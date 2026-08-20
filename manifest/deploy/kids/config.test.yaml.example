@@ -1,6 +1,7 @@
 # 此文件仅作服务器配置模板，真实配置请保存到服务器，不要提交到仓库。
 server:
-  address: ":18002"
+  # 仅监听本机回环地址，由 Nginx 对外提供 HTTPS 服务。
+  address: "127.0.0.1:18002"
   openapiPath: "/api.json"
   swaggerPath: "/swagger"
 

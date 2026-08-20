@@ -62,14 +62,89 @@ Alibaba Cloud Linux 4 LTS 通常使用 `/usr/bin/systemctl`。如 `command -v sy
 
 服务器为 ARM64 时，在仓库 Actions Variables 添加 `RSZ_DEPLOY_GOARCH=arm64`；x86_64 服务器不需要设置，默认使用 `amd64`。
 
+`RSZ_DEPLOY_SSH_KEY` 必须是完整的私钥文本，首行为 `-----BEGIN OPENSSH PRIVATE KEY-----`，末行为 `-----END OPENSSH PRIVATE KEY-----`，不能填写 `.pub` 公钥、文件路径或 SSH 配置内容。工作流会在连接服务器前使用 `ssh-keygen` 校验私钥；校验失败时请重新复制本地私钥全文。
+
 工作流固定执行以下流程：测试、构建 Linux 二进制、上传发布包、切换 `current`、重启 systemd 服务和健康检查。发布成功后只保留最新五个版本。
 
-## 阿里云网络放行
+## Nginx、HTTPS 与阿里云安全组
 
-建议由 Nginx 对外提供 `80`/`443`，kids 保持监听本机 `18002`，无需在阿里云安全组公开 `18002`。若临时直接访问 kids，需要在安全组中增加 TCP `18002` 入站规则；若实例启用了 firewalld，还要执行：
+kids 固定监听 `127.0.0.1:18002`，不直接暴露公网端口。Nginx 是唯一的公网入口，负责 HTTP/HTTPS 终止和反向代理。
+
+Nginx 配置额外保留 `/_nginx/` 路径用于验证默认静态首页，不经过 kids 服务：HTTP 初始化阶段访问 `http://apptest.rszai.com/_nginx/`；启用 HTTPS 后访问 `https://apptest.rszai.com/_nginx/`。其余根路径仍转发至 kids API。
+
+服务器 IP 的默认站点使用 `manifest/deploy/nginx/default.conf`。当前 Alibaba Cloud Linux 默认 `nginx.conf` 已在默认 server 中包含 `/etc/nginx/default.d/*.conf`，将该文件复制到 `/etc/nginx/default.d/default.conf` 后，可通过 `http://<服务器公网IP>/` 或未匹配域名访问 `/usr/share/nginx/html` 下的静态页面。
+
+先在 DNS 中将测试域名 `apptest.rszai.com` 的 A 记录指向服务器公网 IP。将 Nginx 模板复制到服务器后安装：
 
 ```bash
-sudo firewall-cmd --permanent --add-port=18002/tcp
+sudo dnf install -y nginx
+
+sudo install -o root -g root -m 0644 \
+  /tmp/rsz-kids-test.nginx.conf \
+  /etc/nginx/conf.d/rsz-kids-test.conf
+
+sudo nginx -t
+sudo systemctl enable --now nginx
+```
+
+模板文件为 `manifest/deploy/kids/rsz-kids-test.nginx.conf`，与配置模板、systemd 单元一样，应在初始化服务器前传到 `/tmp`：
+
+```bash
+scp manifest/deploy/kids/rsz-kids-test.nginx.conf \
+  <管理用户>@<服务器IP>:/tmp/rsz-kids-test.nginx.conf
+
+scp manifest/deploy/kids/rsz-kids-test.https.nginx.conf \
+  <管理用户>@<服务器IP>:/tmp/rsz-kids-test.https.nginx.conf
+```
+
+Alibaba Cloud Linux 4 的默认仓库不提供 Certbot，因此本项目使用 `acme.sh` 通过 HTTP-01 签发 Let's Encrypt 证书。签发前，请先确认域名已解析、Nginx 已加载 HTTP 初始化配置且安全组已开放 `80`。
+
+```bash
+sudo install -d -o nginx -g nginx -m 0755 /var/www/acme
+curl https://get.acme.sh | sudo sh -s email=<运维邮箱>
+sudo /root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+sudo /root/.acme.sh/acme.sh --issue \
+  --server letsencrypt \
+  -d apptest.rszai.com \
+  -w /var/www/acme
+
+sudo install -d -o root -g root -m 0700 /etc/nginx/ssl
+sudo install -o root -g root -m 0600 /dev/null \
+  /etc/nginx/ssl/apptest.rszai.com.key.pem
+sudo install -o root -g root -m 0644 /dev/null \
+  /etc/nginx/ssl/apptest.rszai.com.fullchain.pem
+
+sudo /root/.acme.sh/acme.sh --install-cert -d apptest.rszai.com \
+  --key-file /etc/nginx/ssl/apptest.rszai.com.key.pem \
+  --fullchain-file /etc/nginx/ssl/apptest.rszai.com.fullchain.pem \
+  --reloadcmd "/usr/bin/systemctl reload nginx"
+```
+
+签发完成后，将 HTTPS 模板替换为当前 Nginx 配置并重载：
+
+```bash
+sudo install -o root -g root -m 0644 \
+  /tmp/rsz-kids-test.https.nginx.conf \
+  /etc/nginx/conf.d/rsz-kids-test.conf
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+HTTPS 模板为 `manifest/deploy/kids/rsz-kids-test.https.nginx.conf`，初始化服务器时同样传到 `/tmp`。`acme.sh --install-cert` 会在续期后自动把新证书写入 Nginx 使用的路径并重载服务。
+
+阿里云安全组仅需放行：
+
+| 协议/端口 | 用途 | 建议来源 |
+| --- | --- | --- |
+| TCP 22 | SSH 与 GitHub Actions 部署 | 尽可能限制管理 IP；GitHub Actions 需要访问时使用密钥认证 |
+| TCP 80 | Let's Encrypt 校验与 HTTP 自动跳转 | `0.0.0.0/0`、`::/0` |
+| TCP 443 | 正式 HTTPS API | `0.0.0.0/0`、`::/0` |
+
+不要在安全组或 firewalld 中放行 `18002`。若 firewalld 已启用，允许 Nginx 端口：
+
+```bash
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
 sudo firewall-cmd --reload
 ```
 
