@@ -1,0 +1,1434 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "success",
+      "operation_id": "completeTask",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "balance": {
+              "balance": 25,
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "source_commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "source_commit_sequence": 42,
+              "updated_at_ms": 1767225600000,
+              "version": 7
+            },
+            "change_cursor": "cur:v1:fixture_cursor_0001",
+            "completion": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "completed_at_ms": 1767225600000,
+              "completed_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "title_snapshot": "fixture_task_title",
+              "version": 1,
+              "zone_id": "Asia/Shanghai"
+            },
+            "ledger_entry": {
+              "actor": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "created_at_ms": 1767225600000,
+              "delta": 5,
+              "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "reason": null,
+              "reversal_of_ledger_id": null,
+              "source": {
+                "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                "scheduled_date_snapshot": "2026-01-05",
+                "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                "source_type": "task",
+                "stars_snapshot": 5,
+                "title_snapshot": "fixture_task_title"
+              }
+            },
+            "occurrence": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "created_at_ms": 1767222000000,
+              "definition_revision": 2,
+              "emoji_snapshot": "✅",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "notes_snapshot": "fixture_task_notes",
+              "photo_required_snapshot": true,
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "state": "completed",
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "task_tag_id_snapshot": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "title_snapshot": "fixture_task_title",
+              "updated_at_ms": 1767225600000,
+              "version": 4,
+              "zone_id": "Asia/Shanghai"
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "success",
+      "operation_id": "completeTask",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "balance": {
+              "balance": 25,
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "source_commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "source_commit_sequence": 42,
+              "updated_at_ms": 1767225600000,
+              "version": 7
+            },
+            "change_cursor": "cur:v1:fixture_cursor_0001",
+            "completion": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "completed_at_ms": 1767225600000,
+              "completed_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "title_snapshot": "fixture_task_title",
+              "version": 1,
+              "zone_id": "Asia/Shanghai"
+            },
+            "ledger_entry": {
+              "actor": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "created_at_ms": 1767225600000,
+              "delta": 5,
+              "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "reason": null,
+              "reversal_of_ledger_id": null,
+              "source": {
+                "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                "scheduled_date_snapshot": "2026-01-05",
+                "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                "source_type": "task",
+                "stars_snapshot": 5,
+                "title_snapshot": "fixture_task_title"
+              }
+            },
+            "occurrence": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "created_at_ms": 1767222000000,
+              "definition_revision": 2,
+              "emoji_snapshot": "✅",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "notes_snapshot": "fixture_task_notes",
+              "photo_required_snapshot": true,
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "state": "completed",
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "task_tag_id_snapshot": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "title_snapshot": "fixture_task_title",
+              "updated_at_ms": 1767225600000,
+              "version": 4,
+              "zone_id": "Asia/Shanghai"
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_not_assigned",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_not_assigned",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "NOT_ASSIGNED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_photo_required",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_photo_required",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "PHOTO_REQUIRED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_asset_rejected",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_asset_rejected",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "ASSET_REJECTED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_balance_overflow",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_member_balance_at_numeric_boundary",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "BALANCE_OVERFLOW",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_audit_inconsistent",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_audit_inconsistent",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "AUDIT_INCONSISTENT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-completeTask"
+          },
+          "request_id": "req-fixture-completeTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "success",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0002",
+          "contract_version": "1",
+          "data": {
+            "balance": {
+              "balance": 20,
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "source_commit_id": "commit:v1:00000000-0000-4000-8000-000000000016",
+              "source_commit_sequence": 43,
+              "updated_at_ms": 1767225601000,
+              "version": 8
+            },
+            "cancellation": {
+              "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+              "cancelled_at_ms": 1767225601000,
+              "cancelled_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "commit_sequence": 43,
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "reason_code": "administrator_cancelled"
+            },
+            "change_cursor": "cur:v1:fixture_cursor_0002",
+            "completion": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "completed_at_ms": 1767225600000,
+              "completed_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "title_snapshot": "fixture_task_title",
+              "version": 1,
+              "zone_id": "Asia/Shanghai"
+            },
+            "occurrence": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "created_at_ms": 1767222000000,
+              "definition_revision": 2,
+              "emoji_snapshot": "✅",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "notes_snapshot": "fixture_task_notes",
+              "photo_required_snapshot": true,
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "state": "cancelled",
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "task_tag_id_snapshot": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "title_snapshot": "fixture_task_title",
+              "updated_at_ms": 1767225601000,
+              "version": 5,
+              "zone_id": "Asia/Shanghai"
+            },
+            "original_ledger_entry": {
+              "actor": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "created_at_ms": 1767225600000,
+              "delta": 5,
+              "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "reason": null,
+              "reversal_of_ledger_id": null,
+              "source": {
+                "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                "scheduled_date_snapshot": "2026-01-05",
+                "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                "source_type": "task",
+                "stars_snapshot": 5,
+                "title_snapshot": "fixture_task_title"
+              }
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000016",
+              "commit_sequence": 43,
+              "committed_at_ms": 1767225601000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000017",
+              "result_kind": "first_committed"
+            },
+            "reversal_ledger_entry": {
+              "actor": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 43,
+              "created_at_ms": 1767225601000,
+              "delta": -5,
+              "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000c",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "reason": "task_completion_cancelled",
+              "reversal_of_ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+              "source": {
+                "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                "scheduled_date_snapshot": "2026-01-05",
+                "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                "source_type": "task",
+                "stars_snapshot": 5,
+                "title_snapshot": "fixture_task_title"
+              }
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225601000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "success",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0002",
+          "contract_version": "1",
+          "data": {
+            "balance": {
+              "balance": 20,
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "source_commit_id": "commit:v1:00000000-0000-4000-8000-000000000016",
+              "source_commit_sequence": 43,
+              "updated_at_ms": 1767225601000,
+              "version": 8
+            },
+            "cancellation": {
+              "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+              "cancelled_at_ms": 1767225601000,
+              "cancelled_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "commit_sequence": 43,
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "reason_code": "administrator_cancelled"
+            },
+            "change_cursor": "cur:v1:fixture_cursor_0002",
+            "completion": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "completed_at_ms": 1767225600000,
+              "completed_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "title_snapshot": "fixture_task_title",
+              "version": 1,
+              "zone_id": "Asia/Shanghai"
+            },
+            "occurrence": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+              "created_at_ms": 1767222000000,
+              "definition_revision": 2,
+              "emoji_snapshot": "✅",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "notes_snapshot": "fixture_task_notes",
+              "photo_required_snapshot": true,
+              "scheduled_date": "2026-01-05",
+              "stars_snapshot": 5,
+              "state": "cancelled",
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "task_tag_id_snapshot": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "title_snapshot": "fixture_task_title",
+              "updated_at_ms": 1767225601000,
+              "version": 5,
+              "zone_id": "Asia/Shanghai"
+            },
+            "original_ledger_entry": {
+              "actor": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 42,
+              "created_at_ms": 1767225600000,
+              "delta": 5,
+              "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "reason": null,
+              "reversal_of_ledger_id": null,
+              "source": {
+                "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                "scheduled_date_snapshot": "2026-01-05",
+                "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                "source_type": "task",
+                "stars_snapshot": 5,
+                "title_snapshot": "fixture_task_title"
+              }
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000016",
+              "commit_sequence": 43,
+              "committed_at_ms": 1767225601000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000017",
+              "result_kind": "idempotent_replay"
+            },
+            "reversal_ledger_entry": {
+              "actor": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "commit_sequence": 43,
+              "created_at_ms": 1767225601000,
+              "delta": -5,
+              "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000c",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "reason": "task_completion_cancelled",
+              "reversal_of_ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+              "source": {
+                "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                "scheduled_date_snapshot": "2026-01-05",
+                "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                "source_type": "task",
+                "stars_snapshot": 5,
+                "title_snapshot": "fixture_task_title"
+              }
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225601000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_audit_inconsistent",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_audit_inconsistent",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "AUDIT_INCONSISTENT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_completion_already_cancelled",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_completion_already_cancelled",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "COMPLETION_ALREADY_CANCELLED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-cancelTaskCompletion",
+      "kind": "error",
+      "operation_id": "cancelTaskCompletion",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "cancellation_id": "cancellation:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_completion_version": 1,
+          "reason_code": "administrator_cancelled"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-cancelTaskCompletion"
+          },
+          "request_id": "req-fixture-cancelTaskCompletion",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "error_timeout",
+      "idempotency_case_id": "fixture-idempotency-completeTask",
+      "kind": "error",
+      "operation_id": "completeTask",
+      "precondition": "fixture_command_deadline_exceeded_commit_state_unknown",
+      "request": {
+        "body": {
+          "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+          "expected_occurrence_version": 3,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+          "scheduled_date": "2026-01-05",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "TIMEOUT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-completeTask-timeout"
+          },
+          "request_id": "req-fixture-completeTask-timeout",
+          "server_time_ms": 1767225600000
+        },
+        "status": 504
+      }
+    }
+  ]
+}

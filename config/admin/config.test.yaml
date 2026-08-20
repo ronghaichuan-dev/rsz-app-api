@@ -1,0 +1,17 @@
+server:
+  address: ":18001"
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+logger:
+  level: "debug"
+  stdout: true
+
+app:
+  name: "admin"
+  env: "test"
+
+database:
+  default:
+    link: "mysql:root:password@tcp(127.0.0.1:3306)/rslytics_admin_test?loc=Local&parseTime=true"
+    debug: true

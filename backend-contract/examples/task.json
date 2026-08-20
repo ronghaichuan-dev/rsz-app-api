@@ -1,0 +1,2182 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "success",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "task_tag": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "name": "fixture_task_tag",
+              "status": "active",
+              "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "updated_at_ms": 1767225600000,
+              "version": 2
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "success",
+      "operation_id": "upsertTaskTag",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "task_tag": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "name": "fixture_task_tag",
+              "status": "active",
+              "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "updated_at_ms": 1767225600000,
+              "version": 2
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_create_task_tag",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag-create",
+      "kind": "success",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_authorized_actor_and_unused_client_generated_task_tag_id",
+      "request": {
+        "body": {
+          "expected_version": null,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000037"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0037",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000040",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000039",
+              "result_kind": "first_committed"
+            },
+            "task_tag": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "deleted_at_ms": null,
+              "name": "fixture_task_tag",
+              "status": "active",
+              "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000037",
+              "updated_at_ms": 1767225600000,
+              "version": 1
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0037",
+          "request_id": "req-fixture-upsertTaskTag-create",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "error",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTaskTag"
+          },
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "error",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTaskTag"
+          },
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "error",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTaskTag"
+          },
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "error",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTaskTag"
+          },
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "error",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTaskTag"
+          },
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-upsertTaskTag",
+      "kind": "error",
+      "operation_id": "upsertTaskTag",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "name": "fixture_task_tag"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-upsertTaskTag"
+          },
+          "request_id": "req-fixture-upsertTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "success",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "active_task_references_cleared": 1,
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "tombstone": {
+              "deleted_at_ms": 1767225600000,
+              "deleted_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "entity_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "entity_type": "task_tag",
+              "version": 6
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "success",
+      "operation_id": "deleteTaskTag",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "active_task_references_cleared": 1,
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "tombstone": {
+              "deleted_at_ms": 1767225600000,
+              "deleted_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "entity_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "entity_type": "task_tag",
+              "version": 6
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "error",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTaskTag"
+          },
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "error",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTaskTag"
+          },
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "error",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTaskTag"
+          },
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "error",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTaskTag"
+          },
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "error",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTaskTag"
+          },
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_tag_in_use",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "error",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_server_state_for_tag_in_use",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "TAG_IN_USE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTaskTag"
+          },
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-deleteTaskTag",
+      "kind": "error",
+      "operation_id": "deleteTaskTag",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "expected_version": 2,
+          "reference_policy": "clear_future_task_references"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-deleteTaskTag"
+          },
+          "request_id": "req-fixture-deleteTaskTag",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "success",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "occurrence_boundary": {
+              "effective_from_date": "2026-01-05",
+              "pending_occurrences_replaced": 1,
+              "resolved_occurrences_preserved": 2,
+              "zone_id": "Asia/Shanghai"
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "task": {
+              "assigned_member_ids": [
+                "member:v1:00000000-0000-4000-8000-000000000002"
+              ],
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "emoji": "✅",
+              "end_rule": {
+                "kind": "after_occurrences",
+                "occurrence_count": 12
+              },
+              "future_effective_from_date": "2026-01-05",
+              "notes": "fixture_task_notes",
+              "photo_required": true,
+              "reminder_config": {
+                "advance_minutes": 15,
+                "anchor": "start_date",
+                "enabled": true,
+                "local_minute_of_day": 1080,
+                "zone_id": "Asia/Shanghai"
+              },
+              "repeat_rule": {
+                "frequency": "weekly",
+                "weekdays": [],
+                "zone_id": "Asia/Shanghai"
+              },
+              "series_revision": 2,
+              "stars": 5,
+              "start_date": "2026-01-05",
+              "status": "active",
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "time_limit_minute_of_day": 1200,
+              "title": "fixture_task_title",
+              "updated_at_ms": 1767225600000,
+              "version": 6,
+              "zone_id": "Asia/Shanghai"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "success",
+      "operation_id": "upsertTask",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "occurrence_boundary": {
+              "effective_from_date": "2026-01-05",
+              "pending_occurrences_replaced": 1,
+              "resolved_occurrences_preserved": 2,
+              "zone_id": "Asia/Shanghai"
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "task": {
+              "assigned_member_ids": [
+                "member:v1:00000000-0000-4000-8000-000000000002"
+              ],
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "emoji": "✅",
+              "end_rule": {
+                "kind": "after_occurrences",
+                "occurrence_count": 12
+              },
+              "future_effective_from_date": "2026-01-05",
+              "notes": "fixture_task_notes",
+              "photo_required": true,
+              "reminder_config": {
+                "advance_minutes": 15,
+                "anchor": "start_date",
+                "enabled": true,
+                "local_minute_of_day": 1080,
+                "zone_id": "Asia/Shanghai"
+              },
+              "repeat_rule": {
+                "frequency": "weekly",
+                "weekdays": [],
+                "zone_id": "Asia/Shanghai"
+              },
+              "series_revision": 2,
+              "stars": 5,
+              "start_date": "2026-01-05",
+              "status": "active",
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "time_limit_minute_of_day": 1200,
+              "title": "fixture_task_title",
+              "updated_at_ms": 1767225600000,
+              "version": 6,
+              "zone_id": "Asia/Shanghai"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_create_task",
+      "idempotency_case_id": "fixture-idempotency-upsertTask-create",
+      "kind": "success",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_authorized_actor_and_unused_client_generated_task_id",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": null,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000038"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0038",
+          "contract_version": "1",
+          "data": {
+            "occurrence_boundary": {
+              "effective_from_date": "2026-01-05",
+              "pending_occurrences_replaced": 0,
+              "resolved_occurrences_preserved": 0,
+              "zone_id": "Asia/Shanghai"
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000042",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000041",
+              "result_kind": "first_committed"
+            },
+            "task": {
+              "assigned_member_ids": [
+                "member:v1:00000000-0000-4000-8000-000000000002"
+              ],
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "deleted_at_ms": null,
+              "emoji": "✅",
+              "end_rule": {
+                "kind": "after_occurrences",
+                "occurrence_count": 12
+              },
+              "future_effective_from_date": "2026-01-05",
+              "notes": "fixture_task_notes",
+              "photo_required": true,
+              "reminder_config": {
+                "advance_minutes": 15,
+                "anchor": "start_date",
+                "enabled": true,
+                "local_minute_of_day": 1080,
+                "zone_id": "Asia/Shanghai"
+              },
+              "repeat_rule": {
+                "frequency": "weekly",
+                "weekdays": [],
+                "zone_id": "Asia/Shanghai"
+              },
+              "series_revision": 1,
+              "stars": 5,
+              "start_date": "2026-01-05",
+              "status": "active",
+              "task_id": "task:v1:00000000-0000-4000-8000-000000000038",
+              "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+              "time_limit_minute_of_day": 1200,
+              "title": "fixture_task_title",
+              "updated_at_ms": 1767225600000,
+              "version": 1,
+              "zone_id": "Asia/Shanghai"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0038",
+          "request_id": "req-fixture-upsertTask-create",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "error",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTask"
+          },
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "error",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTask"
+          },
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "error",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTask"
+          },
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "error",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTask"
+          },
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "error",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertTask"
+          },
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-upsertTask",
+      "kind": "error",
+      "operation_id": "upsertTask",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "emoji": "✅",
+          "end_rule": {
+            "kind": "after_occurrences",
+            "occurrence_count": 12
+          },
+          "expected_version": 5,
+          "future_effective_from_date": "2026-01-05",
+          "notes": "fixture_task_notes",
+          "photo_required": true,
+          "reminder_config": {
+            "advance_minutes": 15,
+            "anchor": "start_date",
+            "enabled": true,
+            "local_minute_of_day": 1080,
+            "zone_id": "Asia/Shanghai"
+          },
+          "repeat_rule": {
+            "frequency": "weekly",
+            "weekdays": [],
+            "zone_id": "Asia/Shanghai"
+          },
+          "stars": 5,
+          "start_date": "2026-01-05",
+          "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+          "time_limit_minute_of_day": 1200,
+          "title": "fixture_task_title",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-upsertTask"
+          },
+          "request_id": "req-fixture-upsertTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "success",
+      "operation_id": "deleteTask",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "occurrence_boundary": {
+              "effective_from_date": "2026-01-05",
+              "pending_occurrences_replaced": 1,
+              "resolved_occurrences_preserved": 2,
+              "zone_id": "Asia/Shanghai"
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "tombstone": {
+              "deleted_at_ms": 1767225600000,
+              "deleted_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "entity_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "entity_type": "task",
+              "version": 6
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "success",
+      "operation_id": "deleteTask",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "occurrence_boundary": {
+              "effective_from_date": "2026-01-05",
+              "pending_occurrences_replaced": 1,
+              "resolved_occurrences_preserved": 2,
+              "zone_id": "Asia/Shanghai"
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "tombstone": {
+              "deleted_at_ms": 1767225600000,
+              "deleted_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "entity_id": "task:v1:00000000-0000-4000-8000-000000000006",
+              "entity_type": "task",
+              "version": 6
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "error",
+      "operation_id": "deleteTask",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTask"
+          },
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "error",
+      "operation_id": "deleteTask",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTask"
+          },
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "error",
+      "operation_id": "deleteTask",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTask"
+          },
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "error",
+      "operation_id": "deleteTask",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTask"
+          },
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "error",
+      "operation_id": "deleteTask",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteTask"
+          },
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-deleteTask",
+      "kind": "error",
+      "operation_id": "deleteTask",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "expected_version": 6,
+          "future_effective_from_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-deleteTask"
+          },
+          "request_id": "req-fixture-deleteTask",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "listTaskOccurrences",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_date_exclusive": "2026-01-06",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "has_more": false,
+            "items": [
+              {
+                "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                "completion_id": null,
+                "created_at_ms": 1767222000000,
+                "definition_revision": 2,
+                "emoji_snapshot": "✅",
+                "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                "notes_snapshot": "fixture_task_notes",
+                "photo_required_snapshot": true,
+                "scheduled_date": "2026-01-05",
+                "stars_snapshot": 5,
+                "state": "pending",
+                "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                "task_tag_id_snapshot": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+                "title_snapshot": "fixture_task_title",
+                "updated_at_ms": 1767225600000,
+                "version": 3,
+                "zone_id": "Asia/Shanghai"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-listTaskOccurrences",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskOccurrences",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_date_exclusive": "2026-01-06",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listTaskOccurrences"
+          },
+          "request_id": "req-fixture-listTaskOccurrences",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskOccurrences",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_date_exclusive": "2026-01-06",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listTaskOccurrences"
+          },
+          "request_id": "req-fixture-listTaskOccurrences",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskOccurrences",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_date_exclusive": "2026-01-06",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-listTaskOccurrences"
+          },
+          "request_id": "req-fixture-listTaskOccurrences",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskOccurrences",
+      "precondition": "fixture_cursor_signature_is_invalid",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_date_exclusive": "2026-01-06",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_date": "2026-01-05",
+          "zone_id": "Asia/Shanghai",
+          "cursor": "cur:v1:invalid_signature_fixture"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/query/cursor",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listTaskOccurrences"
+          },
+          "request_id": "req-fixture-listTaskOccurrences",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    }
+  ]
+}

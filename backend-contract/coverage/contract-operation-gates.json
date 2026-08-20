@@ -1,0 +1,429 @@
+{
+  "contract_version": "1.0.0",
+  "coverage_version": "1",
+  "operation_count": 46,
+  "shared_owners": {
+    "demo_contract_test": "DemoBackendGoldenFixtureConformanceTest",
+    "endpoint_registry": "BackendEndpointRegistry",
+    "endpoint_registry_contract_test": "BackendEndpointRegistryContractTest",
+    "http_adapter": "HttpBackendTransport",
+    "http_contract_test": "HttpBackendGoldenFixtureConformanceTest",
+    "stable_error_mapping": "BackendEndpointRegistry.ALLOWED_ERRORS_BY_OPERATION_ID/BackendResultMapper"
+  },
+  "operations": [
+    {
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain_contract_test_owner": "DemoAuthBackendAdapterContractTest",
+      "operation_id": "getCurrentAccount",
+      "success_fixture": {
+        "case_id": "success_account",
+        "file": "auth.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "selectCurrentCircle",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoAssetHandlers",
+      "domain_contract_test_owner": "DemoAssetContractTest",
+      "operation_id": "commitAssetUpload",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "asset.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoAssetHandlers",
+      "domain_contract_test_owner": "DemoAssetContractTest",
+      "operation_id": "prepareAssetUpload",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "asset.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain_contract_test_owner": "DemoAuthBackendAdapterContractTest",
+      "operation_id": "exchangeGoogleProof",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "auth.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain_contract_test_owner": "DemoAuthBackendAdapterContractTest",
+      "operation_id": "createInviteGuestSession",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "auth.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain_contract_test_owner": "DemoAuthBackendAdapterContractTest",
+      "operation_id": "revokeSession",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "auth.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain_contract_test_owner": "DemoAuthBackendAdapterContractTest",
+      "operation_id": "refreshSession",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "auth.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "listMyCircles",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "deleteCircle",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "updateCircle",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "deleteAdministrator",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "upsertAdministrator",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "getCircleBootstrap",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain_contract_test_owner": "DemoReadModelBackendContractTest",
+      "operation_id": "listExchangeHistory",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "read_models.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "createInvite",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "invite.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "refreshInvite",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "invite.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "revokeInvite",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "invite.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain_contract_test_owner": "DemoReadModelBackendContractTest",
+      "operation_id": "getMemberBalances",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "ledger.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "createCircleMember",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "deleteMember",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "upsertMember",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoRedemptionHandlers",
+      "domain_contract_test_owner": "DemoRedemptionBackendContractTest",
+      "operation_id": "redeemReward",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "redemption.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoRewardHandlers",
+      "domain_contract_test_owner": "DemoRewardBackendContractTest",
+      "operation_id": "deleteReward",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "reward.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoRewardHandlers",
+      "domain_contract_test_owner": "DemoRewardBackendContractTest",
+      "operation_id": "upsertReward",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "reward.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoRewardHandlers",
+      "domain_contract_test_owner": "DemoRewardBackendContractTest",
+      "operation_id": "getRewardEligibility",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "reward.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "adjustMemberStars",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "ledger.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain_contract_test_owner": "DemoReadModelBackendContractTest",
+      "operation_id": "listStarTransactions",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "ledger.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain_contract_test_owner": "DemoReadModelBackendContractTest",
+      "operation_id": "getStatistics",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "read_models.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain_contract_test_owner": "DemoReadModelBackendContractTest",
+      "operation_id": "compareStatistics",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "read_models.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain_contract_test_owner": "DemoReadModelBackendContractTest",
+      "operation_id": "pullCircleBootstrapDelta",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "sync.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain_contract_test_owner": "DemoReadModelBackendContractTest",
+      "operation_id": "listTaskCompletionDetails",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "read_models.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "completeTask",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "task_ledger.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "cancelTaskCompletion",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "task_ledger.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "listTaskOccurrences",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "task.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "deleteTaskTag",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "task.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "upsertTaskTag",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "task.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "deleteTask",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "task.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain_contract_test_owner": "DemoTaskBackendContractTest",
+      "operation_id": "upsertTask",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "task.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "leaveCircle",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "completeOnboarding",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "circle.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoSupportHandlers",
+      "domain_contract_test_owner": "DemoSupportBackendContractTest",
+      "operation_id": "getCurrentEntitlement",
+      "success_fixture": {
+        "case_id": "success",
+        "file": "entitlement.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoSupportHandlers",
+      "domain_contract_test_owner": "DemoSupportBackendContractTest",
+      "operation_id": "verifyPlayPurchase",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "entitlement.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "redeemAdministratorInvite",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "invite.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain_contract_test_owner": "DemoCircleBackendContractTest",
+      "operation_id": "redeemMemberInvite",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "invite.json"
+      }
+    },
+    {
+      "demo_handler_owner": "DemoSupportHandlers",
+      "domain_contract_test_owner": "DemoSupportBackendContractTest",
+      "operation_id": "submitFeedback",
+      "success_fixture": {
+        "case_id": "success_first_committed",
+        "file": "support.json"
+      }
+    }
+  ]
+}

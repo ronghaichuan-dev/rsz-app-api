@@ -1,0 +1,29 @@
+server:
+  address: ":8002"
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+logger:
+  level: "all"
+  stdout: true
+
+app:
+  name: "kids"
+  env: "dev"
+
+database:
+  default:
+    link: "mysql:root:chuan1992@tcp(127.0.0.1:3306)/rslytics_kids?loc=Local&parseTime=true"
+    debug: true
+
+auth:
+  jwt:
+    secret: "rslytics-kids-jwt-secret"
+  google:
+    clientId: ""
+  apple:
+    clientId: ""
+    teamId: ""
+    keyId: ""
+    privateKey: ""
+

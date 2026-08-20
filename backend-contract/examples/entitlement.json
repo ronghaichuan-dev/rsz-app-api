@@ -1,0 +1,461 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-verifyPlayPurchase",
+      "kind": "success",
+      "operation_id": "verifyPlayPurchase",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "package_name": "com.fixture.clearwave",
+          "product_id": "fixture_product_id",
+          "product_type": "subscription",
+          "purchase_token": "fixture_purchase_token_not_real"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "entitlement": {
+              "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "base_plan_id": "fixture_base_plan",
+              "billing_phase": "trial",
+              "entitlement_id": "entitlement:v1:00000000-0000-4000-8000-000000000018",
+              "offer_id": "fixture_offer",
+              "plan_code": "monthly",
+              "product_id": "fixture_product_id",
+              "revoked_at_ms": null,
+              "status": "trial",
+              "trial_eligible": false,
+              "valid_until_ms": 1769817600000,
+              "verified_at_ms": 1767225600000,
+              "version": 3
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "verification_status": "verified"
+          },
+          "request_id": "req-fixture-verifyPlayPurchase",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-verifyPlayPurchase",
+      "kind": "success",
+      "operation_id": "verifyPlayPurchase",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "package_name": "com.fixture.clearwave",
+          "product_id": "fixture_product_id",
+          "product_type": "subscription",
+          "purchase_token": "fixture_purchase_token_not_real"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "entitlement": {
+              "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "base_plan_id": "fixture_base_plan",
+              "billing_phase": "trial",
+              "entitlement_id": "entitlement:v1:00000000-0000-4000-8000-000000000018",
+              "offer_id": "fixture_offer",
+              "plan_code": "monthly",
+              "product_id": "fixture_product_id",
+              "revoked_at_ms": null,
+              "status": "trial",
+              "trial_eligible": false,
+              "valid_until_ms": 1769817600000,
+              "verified_at_ms": 1767225600000,
+              "version": 3
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "verification_status": "verified"
+          },
+          "request_id": "req-fixture-verifyPlayPurchase",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-verifyPlayPurchase",
+      "kind": "error",
+      "operation_id": "verifyPlayPurchase",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "package_name": "com.fixture.clearwave",
+          "product_id": "fixture_product_id",
+          "product_type": "subscription",
+          "purchase_token": "fixture_purchase_token_not_real"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-verifyPlayPurchase"
+          },
+          "request_id": "req-fixture-verifyPlayPurchase",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-verifyPlayPurchase",
+      "kind": "error",
+      "operation_id": "verifyPlayPurchase",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "package_name": "com.fixture.clearwave",
+          "product_id": "fixture_product_id",
+          "product_type": "subscription",
+          "purchase_token": "fixture_purchase_token_not_real"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-verifyPlayPurchase"
+          },
+          "request_id": "req-fixture-verifyPlayPurchase",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-verifyPlayPurchase",
+      "kind": "error",
+      "operation_id": "verifyPlayPurchase",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "package_name": "com.fixture.clearwave",
+          "product_id": "fixture_product_id",
+          "product_type": "subscription",
+          "purchase_token": "fixture_purchase_token_not_real"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-verifyPlayPurchase"
+          },
+          "request_id": "req-fixture-verifyPlayPurchase",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_purchase_rejected",
+      "idempotency_case_id": "fixture-idempotency-verifyPlayPurchase",
+      "kind": "error",
+      "operation_id": "verifyPlayPurchase",
+      "precondition": "fixture_server_state_for_purchase_rejected",
+      "request": {
+        "body": {
+          "package_name": "com.fixture.clearwave",
+          "product_id": "fixture_product_id",
+          "product_type": "subscription",
+          "purchase_token": "fixture_purchase_token_not_real"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "PURCHASE_REJECTED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-verifyPlayPurchase"
+          },
+          "request_id": "req-fixture-verifyPlayPurchase",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-verifyPlayPurchase",
+      "kind": "error",
+      "operation_id": "verifyPlayPurchase",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "package_name": "com.fixture.clearwave",
+          "product_id": "fixture_product_id",
+          "product_type": "subscription",
+          "purchase_token": "fixture_purchase_token_not_real"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-verifyPlayPurchase"
+          },
+          "request_id": "req-fixture-verifyPlayPurchase",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "getCurrentEntitlement",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+            "base_plan_id": "fixture_base_plan",
+            "billing_phase": "trial",
+            "entitlement_id": "entitlement:v1:00000000-0000-4000-8000-000000000018",
+            "offer_id": "fixture_offer",
+            "plan_code": "monthly",
+            "product_id": "fixture_product_id",
+            "revoked_at_ms": null,
+            "status": "trial",
+            "trial_eligible": false,
+            "valid_until_ms": 1769817600000,
+            "verified_at_ms": 1767225600000,
+            "version": 3
+          },
+          "request_id": "req-fixture-getCurrentEntitlement",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getCurrentEntitlement",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getCurrentEntitlement"
+          },
+          "request_id": "req-fixture-getCurrentEntitlement",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getCurrentEntitlement",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-getCurrentEntitlement"
+          },
+          "request_id": "req-fixture-getCurrentEntitlement",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getCurrentEntitlement",
+      "precondition": "fixture_malformed_x_request_id_header",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/headers/x_request_id",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getCurrentEntitlement"
+          },
+          "request_id": "req-fixture-getCurrentEntitlement",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    }
+  ]
+}

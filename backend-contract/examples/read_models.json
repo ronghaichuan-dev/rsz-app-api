@@ -1,0 +1,1078 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "listExchangeHistory",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "filter_mode": "all_time",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "has_more": false,
+            "items": [
+              {
+                "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                "commit_sequence": 42,
+                "cooldown_until_ms_snapshot": 1769817600000,
+                "exchange_id": "exchange:v1:00000000-0000-4000-8000-000000000009",
+                "exchanged_at_ms": 1767225600000,
+                "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+                "member_avatar_snapshot": {
+                  "kind": "preset",
+                  "preset_id": "fixture_avatar_01"
+                },
+                "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                "member_name_snapshot": "fixture_member_name",
+                "permanently_unavailable_snapshot": false,
+                "reward_cooldown_days_snapshot": null,
+                "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+                "reward_repeat_rule_snapshot": "weekly",
+                "reward_title_snapshot": "fixture_reward_title",
+                "reward_visual_snapshot": {
+                  "emoji": "⭐",
+                  "kind": "emoji"
+                },
+                "stars_deducted_snapshot": 10
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_cursor": "cur:v1:fixture_cursor_0001",
+            "total_exchanges": 1
+          },
+          "request_id": "req-fixture-listExchangeHistory",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listExchangeHistory",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "filter_mode": "all_time",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listExchangeHistory"
+          },
+          "request_id": "req-fixture-listExchangeHistory",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listExchangeHistory",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "filter_mode": "all_time",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listExchangeHistory"
+          },
+          "request_id": "req-fixture-listExchangeHistory",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_audit_inconsistent",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listExchangeHistory",
+      "precondition": "fixture_server_state_for_audit_inconsistent",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "filter_mode": "all_time",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "AUDIT_INCONSISTENT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listExchangeHistory"
+          },
+          "request_id": "req-fixture-listExchangeHistory",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listExchangeHistory",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "filter_mode": "all_time",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-listExchangeHistory"
+          },
+          "request_id": "req-fixture-listExchangeHistory",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "getStatistics",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "bucket_unit": "day",
+          "end_at_ms": 1767312000000,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767225600000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "as_of_cursor": "cur:v1:fixture_cursor_0001",
+            "bucket_unit": "day",
+            "buckets": [
+              {
+                "end_at_ms": 1767628800000,
+                "index": 0,
+                "local_end_date_exclusive": "2026-01-06",
+                "local_start_date": "2026-01-05",
+                "start_at_ms": 1767542400000,
+                "value": 1
+              }
+            ],
+            "end_at_ms": 1767628800000,
+            "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+            "metric": "tasks",
+            "period_type": "weekly",
+            "start_at_ms": 1767542400000,
+            "summary": {
+              "non_zero_bucket_count": 1,
+              "peak_value": 1,
+              "total": 1
+            },
+            "zone_id": "Asia/Shanghai"
+          },
+          "request_id": "req-fixture-getStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getStatistics",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "bucket_unit": "day",
+          "end_at_ms": 1767628800000,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767542400000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getStatistics"
+          },
+          "request_id": "req-fixture-getStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getStatistics",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "bucket_unit": "day",
+          "end_at_ms": 1767312000000,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767225600000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getStatistics"
+          },
+          "request_id": "req-fixture-getStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getStatistics",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "bucket_unit": "day",
+          "end_at_ms": 1767312000000,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767225600000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-getStatistics"
+          },
+          "request_id": "req-fixture-getStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "compareStatistics",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "base_member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "bucket_unit": "day",
+          "compare_member_id": "member:v1:00000000-0000-4000-8000-000000000003",
+          "end_at_ms": 1767628800000,
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767542400000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "base_member": {
+              "as_of_cursor": "cur:v1:fixture_cursor_0001",
+              "bucket_unit": "day",
+              "buckets": [
+                {
+                  "end_at_ms": 1767628800000,
+                  "index": 0,
+                  "local_end_date_exclusive": "2026-01-06",
+                  "local_start_date": "2026-01-05",
+                  "start_at_ms": 1767542400000,
+                  "value": 1
+                }
+              ],
+              "end_at_ms": 1767628800000,
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "metric": "tasks",
+              "period_type": "weekly",
+              "start_at_ms": 1767542400000,
+              "summary": {
+                "non_zero_bucket_count": 1,
+                "peak_value": 1,
+                "total": 1
+              },
+              "zone_id": "Asia/Shanghai"
+            },
+            "compare_member": {
+              "as_of_cursor": "cur:v1:fixture_cursor_0001",
+              "bucket_unit": "day",
+              "buckets": [
+                {
+                  "end_at_ms": 1767628800000,
+                  "index": 0,
+                  "local_end_date_exclusive": "2026-01-06",
+                  "local_start_date": "2026-01-05",
+                  "start_at_ms": 1767542400000,
+                  "value": 1
+                }
+              ],
+              "end_at_ms": 1767628800000,
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000003",
+              "metric": "tasks",
+              "period_type": "weekly",
+              "start_at_ms": 1767542400000,
+              "summary": {
+                "non_zero_bucket_count": 1,
+                "peak_value": 1,
+                "total": 1
+              },
+              "zone_id": "Asia/Shanghai"
+            },
+            "snapshot_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-compareStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "compareStatistics",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "base_member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "bucket_unit": "day",
+          "compare_member_id": "member:v1:00000000-0000-4000-8000-000000000003",
+          "end_at_ms": 1767312000000,
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767225600000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-compareStatistics"
+          },
+          "request_id": "req-fixture-compareStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "compareStatistics",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "base_member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "bucket_unit": "day",
+          "compare_member_id": "member:v1:00000000-0000-4000-8000-000000000003",
+          "end_at_ms": 1767312000000,
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767225600000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-compareStatistics"
+          },
+          "request_id": "req-fixture-compareStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "compareStatistics",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "base_member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "bucket_unit": "day",
+          "compare_member_id": "member:v1:00000000-0000-4000-8000-000000000003",
+          "end_at_ms": 1767312000000,
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767225600000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-compareStatistics"
+          },
+          "request_id": "req-fixture-compareStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "listTaskCompletionDetails",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_at_ms": 1767312000000,
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_at_ms": 1767139200000,
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "has_more": false,
+            "items": [
+              {
+                "cancellation": null,
+                "completion": {
+                  "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                  "commit_sequence": 42,
+                  "completed_at_ms": 1767225600000,
+                  "completed_by": {
+                    "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                    "actor_type": "owner",
+                    "display_name_snapshot": "fixture_owner_name",
+                    "role": "owner"
+                  },
+                  "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+                  "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                  "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                  "scheduled_date": "2026-01-05",
+                  "stars_snapshot": 5,
+                  "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                  "title_snapshot": "fixture_task_title",
+                  "version": 1,
+                  "zone_id": "Asia/Shanghai"
+                },
+                "positive_ledger_entry": {
+                  "actor": {
+                    "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                    "actor_type": "owner",
+                    "display_name_snapshot": "fixture_owner_name",
+                    "role": "owner"
+                  },
+                  "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                  "commit_sequence": 42,
+                  "created_at_ms": 1767225600000,
+                  "delta": 5,
+                  "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+                  "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                  "reason": null,
+                  "reversal_of_ledger_id": null,
+                  "source": {
+                    "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                    "scheduled_date_snapshot": "2026-01-05",
+                    "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                    "source_type": "task",
+                    "stars_snapshot": 5,
+                    "title_snapshot": "fixture_task_title"
+                  }
+                },
+                "reversal_ledger_entry": null
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-listTaskCompletionDetails",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskCompletionDetails",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_at_ms": 1767312000000,
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_at_ms": 1767139200000,
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listTaskCompletionDetails"
+          },
+          "request_id": "req-fixture-listTaskCompletionDetails",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskCompletionDetails",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_at_ms": 1767312000000,
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_at_ms": 1767139200000,
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listTaskCompletionDetails"
+          },
+          "request_id": "req-fixture-listTaskCompletionDetails",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_audit_inconsistent",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskCompletionDetails",
+      "precondition": "fixture_server_state_for_audit_inconsistent",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_at_ms": 1767312000000,
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_at_ms": 1767139200000,
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "AUDIT_INCONSISTENT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listTaskCompletionDetails"
+          },
+          "request_id": "req-fixture-listTaskCompletionDetails",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskCompletionDetails",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_at_ms": 1767312000000,
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_at_ms": 1767139200000,
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-listTaskCompletionDetails"
+          },
+          "request_id": "req-fixture-listTaskCompletionDetails",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listExchangeHistory",
+      "precondition": "fixture_cursor_signature_is_invalid",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "filter_mode": "all_time",
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "zone_id": "Asia/Shanghai",
+          "cursor": "cur:v1:invalid_signature_fixture"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/query/cursor",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listExchangeHistory"
+          },
+          "request_id": "req-fixture-listExchangeHistory",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getStatistics",
+      "precondition": "fixture_start_is_not_before_end",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "bucket_unit": "day",
+          "end_at_ms": 1767225600000,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767312000000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/query/start_at_ms",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getStatistics"
+          },
+          "request_id": "req-fixture-getStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "compareStatistics",
+      "precondition": "fixture_start_is_not_before_end",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "base_member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "bucket_unit": "day",
+          "compare_member_id": "member:v1:00000000-0000-4000-8000-000000000003",
+          "end_at_ms": 1767225600000,
+          "metric": "tasks",
+          "period_type": "weekly",
+          "start_at_ms": 1767312000000,
+          "week_start": "monday",
+          "zone_id": "Asia/Shanghai"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/query/start_at_ms",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-compareStatistics"
+          },
+          "request_id": "req-fixture-compareStatistics",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "listTaskCompletionDetails",
+      "precondition": "fixture_cursor_signature_is_invalid",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "end_at_ms": 1767312000000,
+          "limit": 50,
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "start_at_ms": 1767139200000,
+          "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+          "zone_id": "Asia/Shanghai",
+          "cursor": "cur:v1:invalid_signature_fixture"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/query/cursor",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-listTaskCompletionDetails"
+          },
+          "request_id": "req-fixture-listTaskCompletionDetails",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    }
+  ]
+}

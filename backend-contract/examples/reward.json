@@ -1,0 +1,1146 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "success",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "reward": {
+              "assigned_member_ids": [
+                "member:v1:00000000-0000-4000-8000-000000000002"
+              ],
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "cooldown_days": null,
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "description": "fixture_reward_description",
+              "repeat_rule": "weekly",
+              "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+              "stars_required": 10,
+              "status": "active",
+              "title": "fixture_reward_title",
+              "updated_at_ms": 1767225600000,
+              "version": 5,
+              "visual": {
+                "emoji": "⭐",
+                "kind": "emoji"
+              },
+              "zone_id": "Asia/Shanghai"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "success",
+      "operation_id": "upsertReward",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "reward": {
+              "assigned_member_ids": [
+                "member:v1:00000000-0000-4000-8000-000000000002"
+              ],
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "cooldown_days": null,
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "description": "fixture_reward_description",
+              "repeat_rule": "weekly",
+              "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+              "stars_required": 10,
+              "status": "active",
+              "title": "fixture_reward_title",
+              "updated_at_ms": 1767225600000,
+              "version": 5,
+              "visual": {
+                "emoji": "⭐",
+                "kind": "emoji"
+              },
+              "zone_id": "Asia/Shanghai"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_create_custom_cooldown_reward",
+      "idempotency_case_id": "fixture-idempotency-upsertReward-custom",
+      "kind": "success",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_authorized_actor_and_unused_client_generated_reward_id",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": 12,
+          "description": "fixture_reward_description",
+          "expected_version": null,
+          "repeat_rule": "custom",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000034"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0034",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000036",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000035",
+              "result_kind": "first_committed"
+            },
+            "reward": {
+              "assigned_member_ids": [
+                "member:v1:00000000-0000-4000-8000-000000000002"
+              ],
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "cooldown_days": 12,
+              "created_at_ms": 1767225600000,
+              "deleted_at_ms": null,
+              "description": "fixture_reward_description",
+              "repeat_rule": "custom",
+              "reward_id": "reward:v1:00000000-0000-4000-8000-000000000034",
+              "stars_required": 10,
+              "status": "active",
+              "title": "fixture_reward_title",
+              "updated_at_ms": 1767225600000,
+              "version": 1,
+              "visual": {
+                "emoji": "⭐",
+                "kind": "emoji"
+              },
+              "zone_id": "Asia/Shanghai"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0034",
+          "request_id": "req-fixture-upsertReward-custom",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "error",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertReward"
+          },
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "error",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertReward"
+          },
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "error",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertReward"
+          },
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "error",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertReward"
+          },
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "error",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-upsertReward"
+          },
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-upsertReward",
+      "kind": "error",
+      "operation_id": "upsertReward",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "assigned_member_ids": [
+            "member:v1:00000000-0000-4000-8000-000000000002"
+          ],
+          "cooldown_days": null,
+          "description": "fixture_reward_description",
+          "expected_version": 4,
+          "repeat_rule": "weekly",
+          "stars_required": 10,
+          "title": "fixture_reward_title",
+          "visual": {
+            "emoji": "⭐",
+            "kind": "emoji"
+          },
+          "zone_id": "Asia/Shanghai"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-upsertReward"
+          },
+          "request_id": "req-fixture-upsertReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "success",
+      "operation_id": "deleteReward",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "tombstone": {
+              "deleted_at_ms": 1767225600000,
+              "deleted_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "entity_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+              "entity_type": "reward",
+              "version": 6
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "success",
+      "operation_id": "deleteReward",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "tombstone": {
+              "deleted_at_ms": 1767225600000,
+              "deleted_by": {
+                "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                "actor_type": "owner",
+                "display_name_snapshot": "fixture_owner_name",
+                "role": "owner"
+              },
+              "entity_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+              "entity_type": "reward",
+              "version": 6
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "error",
+      "operation_id": "deleteReward",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteReward"
+          },
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "error",
+      "operation_id": "deleteReward",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteReward"
+          },
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "error",
+      "operation_id": "deleteReward",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteReward"
+          },
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "error",
+      "operation_id": "deleteReward",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteReward"
+          },
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "error",
+      "operation_id": "deleteReward",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-deleteReward"
+          },
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-deleteReward",
+      "kind": "error",
+      "operation_id": "deleteReward",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "expected_version": 5,
+          "reason_code": "administrator_deleted"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-deleteReward"
+          },
+          "request_id": "req-fixture-deleteReward",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "getRewardEligibility",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "as_of_cursor": "cur:v1:fixture_cursor_0001",
+            "balance_version": 7,
+            "cooldown_until_ms": null,
+            "last_redeemed_at_ms": null,
+            "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+            "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+            "reward_version": 5,
+            "status": "eligible"
+          },
+          "request_id": "req-fixture-getRewardEligibility",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getRewardEligibility",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getRewardEligibility"
+          },
+          "request_id": "req-fixture-getRewardEligibility",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getRewardEligibility",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getRewardEligibility"
+          },
+          "request_id": "req-fixture-getRewardEligibility",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getRewardEligibility",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-getRewardEligibility"
+          },
+          "request_id": "req-fixture-getRewardEligibility",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getRewardEligibility",
+      "precondition": "fixture_member_reward_scope_mismatch",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/query/member_id",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getRewardEligibility"
+          },
+          "request_id": "req-fixture-getRewardEligibility",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_not_found",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "getRewardEligibility",
+      "precondition": "fixture_reward_not_visible_or_not_found",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008"
+        },
+        "query_parameters": {
+          "member_id": "member:v1:00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "NOT_FOUND",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-getRewardEligibility-not_found"
+          },
+          "request_id": "req-fixture-getRewardEligibility-not_found",
+          "server_time_ms": 1767225600000
+        },
+        "status": 404
+      }
+    }
+  ]
+}

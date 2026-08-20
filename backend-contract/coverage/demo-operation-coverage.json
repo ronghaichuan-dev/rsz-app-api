@@ -1,0 +1,286 @@
+{
+  "contract_version": "1.0.0",
+  "coverage_version": "1",
+  "default_mode": "DEMO_DEBUG",
+  "operation_count": 46,
+  "operations": [
+    {
+      "handler_owner": "DemoAuthHandlers",
+      "operation_id": "getCurrentAccount",
+      "status": "covered",
+      "test_owner": "DemoAuthBackendAdapterContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "selectCurrentCircle",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoAssetHandlers",
+      "operation_id": "commitAssetUpload",
+      "status": "covered",
+      "test_owner": "DemoAssetContractTest"
+    },
+    {
+      "handler_owner": "DemoAssetHandlers",
+      "operation_id": "prepareAssetUpload",
+      "status": "covered",
+      "test_owner": "DemoAssetContractTest"
+    },
+    {
+      "handler_owner": "DemoAuthHandlers",
+      "operation_id": "exchangeGoogleProof",
+      "status": "covered",
+      "test_owner": "DemoAuthBackendAdapterContractTest"
+    },
+    {
+      "handler_owner": "DemoAuthHandlers",
+      "operation_id": "createInviteGuestSession",
+      "status": "covered",
+      "test_owner": "DemoAuthBackendAdapterContractTest"
+    },
+    {
+      "handler_owner": "DemoAuthHandlers",
+      "operation_id": "revokeSession",
+      "status": "covered",
+      "test_owner": "DemoAuthBackendAdapterContractTest"
+    },
+    {
+      "handler_owner": "DemoAuthHandlers",
+      "operation_id": "refreshSession",
+      "status": "covered",
+      "test_owner": "DemoAuthBackendAdapterContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "listMyCircles",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "deleteCircle",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "updateCircle",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "deleteAdministrator",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "upsertAdministrator",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "getCircleBootstrap",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoReadModelHandlers",
+      "operation_id": "listExchangeHistory",
+      "status": "covered",
+      "test_owner": "DemoReadModelBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "createInvite",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "refreshInvite",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "revokeInvite",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoReadModelHandlers",
+      "operation_id": "getMemberBalances",
+      "status": "covered",
+      "test_owner": "DemoReadModelBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "createCircleMember",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "deleteMember",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "upsertMember",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoRedemptionHandlers",
+      "operation_id": "redeemReward",
+      "status": "covered",
+      "test_owner": "DemoRedemptionBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoRewardHandlers",
+      "operation_id": "deleteReward",
+      "status": "covered",
+      "test_owner": "DemoRewardBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoRewardHandlers",
+      "operation_id": "upsertReward",
+      "status": "covered",
+      "test_owner": "DemoRewardBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoRewardHandlers",
+      "operation_id": "getRewardEligibility",
+      "status": "covered",
+      "test_owner": "DemoRewardBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "adjustMemberStars",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoReadModelHandlers",
+      "operation_id": "listStarTransactions",
+      "status": "covered",
+      "test_owner": "DemoReadModelBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoReadModelHandlers",
+      "operation_id": "getStatistics",
+      "status": "covered",
+      "test_owner": "DemoReadModelBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoReadModelHandlers",
+      "operation_id": "compareStatistics",
+      "status": "covered",
+      "test_owner": "DemoReadModelBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoReadModelHandlers",
+      "operation_id": "pullCircleBootstrapDelta",
+      "status": "covered",
+      "test_owner": "DemoReadModelBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoReadModelHandlers",
+      "operation_id": "listTaskCompletionDetails",
+      "status": "covered",
+      "test_owner": "DemoReadModelBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "completeTask",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "cancelTaskCompletion",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "listTaskOccurrences",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "deleteTaskTag",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "upsertTaskTag",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "deleteTask",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoTaskHandlers",
+      "operation_id": "upsertTask",
+      "status": "covered",
+      "test_owner": "DemoTaskBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "leaveCircle",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "completeOnboarding",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoSupportHandlers",
+      "operation_id": "getCurrentEntitlement",
+      "status": "covered",
+      "test_owner": "DemoSupportBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoSupportHandlers",
+      "operation_id": "verifyPlayPurchase",
+      "status": "covered",
+      "test_owner": "DemoSupportBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "redeemAdministratorInvite",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoCircleHandlers",
+      "operation_id": "redeemMemberInvite",
+      "status": "covered",
+      "test_owner": "DemoCircleBackendContractTest"
+    },
+    {
+      "handler_owner": "DemoSupportHandlers",
+      "operation_id": "submitFeedback",
+      "status": "covered",
+      "test_owner": "DemoSupportBackendContractTest"
+    }
+  ],
+  "seed_version": 1,
+  "unknown_operation_policy": "protocol_not_implemented_fail_closed"
+}

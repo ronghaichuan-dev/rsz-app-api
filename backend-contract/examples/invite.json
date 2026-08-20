@@ -1,0 +1,2431 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "success",
+      "operation_id": "createInvite",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "invite": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "expires_at_ms": 1769817600000,
+              "generation": 1,
+              "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+              "permission_scope": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "revoked_at_ms": null,
+              "single_use": true,
+              "status": "active",
+              "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "target_member_id": null,
+              "target_role": "administrator",
+              "used_at_ms": null,
+              "version": 1
+            },
+            "invite_code": "CWV2X8KD",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "success",
+      "operation_id": "createInvite",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "invite": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "expires_at_ms": 1769817600000,
+              "generation": 1,
+              "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+              "permission_scope": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "revoked_at_ms": null,
+              "single_use": true,
+              "status": "active",
+              "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "target_member_id": null,
+              "target_role": "administrator",
+              "used_at_ms": null,
+              "version": 1
+            },
+            "invite_code": "CWV2X8KD",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_member_invite",
+      "idempotency_case_id": "fixture-idempotency-createInvite-member",
+      "kind": "success",
+      "operation_id": "createInvite",
+      "precondition": "fixture_active_member_target_and_authorized_administrator_actor",
+      "request": {
+        "body": {
+          "expected_target_version": 4,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000025",
+          "permission_scope": [],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": null,
+          "target_member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+          "target_role": "member"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0025",
+          "contract_version": "1",
+          "data": {
+            "invite": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "expires_at_ms": 1769817600000,
+              "generation": 1,
+              "invite_id": "invite:v1:00000000-0000-4000-8000-000000000025",
+              "permission_scope": [],
+              "revoked_at_ms": null,
+              "single_use": true,
+              "status": "active",
+              "target_administrator_id": null,
+              "target_member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "target_role": "member",
+              "used_at_ms": null,
+              "version": 1
+            },
+            "invite_code": "CWV2X8KD",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000027",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000026",
+              "result_kind": "first_committed"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-createInvite-member",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "error",
+      "operation_id": "createInvite",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-createInvite"
+          },
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "error",
+      "operation_id": "createInvite",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-createInvite"
+          },
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "error",
+      "operation_id": "createInvite",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-createInvite"
+          },
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "error",
+      "operation_id": "createInvite",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-createInvite"
+          },
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "error",
+      "operation_id": "createInvite",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-createInvite"
+          },
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-createInvite",
+      "kind": "error",
+      "operation_id": "createInvite",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "expected_target_version": 3,
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+          "permission_scope": [
+            "manage_tasks",
+            "manage_rewards"
+          ],
+          "requested_ttl_seconds": 86400,
+          "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+          "target_member_id": null,
+          "target_role": "administrator"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-createInvite"
+          },
+          "request_id": "req-fixture-createInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "success",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "invite": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "expires_at_ms": 1769817600000,
+              "generation": 2,
+              "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+              "permission_scope": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "revoked_at_ms": null,
+              "single_use": true,
+              "status": "active",
+              "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "target_member_id": null,
+              "target_role": "administrator",
+              "used_at_ms": null,
+              "version": 2
+            },
+            "invite_code": "CWV3X8KD",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "success",
+      "operation_id": "refreshInvite",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "invite": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "expires_at_ms": 1769817600000,
+              "generation": 2,
+              "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+              "permission_scope": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "revoked_at_ms": null,
+              "single_use": true,
+              "status": "active",
+              "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "target_member_id": null,
+              "target_role": "administrator",
+              "used_at_ms": null,
+              "version": 2
+            },
+            "invite_code": "CWV3X8KD",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "error",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-refreshInvite"
+          },
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "error",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-refreshInvite"
+          },
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "error",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-refreshInvite"
+          },
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "error",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-refreshInvite"
+          },
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "error",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-refreshInvite"
+          },
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_invite_used",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "error",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_server_state_for_invite_used",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_USED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-refreshInvite"
+          },
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-refreshInvite",
+      "kind": "error",
+      "operation_id": "refreshInvite",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "requested_ttl_seconds": 86400
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-refreshInvite"
+          },
+          "request_id": "req-fixture-refreshInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "success",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "invite": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "expires_at_ms": 1769817600000,
+              "generation": 1,
+              "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+              "permission_scope": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "revoked_at_ms": 1767225600000,
+              "single_use": true,
+              "status": "revoked",
+              "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "target_member_id": null,
+              "target_role": "administrator",
+              "used_at_ms": null,
+              "version": 2
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "success",
+      "operation_id": "revokeInvite",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "invite": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767225600000,
+              "expires_at_ms": 1769817600000,
+              "generation": 1,
+              "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+              "permission_scope": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "revoked_at_ms": 1767225600000,
+              "single_use": true,
+              "status": "revoked",
+              "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "target_member_id": null,
+              "target_role": "administrator",
+              "used_at_ms": null,
+              "version": 2
+            },
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            }
+          },
+          "etag": "etag:v1:fixture_etag_0001",
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "error",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-revokeInvite"
+          },
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "error",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-revokeInvite"
+          },
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "error",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-revokeInvite"
+          },
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "error",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-revokeInvite"
+          },
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_version_conflict",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "error",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_server_state_for_version_conflict",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VERSION_CONFLICT",
+            "current_version": 9,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-revokeInvite"
+          },
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_invite_used",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "error",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_server_state_for_invite_used",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_USED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-revokeInvite"
+          },
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-revokeInvite",
+      "kind": "error",
+      "operation_id": "revokeInvite",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "expected_version": 1,
+          "reason_code": "manual_revoke"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+          "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005"
+        },
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-revokeInvite"
+          },
+          "request_id": "req-fixture-revokeInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "success",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "administrator": {
+              "administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "avatar": {
+                "kind": "preset",
+                "preset_id": "fixture_avatar_01"
+              },
+              "bound_account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "display_name": "fixture_owner_name",
+              "permissions": [
+                "manage_circle",
+                "manage_members",
+                "manage_tasks",
+                "manage_rewards",
+                "adjust_stars"
+              ],
+              "role": "administrator",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 3
+            },
+            "auth_session": {
+              "access_token": "fixture_access_token_not_real",
+              "metadata": {
+                "access_expires_at_ms": 1767229200000,
+                "issued_at_ms": 1767225600000,
+                "principal_type": "account",
+                "refresh_expires_at_ms": 1769817600000,
+                "session_id": "session:v1:00000000-0000-4000-8000-000000000011",
+                "status": "active"
+              },
+              "refresh_token": "fixture_refresh_token_not_real",
+              "token_type": "Bearer"
+            },
+            "circle": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "icon": {
+                "emoji": "⭐",
+                "kind": "emoji"
+              },
+              "name": "fixture_circle_name",
+              "owner_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 4
+            },
+            "membership": {
+              "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "actor_type": "administrator",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "membership_id": "membership:v1:00000000-0000-4000-8000-000000000012",
+              "permissions": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "role": "administrator",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 2
+            },
+            "redemption_receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "sync_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "success",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "administrator": {
+              "administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "avatar": {
+                "kind": "preset",
+                "preset_id": "fixture_avatar_01"
+              },
+              "bound_account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "display_name": "fixture_owner_name",
+              "permissions": [
+                "manage_circle",
+                "manage_members",
+                "manage_tasks",
+                "manage_rewards",
+                "adjust_stars"
+              ],
+              "role": "administrator",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 3
+            },
+            "auth_session": {
+              "access_token": "fixture_access_token_not_real",
+              "metadata": {
+                "access_expires_at_ms": 1767229200000,
+                "issued_at_ms": 1767225600000,
+                "principal_type": "account",
+                "refresh_expires_at_ms": 1769817600000,
+                "session_id": "session:v1:00000000-0000-4000-8000-000000000011",
+                "status": "active"
+              },
+              "refresh_token": "fixture_refresh_token_not_real",
+              "token_type": "Bearer"
+            },
+            "circle": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "icon": {
+                "emoji": "⭐",
+                "kind": "emoji"
+              },
+              "name": "fixture_circle_name",
+              "owner_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 4
+            },
+            "membership": {
+              "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "actor_type": "administrator",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "membership_id": "membership:v1:00000000-0000-4000-8000-000000000012",
+              "permissions": [
+                "manage_tasks",
+                "manage_rewards"
+              ],
+              "role": "administrator",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 2
+            },
+            "redemption_receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "sync_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_invite_not_found",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_invite_not_found",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_NOT_FOUND",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 404
+      }
+    },
+    {
+      "case_id": "error_invite_expired",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_invite_expired",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_EXPIRED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 410
+      }
+    },
+    {
+      "case_id": "error_invite_used",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_invite_used",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_USED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_invite_role_mismatch",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_invite_role_mismatch",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_ROLE_MISMATCH",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_invite_target_deleted",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_invite_target_deleted",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_TARGET_DELETED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 410
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-redeemAdministratorInvite",
+      "kind": "error",
+      "operation_id": "redeemAdministratorInvite",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0001"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-redeemAdministratorInvite"
+          },
+          "request_id": "req-fixture-redeemAdministratorInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "success",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "auth_session": {
+              "access_token": "fixture_access_token_not_real",
+              "metadata": {
+                "access_expires_at_ms": 1767229200000,
+                "issued_at_ms": 1767225600000,
+                "principal_type": "account",
+                "refresh_expires_at_ms": 1769817600000,
+                "session_id": "session:v1:00000000-0000-4000-8000-000000000011",
+                "status": "active"
+              },
+              "refresh_token": "fixture_refresh_token_not_real",
+              "token_type": "Bearer"
+            },
+            "circle": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "icon": {
+                "emoji": "⭐",
+                "kind": "emoji"
+              },
+              "name": "fixture_circle_name",
+              "owner_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 4
+            },
+            "member": {
+              "avatar": {
+                "kind": "preset",
+                "preset_id": "fixture_avatar_01"
+              },
+              "bound_account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "display_name": "fixture_member_name",
+              "gender": "female",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 5
+            },
+            "membership": {
+              "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "actor_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "actor_type": "member",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "membership_id": "membership:v1:00000000-0000-4000-8000-000000000012",
+              "permissions": [
+                "complete_assigned_tasks",
+                "redeem_assigned_rewards"
+              ],
+              "role": "member",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 2
+            },
+            "redemption_receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "sync_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "success",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "auth_session": {
+              "access_token": "fixture_access_token_not_real",
+              "metadata": {
+                "access_expires_at_ms": 1767229200000,
+                "issued_at_ms": 1767225600000,
+                "principal_type": "account",
+                "refresh_expires_at_ms": 1769817600000,
+                "session_id": "session:v1:00000000-0000-4000-8000-000000000011",
+                "status": "active"
+              },
+              "refresh_token": "fixture_refresh_token_not_real",
+              "token_type": "Bearer"
+            },
+            "circle": {
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "icon": {
+                "emoji": "⭐",
+                "kind": "emoji"
+              },
+              "name": "fixture_circle_name",
+              "owner_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 4
+            },
+            "member": {
+              "avatar": {
+                "kind": "preset",
+                "preset_id": "fixture_avatar_01"
+              },
+              "bound_account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "display_name": "fixture_member_name",
+              "gender": "female",
+              "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 5
+            },
+            "membership": {
+              "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+              "actor_id": "member:v1:00000000-0000-4000-8000-000000000002",
+              "actor_type": "member",
+              "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+              "created_at_ms": 1767139200000,
+              "deleted_at_ms": null,
+              "membership_id": "membership:v1:00000000-0000-4000-8000-000000000012",
+              "permissions": [
+                "complete_assigned_tasks",
+                "redeem_assigned_rewards"
+              ],
+              "role": "member",
+              "status": "active",
+              "updated_at_ms": 1767225600000,
+              "version": 2
+            },
+            "redemption_receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "sync_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_invite_not_found",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_invite_not_found",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_NOT_FOUND",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 404
+      }
+    },
+    {
+      "case_id": "error_invite_expired",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_invite_expired",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_EXPIRED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 410
+      }
+    },
+    {
+      "case_id": "error_invite_used",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_invite_used",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_USED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_invite_role_mismatch",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_invite_role_mismatch",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_ROLE_MISMATCH",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_invite_target_deleted",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_invite_target_deleted",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "INVITE_TARGET_DELETED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 410
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-redeemMemberInvite",
+      "kind": "error",
+      "operation_id": "redeemMemberInvite",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "invite_code": "CWV2X8KD",
+          "redemption_nonce": "fixture_redeem_nonce_0002"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-redeemMemberInvite"
+          },
+          "request_id": "req-fixture-redeemMemberInvite",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    }
+  ]
+}

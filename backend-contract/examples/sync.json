@@ -1,0 +1,571 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success",
+      "idempotency_case_id": null,
+      "kind": "success",
+      "operation_id": "pullCircleBootstrapDelta",
+      "precondition": "fixture_happy_path_state",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "limit": 50
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "data": {
+            "commits": [
+              {
+                "change_cursor": "cur:v1:fixture_cursor_0001",
+                "changes": {
+                  "administrators": [
+                    {
+                      "administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                      "avatar": {
+                        "kind": "preset",
+                        "preset_id": "fixture_avatar_01"
+                      },
+                      "bound_account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "created_at_ms": 1767139200000,
+                      "deleted_at_ms": null,
+                      "display_name": "fixture_owner_name",
+                      "permissions": [
+                        "manage_circle",
+                        "manage_members",
+                        "manage_tasks",
+                        "manage_rewards",
+                        "adjust_stars"
+                      ],
+                      "role": "owner",
+                      "status": "active",
+                      "updated_at_ms": 1767225600000,
+                      "version": 3
+                    }
+                  ],
+                  "circle_selections": [
+                    {
+                      "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+                      "current_circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "selection_id": "selection:v1:00000000-0000-4000-8000-000000000019",
+                      "updated_at_ms": 1767225600000,
+                      "version": 2
+                    }
+                  ],
+                  "circles": [
+                    {
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "created_at_ms": 1767139200000,
+                      "deleted_at_ms": null,
+                      "icon": {
+                        "emoji": "⭐",
+                        "kind": "emoji"
+                      },
+                      "name": "fixture_circle_name",
+                      "owner_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                      "status": "active",
+                      "updated_at_ms": 1767225600000,
+                      "version": 4
+                    }
+                  ],
+                  "exchanges": [
+                    {
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "commit_sequence": 42,
+                      "cooldown_until_ms_snapshot": 1769817600000,
+                      "exchange_id": "exchange:v1:00000000-0000-4000-8000-000000000009",
+                      "exchanged_at_ms": 1767225600000,
+                      "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+                      "member_avatar_snapshot": {
+                        "kind": "preset",
+                        "preset_id": "fixture_avatar_01"
+                      },
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "member_name_snapshot": "fixture_member_name",
+                      "permanently_unavailable_snapshot": false,
+                      "reward_cooldown_days_snapshot": null,
+                      "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+                      "reward_repeat_rule_snapshot": "weekly",
+                      "reward_title_snapshot": "fixture_reward_title",
+                      "reward_visual_snapshot": {
+                        "emoji": "⭐",
+                        "kind": "emoji"
+                      },
+                      "stars_deducted_snapshot": 10
+                    }
+                  ],
+                  "ledger_entries": [
+                    {
+                      "actor": {
+                        "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                        "actor_type": "owner",
+                        "display_name_snapshot": "fixture_owner_name",
+                        "role": "owner"
+                      },
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "commit_sequence": 42,
+                      "created_at_ms": 1767225600000,
+                      "delta": 5,
+                      "ledger_id": "star-transaction:v1:00000000-0000-4000-8000-00000000000b",
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "reason": null,
+                      "reversal_of_ledger_id": null,
+                      "source": {
+                        "asset_id_snapshot": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                        "scheduled_date_snapshot": "2026-01-05",
+                        "source_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                        "source_type": "task",
+                        "stars_snapshot": 5,
+                        "title_snapshot": "fixture_task_title"
+                      }
+                    }
+                  ],
+                  "members": [
+                    {
+                      "avatar": {
+                        "kind": "preset",
+                        "preset_id": "fixture_avatar_01"
+                      },
+                      "bound_account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "created_at_ms": 1767139200000,
+                      "deleted_at_ms": null,
+                      "display_name": "fixture_member_name",
+                      "gender": "female",
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "status": "active",
+                      "updated_at_ms": 1767225600000,
+                      "version": 5
+                    }
+                  ],
+                  "memberships": [
+                    {
+                      "account_id": "account:v1:00000000-0000-4000-8000-000000000010",
+                      "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                      "actor_type": "owner",
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "created_at_ms": 1767139200000,
+                      "deleted_at_ms": null,
+                      "membership_id": "membership:v1:00000000-0000-4000-8000-000000000012",
+                      "permissions": [
+                        "manage_circle",
+                        "manage_members",
+                        "manage_tasks",
+                        "manage_rewards",
+                        "adjust_stars"
+                      ],
+                      "role": "owner",
+                      "status": "active",
+                      "updated_at_ms": 1767225600000,
+                      "version": 2
+                    }
+                  ],
+                  "notification_outbox_entries": [
+                    {
+                      "attempt_count": 0,
+                      "created_at_ms": 1767225600000,
+                      "event_type": "reward_redeemed",
+                      "exchange_id": "exchange:v1:00000000-0000-4000-8000-000000000009",
+                      "next_attempt_at_ms": 1767225660000,
+                      "notification_id": "notification:v1:00000000-0000-4000-8000-000000000016",
+                      "status": "pending",
+                      "updated_at_ms": 1767225600000,
+                      "version": 1
+                    }
+                  ],
+                  "outgoing_invites": [
+                    {
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "created_at_ms": 1767139200000,
+                      "expires_at_ms": 1769817600000,
+                      "generation": 1,
+                      "invite_id": "invite:v1:00000000-0000-4000-8000-000000000005",
+                      "permission_scope": [
+                        "manage_tasks",
+                        "manage_rewards"
+                      ],
+                      "revoked_at_ms": null,
+                      "single_use": true,
+                      "status": "active",
+                      "target_administrator_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                      "target_member_id": null,
+                      "target_role": "administrator",
+                      "used_at_ms": null,
+                      "version": 1
+                    }
+                  ],
+                  "reward_cooldowns": [
+                    {
+                      "cooldown_until_ms": 1769817600000,
+                      "last_redeemed_at_ms": 1767225600000,
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "permanently_unavailable": false,
+                      "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+                      "version": 2
+                    }
+                  ],
+                  "rewards": [
+                    {
+                      "assigned_member_ids": [
+                        "member:v1:00000000-0000-4000-8000-000000000002"
+                      ],
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "cooldown_days": null,
+                      "created_at_ms": 1767139200000,
+                      "deleted_at_ms": null,
+                      "description": "fixture_reward_description",
+                      "repeat_rule": "weekly",
+                      "reward_id": "reward:v1:00000000-0000-4000-8000-000000000008",
+                      "stars_required": 10,
+                      "status": "active",
+                      "title": "fixture_reward_title",
+                      "updated_at_ms": 1767225600000,
+                      "version": 5,
+                      "visual": {
+                        "emoji": "⭐",
+                        "kind": "emoji"
+                      },
+                      "zone_id": "Asia/Shanghai"
+                    }
+                  ],
+                  "star_balances": [
+                    {
+                      "balance": 25,
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "source_commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+                      "source_commit_sequence": 42,
+                      "updated_at_ms": 1767225600000,
+                      "version": 7
+                    }
+                  ],
+                  "task_cancellations": [],
+                  "task_completions": [
+                    {
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "commit_sequence": 42,
+                      "completed_at_ms": 1767225600000,
+                      "completed_by": {
+                        "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                        "actor_type": "owner",
+                        "display_name_snapshot": "fixture_owner_name",
+                        "role": "owner"
+                      },
+                      "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "proof_asset_id": "asset:v1:00000000-0000-4000-8000-00000000000e",
+                      "scheduled_date": "2026-01-05",
+                      "stars_snapshot": 5,
+                      "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                      "title_snapshot": "fixture_task_title",
+                      "version": 1,
+                      "zone_id": "Asia/Shanghai"
+                    }
+                  ],
+                  "task_occurrences": [
+                    {
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "completion_id": "completion:v1:00000000-0000-4000-8000-00000000000a",
+                      "created_at_ms": 1767222000000,
+                      "definition_revision": 2,
+                      "emoji_snapshot": "✅",
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "notes_snapshot": "fixture_task_notes",
+                      "photo_required_snapshot": true,
+                      "scheduled_date": "2026-01-05",
+                      "stars_snapshot": 5,
+                      "state": "completed",
+                      "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                      "task_tag_id_snapshot": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+                      "title_snapshot": "fixture_task_title",
+                      "updated_at_ms": 1767225600000,
+                      "version": 4,
+                      "zone_id": "Asia/Shanghai"
+                    }
+                  ],
+                  "task_occurrence_tombstones": [
+                    {
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "deleted_at_ms": 1767225600000,
+                      "deleted_by": {
+                        "actor_id": "admin:v1:00000000-0000-4000-8000-000000000004",
+                        "actor_type": "owner",
+                        "display_name_snapshot": "fixture_owner_name",
+                        "role": "owner"
+                      },
+                      "member_id": "member:v1:00000000-0000-4000-8000-000000000002",
+                      "scheduled_date": "2026-01-06",
+                      "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                      "version": 3
+                    }
+                  ],
+                  "task_tags": [
+                    {
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "created_at_ms": 1767139200000,
+                      "deleted_at_ms": null,
+                      "name": "fixture_task_tag",
+                      "status": "active",
+                      "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+                      "updated_at_ms": 1767225600000,
+                      "version": 2
+                    }
+                  ],
+                  "tasks": [
+                    {
+                      "assigned_member_ids": [
+                        "member:v1:00000000-0000-4000-8000-000000000002"
+                      ],
+                      "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001",
+                      "created_at_ms": 1767139200000,
+                      "deleted_at_ms": null,
+                      "emoji": "✅",
+                      "end_rule": {
+                        "kind": "after_occurrences",
+                        "occurrence_count": 12
+                      },
+                      "future_effective_from_date": "2026-01-05",
+                      "notes": "fixture_task_notes",
+                      "photo_required": true,
+                      "reminder_config": {
+                        "advance_minutes": 15,
+                        "anchor": "start_date",
+                        "enabled": true,
+                        "local_minute_of_day": 1080,
+                        "zone_id": "Asia/Shanghai"
+                      },
+                      "repeat_rule": {
+                        "frequency": "weekly",
+                        "weekdays": [],
+                        "zone_id": "Asia/Shanghai"
+                      },
+                      "series_revision": 2,
+                      "stars": 5,
+                      "start_date": "2026-01-05",
+                      "status": "active",
+                      "task_id": "task:v1:00000000-0000-4000-8000-000000000006",
+                      "task_tag_id": "task-tag:v1:00000000-0000-4000-8000-000000000007",
+                      "time_limit_minute_of_day": 1200,
+                      "title": "fixture_task_title",
+                      "updated_at_ms": 1767225600000,
+                      "version": 6,
+                      "zone_id": "Asia/Shanghai"
+                    }
+                  ],
+                  "tombstones": []
+                },
+                "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+                "commit_sequence": 42,
+                "committed_at_ms": 1767225600000
+              }
+            ],
+            "has_more": false,
+            "next_cursor": null,
+            "snapshot_cursor": "cur:v1:fixture_cursor_0001"
+          },
+          "request_id": "req-fixture-pullCircleBootstrapDelta",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "pullCircleBootstrapDelta",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "limit": 50
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-pullCircleBootstrapDelta"
+          },
+          "request_id": "req-fixture-pullCircleBootstrapDelta",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_forbidden",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "pullCircleBootstrapDelta",
+      "precondition": "fixture_server_state_for_forbidden",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "limit": 50
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "FORBIDDEN",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-pullCircleBootstrapDelta"
+          },
+          "request_id": "req-fixture-pullCircleBootstrapDelta",
+          "server_time_ms": 1767225600000
+        },
+        "status": 403
+      }
+    },
+    {
+      "case_id": "error_audit_inconsistent",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "pullCircleBootstrapDelta",
+      "precondition": "fixture_server_state_for_audit_inconsistent",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "limit": 50
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "AUDIT_INCONSISTENT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-pullCircleBootstrapDelta"
+          },
+          "request_id": "req-fixture-pullCircleBootstrapDelta",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "pullCircleBootstrapDelta",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "limit": 50
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-pullCircleBootstrapDelta"
+          },
+          "request_id": "req-fixture-pullCircleBootstrapDelta",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": null,
+      "kind": "error",
+      "operation_id": "pullCircleBootstrapDelta",
+      "precondition": "fixture_change_cursor_signature_is_invalid",
+      "request": {
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization"
+        ],
+        "path_parameters": {
+          "circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"
+        },
+        "query_parameters": {
+          "limit": 50,
+          "change_cursor": "cur:v1:invalid_signature_fixture"
+        }
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/query/change_cursor",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-pullCircleBootstrapDelta"
+          },
+          "request_id": "req-fixture-pullCircleBootstrapDelta",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    }
+  ]
+}

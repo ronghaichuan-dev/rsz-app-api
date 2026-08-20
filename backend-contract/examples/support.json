@@ -1,0 +1,412 @@
+{
+  "contract_version": "1.0.0",
+  "fixture_set_version": "1",
+  "fixtures": [
+    {
+      "case_id": "success_first_committed",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback",
+      "kind": "success",
+      "operation_id": "submitFeedback",
+      "precondition": "fixture_guest_owns_committed_feedback_attachment",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [
+            "asset:v1:00000000-0000-4000-8000-000000000021"
+          ],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": null,
+          "contact_consent": false,
+          "contact_type": null,
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "feedback_id": "feedback:v1:00000000-0000-4000-8000-000000000017",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "first_committed"
+            },
+            "received_at_ms": 1767225600000,
+            "status": "accepted",
+            "version": 1
+          },
+          "request_id": "req-fixture-submitFeedback",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_idempotent_replay",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback",
+      "kind": "success",
+      "operation_id": "submitFeedback",
+      "precondition": "same_actor_route_idempotency_key_and_body_hash_as_first_commit",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [
+            "asset:v1:00000000-0000-4000-8000-000000000021"
+          ],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": null,
+          "contact_consent": false,
+          "contact_type": null,
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0001",
+          "contract_version": "1",
+          "data": {
+            "feedback_id": "feedback:v1:00000000-0000-4000-8000-000000000017",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000015",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000014",
+              "result_kind": "idempotent_replay"
+            },
+            "received_at_ms": 1767225600000,
+            "status": "accepted",
+            "version": 1
+          },
+          "request_id": "req-fixture-submitFeedback",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "success_account_with_contact_consent",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback-contact",
+      "kind": "success",
+      "operation_id": "submitFeedback",
+      "precondition": "fixture_active_account_with_explicit_contact_consent",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": "fixture_contact@example.invalid",
+          "contact_consent": true,
+          "contact_type": "email",
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "change_cursor": "cur:v1:fixture_cursor_0031",
+          "contract_version": "1",
+          "data": {
+            "feedback_id": "feedback:v1:00000000-0000-4000-8000-000000000031",
+            "receipt": {
+              "commit_id": "commit:v1:00000000-0000-4000-8000-000000000033",
+              "commit_sequence": 42,
+              "committed_at_ms": 1767225600000,
+              "receipt_id": "receipt:v1:00000000-0000-4000-8000-000000000032",
+              "result_kind": "first_committed"
+            },
+            "received_at_ms": 1767225600000,
+            "status": "accepted",
+            "version": 1
+          },
+          "request_id": "req-fixture-submitFeedback-contact",
+          "server_time_ms": 1767225600000
+        },
+        "status": 200
+      }
+    },
+    {
+      "case_id": "error_unauthenticated",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback",
+      "kind": "error",
+      "operation_id": "submitFeedback",
+      "precondition": "fixture_server_state_for_unauthenticated",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": null,
+          "contact_consent": false,
+          "contact_type": null,
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-submitFeedback"
+          },
+          "request_id": "req-fixture-submitFeedback",
+          "server_time_ms": 1767225600000
+        },
+        "status": 401
+      }
+    },
+    {
+      "case_id": "error_validation_failed",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback",
+      "kind": "error",
+      "operation_id": "submitFeedback",
+      "precondition": "fixture_server_state_for_validation_failed",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": null,
+          "contact_consent": false,
+          "contact_type": null,
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "current_version": null,
+            "field": "/request",
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-submitFeedback"
+          },
+          "request_id": "req-fixture-submitFeedback",
+          "server_time_ms": 1767225600000
+        },
+        "status": 422
+      }
+    },
+    {
+      "case_id": "error_idempotency_conflict",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback",
+      "kind": "error",
+      "operation_id": "submitFeedback",
+      "precondition": "fixture_server_state_for_idempotency_conflict",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": null,
+          "contact_consent": false,
+          "contact_type": null,
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "IDEMPOTENCY_CONFLICT",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": null,
+            "retryable": false,
+            "trace_id": "trace-fixture-submitFeedback"
+          },
+          "request_id": "req-fixture-submitFeedback",
+          "server_time_ms": 1767225600000
+        },
+        "status": 409
+      }
+    },
+    {
+      "case_id": "error_rate_limited",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback",
+      "kind": "error",
+      "operation_id": "submitFeedback",
+      "precondition": "fixture_server_state_for_rate_limited",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": null,
+          "contact_consent": false,
+          "contact_type": null,
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "RATE_LIMITED",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-submitFeedback"
+          },
+          "request_id": "req-fixture-submitFeedback",
+          "server_time_ms": 1767225600000
+        },
+        "status": 429
+      }
+    },
+    {
+      "case_id": "error_unavailable",
+      "idempotency_case_id": "fixture-idempotency-submitFeedback",
+      "kind": "error",
+      "operation_id": "submitFeedback",
+      "precondition": "fixture_server_state_for_unavailable",
+      "request": {
+        "body": {
+          "attachment_asset_ids": [],
+          "category": "product_feedback",
+          "client_created_at_ms": 1767225600000,
+          "client_version": "1.0.0-fixture",
+          "contact": null,
+          "contact_consent": false,
+          "contact_type": null,
+          "content": "fixture_feedback_content",
+          "device_model": "fixture_device_model",
+          "locale": "zh-CN",
+          "os_version": "fixture_os_version",
+          "privacy_consent_version": "2026-01"
+        },
+        "headers_present": [
+          "X-Request-Id",
+          "X-Contract-Version",
+          "X-Client-Version",
+          "Authorization",
+          "Idempotency-Key"
+        ],
+        "path_parameters": {},
+        "query_parameters": {}
+      },
+      "response": {
+        "body": {
+          "contract_version": "1",
+          "error": {
+            "code": "UNAVAILABLE",
+            "current_version": null,
+            "field": null,
+            "retry_after_ms": 1000,
+            "retryable": true,
+            "trace_id": "trace-fixture-submitFeedback"
+          },
+          "request_id": "req-fixture-submitFeedback",
+          "server_time_ms": 1767225600000
+        },
+        "status": 503
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+# GoFrame CLI configuration.
+# Run examples:
+#   gf gen dao -c hack/config.yaml
+#
+# Important:
+#   path must point to project root.
+#   group uses microservice name.
+#   daoPath/doPath/entityPath are relative to path.
+#
+# Target structure:
+#   internal/model/<service>/dao
+#   internal/model/<service>/do
+#   internal/model/<service>/entity
+
+gfcli:
+  gen:
+    dao:
+      # - link: "mysql:root:password@tcp(127.0.0.1:3306)/rslytics_admin?loc=Local&parseTime=true"
+      #   group: "admin"
+      #   tables: "admin_*"
+      #   removePrefix: ""
+      #   descriptionTag: true
+      #   noJsonTag: false
+      #   noModelComment: false
+      #   path: "."
+      #   daoPath: "internal/model/admin/dao"
+      #   doPath: "internal/model/admin/do"
+      #   entityPath: "internal/model/admin/entity"
+      - link: "mysql:root:chuan1992@tcp(127.0.0.1:3306)/rslytics_kids?loc=Local&parseTime=true"
+        group: "kids"
+        tables: "kids_*"
+        removePrefix: ""
+        descriptionTag: true
+        noJsonTag: false
+        noModelComment: false
+        path: "."
+        daoPath: "internal/model/kids/dao"
+        doPath: "internal/model/kids/do"
+        entityPath: "internal/model/kids/entity"

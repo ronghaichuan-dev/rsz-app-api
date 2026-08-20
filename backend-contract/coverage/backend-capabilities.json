@@ -1,0 +1,1612 @@
+{
+  "backend_base": "bad8b25e46a072345b329154385a1760a9eb40c1",
+  "capabilities": [
+    {
+      "capability_id": "P01-STORE-CATALOG-TRIAL",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P01",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Google Play Billing catalog/offer",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "P01-STORE-PURCHASE-RESTORE",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P01",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Google Play Billing purchase/restore",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "P01-PLAY-PURCHASE-VERIFY",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "EntitlementBackendContractTest",
+      "demo_handler_owner": "DemoEntitlementHandlers",
+      "domain": "P01",
+      "e2e_owner": "DemoSupportBackendContractTest/BackendEntitlementIntegrationTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "EntitlementBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "verifyPlayPurchase"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P01-ENTITLEMENT-LOCAL-PROJECTION",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P01",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "EntitlementProvider/PersistentEntitlementCache",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P01-ENTITLEMENT-SERVER-SNAPSHOT",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "EntitlementBackendContractTest",
+      "demo_handler_owner": "DemoEntitlementHandlers",
+      "domain": "P01",
+      "e2e_owner": "DemoSupportBackendContractTest/BackendEntitlementIntegrationTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "EntitlementBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "getCurrentEntitlement"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P01-LOCAL-REDEEM-CODE",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P01",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "RedeemCodeHelper/Persistent compatibility path",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P02-LOCAL-SESSION-DOMAIN",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P02",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "IdentitySessionRepository/IdentityDomainCoordinator",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P02-GOOGLE-CREDENTIAL",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P02",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Android Credential Manager/Google Identity",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "P02-GOOGLE-AUTH-EXCHANGE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "AuthBackendAdapterContract",
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain": "P02",
+      "e2e_owner": "DemoStartupLaunchE2ETest/BackendSessionCoordinatorTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "RuntimeAuthBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "exchangeGoogleProof"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P02-ONLINE-GUEST-SESSION",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "AuthBackendAdapterContract",
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain": "P02",
+      "e2e_owner": "DemoStartupLaunchE2ETest/BackendSessionCoordinatorTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "RuntimeAuthBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "createInviteGuestSession"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P02-SESSION-REFRESH",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "AuthBackendAdapterContract",
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain": "P02",
+      "e2e_owner": "DemoStartupLaunchE2ETest/BackendSessionCoordinatorTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "RuntimeAuthBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "refreshSession"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P02-SESSION-REVOKE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "AuthBackendAdapterContract",
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain": "P02",
+      "e2e_owner": "DemoStartupLaunchE2ETest/BackendSessionCoordinatorTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "RuntimeAuthBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "revokeSession"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P02-CURRENT-ACCOUNT-READ",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "AuthBackendAdapterContract",
+      "demo_handler_owner": "DemoAuthHandlers",
+      "domain": "P02",
+      "e2e_owner": "DemoStartupLaunchE2ETest/BackendSessionCoordinatorTest",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "RuntimeAuthBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "getCurrentAccount"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P03-ONBOARDING-DRAFT",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P03",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "CircleMemberRepository OnboardingDraft",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P03-ATOMIC-ONBOARDING",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P03",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "completeOnboarding"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P03-ADD-CIRCLE-MEMBER",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P03",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "createCircleMember"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P04-MAIN-BOOTSTRAP-DELTA",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "SyncFoundationContractTest/BackendReadModelHttpFixtureContractTest/DemoReadModelBackendContractTest",
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain": "P04",
+      "e2e_owner": "BackendSyncRoomTest/DemoReadModelBackendContractTest.bootstrapPages_resumeAcrossProcess_andMutationAckClosesDelta",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "BackendSyncCoordinator/RuntimeBackendSyncRemotePort",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "pullCircleBootstrapDelta"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P04-MAIN-LOCAL-NAVIGATION",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P04",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "MainHost/MainDestinationRegistry",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-TASK-TAG-UPSERT",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "TaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P05",
+      "e2e_owner": "DemoTaskBackendContractTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "TaskBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "upsertTaskTag"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-TASK-TAG-DELETE",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "TaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P05",
+      "e2e_owner": "DemoTaskBackendContractTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "TaskBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "deleteTaskTag"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-TASK-UPSERT",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "TaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P05",
+      "e2e_owner": "DemoTaskBackendContractTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "TaskBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "upsertTask"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-TASK-DELETE",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "TaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P05",
+      "e2e_owner": "DemoTaskBackendContractTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "TaskBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "deleteTask"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-OCCURRENCE-READ-SYNC",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "TaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P05",
+      "e2e_owner": "DemoTaskBackendContractTest",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "TaskBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "listTaskOccurrences"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-PROOF-ASSET-PREPARE",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "AssetBackendContractTest",
+      "demo_handler_owner": "DemoAssetHandlers",
+      "domain": "P05",
+      "e2e_owner": "DemoAssetContractTest/BackendSyncRoomTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "AssetBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "prepareAssetUpload"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-PROOF-ASSET-COMMIT",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "AssetBackendContractTest",
+      "demo_handler_owner": "DemoAssetHandlers",
+      "domain": "P05",
+      "e2e_owner": "DemoAssetContractTest/BackendSyncRoomTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "AssetBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "commitAssetUpload"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-TASK-REMINDER-DELIVERY",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P05",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "TaskReminderCoordinator/AlarmManager",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-P06-TASK-COMPLETE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "LedgerBackendContractTest/DemoTaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P05/P06",
+      "e2e_owner": "DemoTaskBackendContractTest/LedgerCanonicalProjectorRoomTest/ModeAwareTaskLedgerTransactionsTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "ModeAwareTaskLedgerTransactions/OnlineTaskLedgerService/TaskLedgerCommandAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "completeTask"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P05-P06-TASK-CANCEL",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "LedgerBackendContractTest/DemoTaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P05/P06/P11",
+      "e2e_owner": "DemoTaskBackendContractTest/LedgerCanonicalProjectorRoomTest/ModeAwareTaskLedgerTransactionsTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "ModeAwareTaskLedgerTransactions/OnlineTaskLedgerService/TaskLedgerCommandAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "cancelTaskCompletion"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P06-LEDGER-HISTORY-READ",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "LedgerBackendContractTest/BackendReadModelHttpFixtureContractTest/DemoReadModelBackendContractTest",
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain": "P06",
+      "e2e_owner": "BackendReadModelRoomTest/DemoReadModelBackendContractTest.historyPages_freezeSnapshotTotalAndOrderAcrossMutation",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "RuntimeStarLedgerBackendPort/BackendReadModelAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "listStarTransactions"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P06-MEMBER-BALANCES-READ",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "LedgerBackendContractTest/DemoTaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P06",
+      "e2e_owner": "LedgerCanonicalProjectorRoomTest.balanceReadSnapshot_doesNotOverwriteLegacyNonZeroBalanceAndRollsBackPage/StarLedgerDaoTest.balances_preserveInputOrderFillZeroAndRejectCrossCircleMembers",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "RuntimeStarLedgerBackendPort/StarLedgerBackendIntegration",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "getMemberBalances"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P06-MANUAL-ADJUSTMENT",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "LedgerBackendContractTest/DemoTaskBackendContractTest",
+      "demo_handler_owner": "DemoTaskHandlers",
+      "domain": "P06",
+      "e2e_owner": "DemoTaskBackendContractTest/StarBalanceAdjustmentServiceTest/LedgerCanonicalProjectorRoomTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "OnlineStarAdjustmentService/TaskLedgerCommandAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "adjustMemberStars"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P07-MEMBER-READ-MODELS",
+      "consistency": "NOT_REQUIRED",
+      "contract_test_owner": "BackendCapabilityCoverageTest",
+      "demo_handler_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "domain": "P07",
+      "e2e_owner": "BackendBoundaryNoOperationE2E",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "resolution": {
+        "kind": "NOT_REQUIRED",
+        "reason": "Main 继续读 Room projection；由 pullCircleBootstrapDelta/listTaskOccurrences/getMemberBalances/getRewardEligibility 支撑，不创建 BFF operation。",
+        "satisfied_by_operation_ids": [
+          "pullCircleBootstrapDelta",
+          "listTaskOccurrences",
+          "getMemberBalances",
+          "getRewardEligibility"
+        ]
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P07-P09-P10-REWARD-REDEMPTION",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "RewardRedemptionBackendContractTest/DemoRedemptionBackendContractTest",
+      "demo_handler_owner": "DemoRedemptionHandlers/FileDemoRedemptionTransactionCoordinator",
+      "domain": "P07/P06/P09/P10",
+      "e2e_owner": "DemoRedemptionBackendContractTest/RewardRedemptionCanonicalProjectorRoomTest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "RewardRedemptionCommandAdapter/OnlineRewardRedemptionService",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "redeemReward"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P07-ADMIN-REDEMPTION-NOTICE",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P07",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "AndroidAdminRedemptionNotificationAdapter",
+        "reason": "本项只表示 Offline 本机 adapter；Online outbox 状态属于 redeemReward bundle，跨设备 token 注册/注销留给任务 12，不新增独立通知 mutation。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-MY-CIRCLES-READ",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "listMyCircles"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-CIRCLE-BOOTSTRAP-READ",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "getCircleBootstrap"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-CIRCLE-SELECTION",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "selectCurrentCircle"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-CIRCLE-UPDATE",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "updateCircle"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-CIRCLE-DELETE",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "deleteCircle"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-CIRCLE-LEAVE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "leaveCircle"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-MEMBER-UPSERT",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "upsertMember"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-MEMBER-DELETE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "deleteMember"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-ADMINISTRATOR-UPSERT",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08/P03",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "upsertAdministrator"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-ADMINISTRATOR-DELETE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "CircleBackendContractTest",
+      "demo_handler_owner": "DemoCircleHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "CircleBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "deleteAdministrator"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-PROFILE-ASSET",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "AssetBackendContractTest",
+      "demo_handler_owner": "DemoAssetHandlers",
+      "domain": "P03/P08",
+      "e2e_owner": "DemoAssetContractTest/BackendSyncRoomTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "AssetBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "commitAssetUpload"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-OUTGOING-INVITE-CREATE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "InviteBackendContractTest",
+      "demo_handler_owner": "DemoInviteHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "InviteBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "createInvite"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-OUTGOING-INVITE-REFRESH",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "InviteBackendContractTest",
+      "demo_handler_owner": "DemoInviteHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "InviteBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "refreshInvite"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-OUTGOING-INVITE-REVOKE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "InviteBackendContractTest",
+      "demo_handler_owner": "DemoInviteHandlers",
+      "domain": "P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "InviteBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "revokeInvite"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-INCOMING-ADMIN-INVITE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "InviteBackendContractTest",
+      "demo_handler_owner": "DemoInviteHandlers",
+      "domain": "P02/P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "InviteBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "redeemAdministratorInvite"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P08-INCOMING-MEMBER-INVITE",
+      "consistency": "REMOTE_ATOMIC_COMMAND",
+      "contract_test_owner": "InviteBackendContractTest",
+      "demo_handler_owner": "DemoInviteHandlers",
+      "domain": "P02/P08",
+      "e2e_owner": "DemoCircleBackendContractTest/DemoStartupLaunchE2ETest",
+      "inventory_consistency": "REMOTE_ATOMIC_COMMAND",
+      "live_adapter_owner": "InviteBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "redeemMemberInvite"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P09-REWARD-DRAFT",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P09",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "RewardRepository RewardDraft",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P09-REWARD-UPSERT",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "RewardBackendContractTest",
+      "demo_handler_owner": "DemoRewardHandlers",
+      "domain": "P09",
+      "e2e_owner": "DemoRewardBackendContractTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "RewardMutationCoordinator/BackendSyncRemotePort",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "upsertReward"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P09-REWARD-DELETE",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "RewardBackendContractTest",
+      "demo_handler_owner": "DemoRewardHandlers",
+      "domain": "P09",
+      "e2e_owner": "DemoRewardBackendContractTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "RewardMutationCoordinator/BackendSyncRemotePort",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "deleteReward"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P09-ELIGIBILITY-COOLDOWN-READ",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "RewardBackendContractTest",
+      "demo_handler_owner": "DemoRewardHandlers",
+      "domain": "P09",
+      "e2e_owner": "DemoRewardBackendContractTest",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "RuntimeRewardEligibilityPort",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "getRewardEligibility"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P10-EXCHANGE-APPEND",
+      "consistency": "NOT_REQUIRED",
+      "contract_test_owner": "BackendCapabilityCoverageTest",
+      "demo_handler_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "domain": "P10",
+      "e2e_owner": "BackendBoundaryNoOperationE2E",
+      "inventory_consistency": "NOT_REQUIRED",
+      "live_adapter_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "resolution": {
+        "kind": "NOT_REQUIRED",
+        "reason": "Exchange 写入只属于 redeemReward commit bundle，不公开 create/update/delete。",
+        "satisfied_by_operation_ids": [
+          "redeemReward"
+        ]
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P10-EXCHANGE-HISTORY",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "BackendReadModelHttpFixtureContractTest/DemoReadModelBackendContractTest/ExchangeHistoryContractTest",
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain": "P10",
+      "e2e_owner": "BackendReadModelRoomTest/DemoReadModelBackendContractTest.historyPages_freezeSnapshotTotalAndOrderAcrossMutation",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "BackendReadModelAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "listExchangeHistory"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P11-STATISTICS-GET",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "BackendReadModelHttpFixtureContractTest/DemoReadModelBackendContractTest/StatisticsBackendContractTest",
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain": "P11",
+      "e2e_owner": "DemoReadModelBackendContractTest.statistics_preserveExplicitBucketsDstWeekStartAndCompareSnapshot",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "BackendReadModelAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "getStatistics"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P11-STATISTICS-COMPARE",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "BackendReadModelHttpFixtureContractTest/DemoReadModelBackendContractTest/StatisticsBackendContractTest",
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain": "P11",
+      "e2e_owner": "DemoReadModelBackendContractTest.statistics_preserveExplicitBucketsDstWeekStartAndCompareSnapshot",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "BackendReadModelAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "compareStatistics"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P11-COMPLETION-DETAILS",
+      "consistency": "READ_SYNC",
+      "contract_test_owner": "BackendReadModelHttpFixtureContractTest/DemoReadModelBackendContractTest/StatisticsBackendContractTest",
+      "demo_handler_owner": "DemoReadModelHandlers",
+      "domain": "P11",
+      "e2e_owner": "BackendReadModelRoomTest/DemoReadModelBackendContractTest.historyPages_freezeSnapshotTotalAndOrderAcrossMutation",
+      "inventory_consistency": "READ_SYNC",
+      "live_adapter_owner": "BackendReadModelAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "listTaskCompletionDetails"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P11-COMPLETION-CANCEL-ALIAS",
+      "consistency": "NOT_REQUIRED",
+      "contract_test_owner": "BackendCapabilityCoverageTest",
+      "demo_handler_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "domain": "P11",
+      "e2e_owner": "BackendBoundaryNoOperationE2E",
+      "inventory_consistency": "NOT_REQUIRED",
+      "live_adapter_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "resolution": {
+        "kind": "NOT_REQUIRED",
+        "reason": "Statistics 入口复用 cancelTaskCompletion，不建立第二写 owner。",
+        "satisfied_by_operation_ids": [
+          "cancelTaskCompletion"
+        ]
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P12-LOCAL-PREFERENCES",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P12",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "Persistent/resources",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P12-DAILY-REMINDER",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P12",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "DailyReminderCoordinator/AlarmManager",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P12-FAQ-ABOUT",
+      "consistency": "LOCAL_ONLY",
+      "contract_test_owner": "LocalBoundaryRegressionTest",
+      "demo_handler_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "domain": "P12",
+      "e2e_owner": "OfflineZeroBackendCallsE2E",
+      "inventory_consistency": "LOCAL_ONLY",
+      "live_adapter_owner": "NOT_APPLICABLE_LOCAL_ONLY",
+      "resolution": {
+        "kind": "LOCAL_ONLY",
+        "owner": "Local resources/BuildConfig",
+        "reason": "当前产品事实仅在本机；Offline 永远零自建后端调用。"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P12-FEEDBACK-EMAIL",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P12",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Android mail resolver/external mail app",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "P12-FEEDBACK-BACKEND",
+      "consistency": "OPTIMISTIC_MUTATION",
+      "contract_test_owner": "SupportBackendContractTest",
+      "demo_handler_owner": "DemoSupportHandlers",
+      "domain": "P12",
+      "e2e_owner": "DemoSupportBackendContractTest",
+      "inventory_consistency": "OPTIMISTIC_MUTATION",
+      "live_adapter_owner": "SupportBackendAdapter",
+      "resolution": {
+        "kind": "OPERATION",
+        "operation_id": "submitFeedback"
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P12-DIAGNOSTIC-LOG-UPLOAD",
+      "consistency": "NOT_REQUIRED",
+      "contract_test_owner": "BackendCapabilityCoverageTest",
+      "demo_handler_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "domain": "P12/Infra",
+      "e2e_owner": "BackendBoundaryNoOperationE2E",
+      "inventory_consistency": "DIAGNOSTIC_UPLOAD",
+      "live_adapter_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "resolution": {
+        "kind": "NOT_REQUIRED",
+        "reason": "v1 安全退役：当前 production caller=0，且没有显式同意、字段白名单、脱敏与 retention 产品合同。",
+        "satisfied_by_operation_ids": []
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P12-DEVICE-PUSH",
+      "consistency": "NOT_REQUIRED",
+      "contract_test_owner": "BackendCapabilityCoverageTest",
+      "demo_handler_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "domain": "P12/P07",
+      "e2e_owner": "BackendBoundaryNoOperationE2E",
+      "inventory_consistency": "NOT_REQUIRED",
+      "live_adapter_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "resolution": {
+        "kind": "NOT_REQUIRED",
+        "reason": "当前 tree 无 Firebase Messaging、device token 或 notification acknowledgement 产品入口。",
+        "satisfied_by_operation_ids": []
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "P12-POLICY-WEB-CONTENT",
+      "consistency": "NOT_REQUIRED",
+      "contract_test_owner": "BackendCapabilityCoverageTest",
+      "demo_handler_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "domain": "P12",
+      "e2e_owner": "BackendBoundaryNoOperationE2E",
+      "inventory_consistency": "NOT_REQUIRED",
+      "live_adapter_owner": "NOT_APPLICABLE_NOT_REQUIRED",
+      "resolution": {
+        "kind": "NOT_REQUIRED",
+        "reason": "Web 内容站点 owner 未确认，且不属于 Clearwave 业务 API。",
+        "satisfied_by_operation_ids": []
+      },
+      "e2e_status": "passed"
+    },
+    {
+      "capability_id": "EXT-FIREBASE",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P01/P04/P12/Infra",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Firebase Analytics/Remote Config/Crashlytics",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "EXT-ADS-UMP",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P01/Infra",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Google Mobile Ads/UMP",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "EXT-TIKTOK-ATTRIBUTION",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P01/Infra",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "TikTok Business SDK",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "EXT-SYSTEM-PICKER-CAMERA-SHARE",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P03/P04/P05/P08/P09/P12",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Android Picker/Camera/FileProvider/Share",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    },
+    {
+      "capability_id": "EXT-APP-RATING-MARKET",
+      "consistency": "EXTERNAL_SDK",
+      "contract_test_owner": "ExternalBoundaryContractTest",
+      "demo_handler_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "domain": "P12",
+      "e2e_owner": "ExternalInteropNotRunOrRealSdkE2E",
+      "inventory_consistency": "EXTERNAL_SDK",
+      "live_adapter_owner": "NOT_APPLICABLE_EXTERNAL_SDK",
+      "resolution": {
+        "kind": "EXTERNAL_SDK",
+        "owner": "Application market/browser",
+        "reason": "第三方或 Android 平台 owner，不由自建 Backend/Demo 冒充成功。"
+      },
+      "e2e_status": "not_run"
+    }
+  ],
+  "contract_version": "1.0.0",
+  "coverage_version": "1",
+  "cross_operation_closure": {
+    "circle_sync_commit": {
+      "projection_operation_id": "pullCircleBootstrapDelta",
+      "required_change_collections": [
+        "outgoing_invites",
+        "notification_outbox_entries",
+        "task_occurrence_tombstones"
+      ]
+    },
+    "guest_upgrade_grant": {
+      "consumer_operation_id": "exchangeGoogleProof",
+      "issuer_operation_id": "createInviteGuestSession"
+    }
+  },
+  "auth_preintegration": {
+    "account_session_owner": "BackendSessionCoordinator",
+    "contract_test_owner": "AuthBackendAdapterContract",
+    "credential_store_owner": "FileBackendCredentialStore/AndroidKeystoreBackendCredentialCipher",
+    "demo_credential_owner": "DemoPersonaProof",
+    "demo_handler_owner": "DemoAuthHandlers/FileDemoAuthStateStore",
+    "implemented_operation_ids": [
+      "exchangeGoogleProof",
+      "createInviteGuestSession",
+      "refreshSession",
+      "revokeSession",
+      "getCurrentAccount"
+    ],
+    "live_credential_owner": "CredentialManagerGoogleCredentialGateway/GoogleIdTokenProof",
+    "offline_zero_transport_test_owner": "BackendRuntimeTest",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_google_interop_status": "not_run_no_device_google_account_or_oauth_backend",
+    "status": "client_and_demo_contract_ready_real_interop_not_run"
+  },
+  "circle_invite_preintegration": {
+    "canonical_dto_owner": "CircleMemberBackendPort",
+    "contract_test_owners": [
+      "DemoCircleBackendContractTest",
+      "CircleSyncIntegrationTest"
+    ],
+    "demo_handler_owner": "DemoCircleHandlers/FileDemoAuthStateStore",
+    "http_adapter_owner": "RuntimeCircleBackendAdapter",
+    "implemented_operation_ids": [
+      "listMyCircles",
+      "getCircleBootstrap",
+      "selectCurrentCircle",
+      "updateCircle",
+      "deleteCircle",
+      "leaveCircle",
+      "completeOnboarding",
+      "createCircleMember",
+      "upsertMember",
+      "deleteMember",
+      "upsertAdministrator",
+      "deleteAdministrator",
+      "createInvite",
+      "refreshInvite",
+      "revokeInvite",
+      "redeemAdministratorInvite",
+      "redeemMemberInvite",
+      "pullCircleBootstrapDelta"
+    ],
+    "offline_zero_transport_test_owner": "CircleMemberRepositoryTest.offlineLifecycle_neverTouchesBackendTransport",
+    "projector_owner": "CircleCanonicalProjector",
+    "readiness": "conditional_ready",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_oauth_interop_status": "not_run_no_real_backend_or_oauth_provider",
+    "real_tls_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "redemption_recovery_owner": "CircleInviteRedemptionCoordinator/InviteRedemptionHandoffEntity",
+    "repository_owner": "CircleMemberRepository/CircleMemberServices",
+    "room_test_owners": [
+      "AppDatabaseCircleInviteMigrationTest",
+      "CircleCanonicalProjectorRoomTest"
+    ],
+    "route_test_owners": [
+      "LoginInviteRouteTest",
+      "P08ActivityRoutesTest"
+    ],
+    "status": "client_http_and_stateful_demo_contract_ready_real_interop_not_run"
+  },
+  "task_preintegration": {
+    "canonical_dto_owner": "TaskBackendModels/TaskWireCodec",
+    "completion_boundary_owner": "ModeAwareTaskLedgerTransactions/OnlineTaskLedgerService/TaskLedgerCommandAdapter",
+    "contract_test_owners": [
+      "TaskBackendContractTest",
+      "DemoTaskBackendContractTest",
+      "TaskCanonicalProjectorRoomTest",
+      "TaskMutationCoordinatorRoomTest"
+    ],
+    "demo_handler_owner": "DemoTaskHandlers/FileDemoTaskStateStore",
+    "http_adapter_owner": "RuntimeTaskBackendPort/BackendSyncRemotePort",
+    "implemented_operation_ids": [
+      "upsertTaskTag",
+      "deleteTaskTag",
+      "upsertTask",
+      "deleteTask",
+      "listTaskOccurrences"
+    ],
+    "mode_aware_repository_owner": "ModeAwareTaskEditorRepositoryPort/TaskMutationCoordinator/TaskServices",
+    "offline_regression_owner": "TaskRepositoryTest/TaskEditorContractTest",
+    "process_recovery_test_owner": "DemoTaskBackendContractTest.occurrenceCursor_survivesProcessRecreationAndRejectsStaleSnapshot/BackendSyncRoomTest",
+    "projector_owner": "TaskCanonicalProjector/TaskSyncDomainProjector",
+    "proof_asset_owner": "BackendTaskProofAssetPort/BackendAssetServices",
+    "proof_asset_failure_test_owner": "TaskBackendContractTest.proofDraft_acceptsOwnedReferenceAndRejectsTraversal/AppOwnedAssetFileReaderTest",
+    "readiness": "conditional_ready",
+    "real_asset_interop_status": "not_run_no_presigned_object_store_or_trusted_endpoint",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_tls_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "reminder_owner": "TaskReminderCoordinator/AlarmManager",
+    "reminder_rebuild_test_owner": "TaskReminderCoordinatorTest/TaskReminderAlarmRegistryTest/TaskCanonicalProjectorRoomTest",
+    "room_migration_owner": "MIGRATION_10_11/AppDatabaseTaskBackendMigrationTest",
+    "scope_permission_test_owner": "DemoTaskBackendContractTest/TaskRepositoryTest",
+    "status": "client_http_and_stateful_demo_task_contract_ready_real_interop_not_run"
+  },
+  "ledger_preintegration": {
+    "atomic_command_adapter_owner": "ModeAwareTaskLedgerTransactions/OnlineTaskLedgerService/OnlineStarAdjustmentService/TaskLedgerCommandAdapter",
+    "canonical_dto_owner": "LedgerBackendModels/LedgerWireCodec",
+    "contract_test_owners": [
+      "LedgerBackendContractTest",
+      "DemoTaskBackendContractTest",
+      "LedgerCanonicalProjectorRoomTest",
+      "BackendSyncRoomTest",
+      "ModeAwareTaskLedgerTransactionsTest",
+      "StarBalanceAdjustmentServiceTest",
+      "AppDatabaseLedgerBackendMigrationTest"
+    ],
+    "demo_handler_owner": "DemoTaskHandlers/FileDemoTaskStateStore",
+    "implemented_operation_ids": [
+      "completeTask",
+      "cancelTaskCompletion",
+      "adjustMemberStars",
+      "getMemberBalances",
+      "listStarTransactions"
+    ],
+    "offline_transaction_owner": "StarLedgerServices.taskCompletionTransactions/StarLedgerServices.balanceAdjustments",
+    "offline_zero_transport_test_owner": "ModeAwareTaskLedgerTransactionsTest/StarBalanceAdjustmentServiceTest",
+    "projector_owner": "LedgerCanonicalProjector/LedgerSyncDomainProjector/AtomicSyncProjector",
+    "read_adapter_owner": "RuntimeStarLedgerBackendPort/StarLedgerBackendIntegration",
+    "read_page_atomicity_test_owner": "LedgerCanonicalProjectorRoomTest.balanceReadSnapshot_doesNotOverwriteLegacyNonZeroBalanceAndRollsBackPage/LedgerCanonicalProjectorRoomTest.ledgerReadPage_conflictRollsBackEarlierAppend",
+    "readiness": "conditional_ready",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_tls_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "remote_commit_recovery_owner": "SyncOutboxRepository/BackendSyncCoordinator/LedgerCanonicalProjectorRoomTest/BackendSyncRoomTest",
+    "room_migration_owner": "MIGRATION_11_12/AppDatabaseLedgerBackendMigrationTest",
+    "scope_permission_test_owner": "DemoTaskBackendContractTest/ModeAwareTaskLedgerTransactionsTest/StarBalanceAdjustmentServiceTest",
+    "status": "client_http_and_stateful_demo_ledger_contract_ready_real_interop_not_run"
+  },
+  "reward_preintegration": {
+    "asset_owner": "BackendRewardAssetPort/BackendAssetServices",
+    "canonical_dto_owner": "RewardBackendModels/RewardWireCodec",
+    "contract_test_owners": [
+      "RewardBackendContractTest",
+      "DemoRewardBackendContractTest",
+      "RewardCanonicalProjectorRoomTest",
+      "RewardMutationCoordinatorRoomTest",
+      "AppDatabaseRewardBackendMigrationTest",
+      "RewardRepositoryTest",
+      "RewardEditorContractTest"
+    ],
+    "demo_handler_owner": "DemoRewardHandlers/FileDemoRewardStateStore",
+    "draft_owner": "RewardRepository/RewardDraft",
+    "eligibility_port_owner": "RuntimeRewardEligibilityPort/RewardBackendIntegration",
+    "implemented_operation_ids": [
+      "upsertReward",
+      "deleteReward",
+      "getRewardEligibility"
+    ],
+    "mode_aware_repository_owner": "RewardServices/RewardMutationCoordinator/RewardRepository",
+    "next_redemption_boundary_owner": "DeviceTokenRegistrationTask12",
+    "offline_regression_owner": "RewardRepositoryTest/RewardEditorContractTest",
+    "projector_owner": "RewardCanonicalProjector/RewardSyncDomainProjector",
+    "readiness": "conditional_ready",
+    "real_asset_interop_status": "not_run_no_presigned_object_store_or_trusted_endpoint",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_tls_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "redemption_transaction_status": "implemented_single_remote_atomic_command",
+    "room_migration_owner": "MIGRATION_12_13/AppDatabaseRewardBackendMigrationTest",
+    "scope_permission_test_owner": "DemoRewardBackendContractTest/RewardCanonicalProjectorRoomTest/RewardRepositoryTest",
+    "status": "client_http_and_stateful_demo_reward_contract_ready_real_interop_not_run"
+  },
+  "redemption_preintegration": {
+    "append_only_owner": "StarLedgerDao/ExchangeRecordDao/RewardRedemptionCanonicalProjector",
+    "atomic_command_adapter_owner": "RewardRedemptionCommandAdapter/RewardRedemptionSyncMutationResponseDecoder",
+    "canonical_dto_owner": "RewardRedemptionBackendModels/RewardRedemptionWireCodec",
+    "contract_test_owners": [
+      "RewardRedemptionBackendContractTest",
+      "DemoRedemptionBackendContractTest",
+      "RewardRedemptionCanonicalProjectorRoomTest",
+      "RewardRedemptionServiceTest",
+      "BackendSyncRoomTest"
+    ],
+    "demo_handler_owner": "DemoRedemptionHandlers/FileDemoRedemptionStateStore",
+    "demo_transaction_owner": "FileDemoRedemptionTransactionCoordinator/DemoBackendTransactionGate",
+    "implemented_operation_ids": [
+      "redeemReward"
+    ],
+    "mode_aware_service_owner": "RewardRedemptionServices.redemptions/ModeAwareRewardRedemptions/OnlineRewardRedemptionService",
+    "notification_boundary_owner": "BackendNotificationEntity/BackendAuditProjectionDao/AndroidAdminRedemptionNotificationAdapter",
+    "offline_transaction_owner": "RewardRedemptionService",
+    "offline_zero_transport_test_owner": "RewardRedemptionServiceTest/RewardRedemptionBackendContractTest.modeAwareFacade_routesOnlyAccountScopesToBackendOwner",
+    "projector_owner": "RewardRedemptionCanonicalProjector/AtomicSyncProjector",
+    "readiness": "conditional_ready",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_notification_delivery_status": "not_run_device_token_registration_deferred_to_task_12",
+    "real_tls_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "remote_commit_recovery_owner": "SyncOutboxRepository/BackendSyncCoordinator/RewardRedemptionCanonicalProjectorRoomTest/BackendSyncRoomTest",
+    "room_migration_owner": "NOT_REQUIRED_SCHEMA_13_ALREADY_CONTAINS_REDEMPTION_PROJECTION_FIELDS",
+    "scope_permission_test_owner": "DemoRedemptionBackendContractTest/RewardRedemptionCanonicalProjectorRoomTest",
+    "status": "client_http_and_stateful_demo_redemption_contract_ready_real_interop_not_run"
+  },
+  "read_model_preintegration": {
+    "canonical_codec_owner": "ContractV1SyncWireDecoder/LedgerWireCodec/RewardRedemptionWireCodec/StatisticsWireCodec",
+    "contract_test_owners": [
+      "BackendReadModelHttpFixtureContractTest",
+      "DemoReadModelBackendContractTest",
+      "BackendReadModelRoomTest",
+      "BackendSyncRoomTest",
+      "RewardRedemptionCanonicalProjectorRoomTest",
+      "ExchangeHistoryContractTest",
+      "StatisticsBackendContractTest",
+      "StatisticsPeriodResolverTest",
+      "StatisticsUiStateTest"
+    ],
+    "demo_commit_clock_owner": "FileDemoCommitSequenceStore/DemoBackendTransactionGate",
+    "demo_handler_owner": "DemoReadModelHandlers/DemoReadModelSeed",
+    "history_checkpoint_owner": "BackendReadModelAdapter/SyncCursorEntity/FileDemoReadModelSnapshotStore",
+    "implemented_operation_ids": [
+      "pullCircleBootstrapDelta",
+      "getMemberBalances",
+      "listStarTransactions",
+      "listExchangeHistory",
+      "listTaskCompletionDetails",
+      "getStatistics",
+      "compareStatistics"
+    ],
+    "main_sync_entry_owner": "StartupActivity/LoginActivity/CircleInviteRedemptionCoordinator/MainActivity/BackendSyncCoordinator",
+    "mode_aware_ui_owner": "MainActivity/StarBalanceActivity/ExchangeHistoryActivity/StatisticsUiDataSource",
+    "offline_zero_transport_test_owner": "DemoReadModelBackendContractTest.routesAndOptionalQueries_failClosedWithHttpDemoParity",
+    "projector_owner": "AtomicSyncProjector/LedgerCanonicalProjector/RewardRedemptionCanonicalProjector",
+    "ranking_batch_owner": "StarLedgerBackendIntegration/StarLedgerRepository/MainActivity",
+    "readiness": "conditional_ready",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_multi_device_status": "not_run_single_connected_device_only",
+    "real_tls_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "room_migration_owner": "NOT_REQUIRED_SCHEMA_13_AND_SYNC_CURSOR_ALREADY_SUPPORT_READ_MODEL_CHECKPOINTS",
+    "statistics_fact_owner": "StatisticsDao/StatisticsRepository",
+    "statistics_parity_owner": "StatisticsBackendBoundary/StatisticsReadModelParity",
+    "status": "client_http_and_stateful_demo_main_history_ranking_statistics_ready_real_interop_not_run",
+    "ui_failure_state_owner": "BackendReadModelFailureKind/StatisticsReadModelUiFailure/ExchangeHistoryActivity/StarBalanceActivity"
+  },
+  "support_preintegration": {
+    "billing_fake_isolation_status": "backend_demo_does_not_enable_billing_fake_live_release_has_no_fake_entry",
+    "billing_verifier_seam_owner": "ServerPurchaseVerifier/BillingService.installServerPurchaseVerifier/RuntimeBackendEntitlementPort",
+    "contract_test_owners": [
+      "SupportBackendAdapterTest",
+      "DemoSupportBackendContractTest",
+      "BackendEntitlementIntegrationTest",
+      "ServerPurchaseVerificationCoordinatorTest",
+      "EntitlementCacheCodecTest",
+      "SettingsPageGroupContractTest",
+      "BackendBuildVariantContractTest",
+      "ExternalSdkVariantPolicyTest",
+      "LiveReleaseIsolationTest",
+      "LiveReleaseBillingIsolationTest"
+    ],
+    "demo_handler_owner": "DemoSupportHandlers/FileDemoSupportStateStore",
+    "device_push_decision": "not_required_no_firebase_messaging_product_chain",
+    "diagnostic_upload_decision": "not_required_safely_retired_no_production_entry",
+    "entitlement_merge_owner": "EntitlementProvider/BackendMergedEntitlementSource/SubscriptionEntitlement",
+    "external_sdk_demo_policy_owner": "ExternalSdkVariantPolicy/app/src/demo/AndroidManifest.xml",
+    "feedback_adapter_owner": "FeedbackSubmissionAdapter/SupportBackendAdapter/FeedbackServices",
+    "implemented_operation_ids": [
+      "submitFeedback",
+      "verifyPlayPurchase",
+      "getCurrentEntitlement"
+    ],
+    "readiness": "conditional_ready",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "real_firebase_interop_status": "not_run_no_firebase_messaging_product_chain_and_demo_sdk_disabled",
+    "real_store_verification_status": "not_run_no_real_play_purchase_or_backend",
+    "real_tls_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "status": "client_http_and_stateful_demo_support_contract_ready_external_sdks_isolated_real_interop_not_run",
+    "trial_entry_owner": "StartupActivity/FreeTrialGuideActivity/GuideSubscriptionsActivity/SubscriptionEntryHelper"
+  },
+  "demo_mode_closure": {
+    "control_entry_source_set": "demoDebug",
+    "control_state_owner": "FileDemoBackendControlStateStore/DemoBackendControlCoordinator",
+    "default_runtime_selection": "DEMO_DEBUG",
+    "external_capability_status": "firebase_ads_tiktok_disabled_billing_fake_independent_system_notifications_not_simulated",
+    "failure_profiles": [
+      "offline",
+      "timeout",
+      "slow",
+      "http_401",
+      "http_403",
+      "http_409",
+      "http_429",
+      "http_5xx",
+      "response_lost_after_commit",
+      "crash_before_projection"
+    ],
+    "operation_count": 46,
+    "operation_coverage": "backend-contract/coverage/demo-operation-coverage.json",
+    "projection_isolation_owner": "IdentityServices.clearBackendPrincipalForEnvironmentTransition",
+    "reset_owner": "FileDemoBackendServerResetter",
+    "seed_version": 1,
+    "status": "stateful_demo_mode_debug_enabled_release_fail_closed_and_release_excluded",
+    "transport_owner": "DemoBackendTransport/FailClosedDemoEndpointRouter/ContractDemoBackendHandlerRegistry"
+  },
+  "runtime_foundation": {
+    "build_variant_modes": {
+      "demo": [
+        "DISABLED",
+        "DEMO"
+      ],
+      "live": [
+        "DISABLED",
+        "HTTP"
+      ]
+    },
+    "demo_status": "runtime_health_auth_asset_circle_task_ledger_reward_redemption_read_model_and_support_handlers_ready_external_sdks_disabled",
+    "demo_transport_owner": "DemoBackendTransport/FailClosedDemoEndpointRouter/FileDemoBackendStateStore/FileDemoAuthStateStore/FileDemoAssetStateStore/FileDemoTaskStateStore/FileDemoRewardStateStore/FileDemoRedemptionStateStore/FileDemoRedemptionTransactionCoordinator/FileDemoCommitSequenceStore/FileDemoReadModelSnapshotStore/FileDemoSupportStateStore/DemoSupportHandlers",
+    "endpoint_registry_owner": "BackendEndpointRegistry",
+    "http_status": "transport_auth_asset_circle_task_ledger_reward_redemption_read_model_and_support_adapters_ready_real_service_not_run",
+    "http_transport_owner": "HttpBackendTransport",
+    "registered_operation_ids": [
+      "getCurrentAccount",
+      "selectCurrentCircle",
+      "commitAssetUpload",
+      "prepareAssetUpload",
+      "exchangeGoogleProof",
+      "createInviteGuestSession",
+      "revokeSession",
+      "refreshSession",
+      "listMyCircles",
+      "deleteCircle",
+      "updateCircle",
+      "deleteAdministrator",
+      "upsertAdministrator",
+      "getCircleBootstrap",
+      "listExchangeHistory",
+      "createInvite",
+      "refreshInvite",
+      "revokeInvite",
+      "getMemberBalances",
+      "createCircleMember",
+      "deleteMember",
+      "upsertMember",
+      "redeemReward",
+      "deleteReward",
+      "upsertReward",
+      "getRewardEligibility",
+      "adjustMemberStars",
+      "listStarTransactions",
+      "getStatistics",
+      "compareStatistics",
+      "pullCircleBootstrapDelta",
+      "listTaskCompletionDetails",
+      "completeTask",
+      "cancelTaskCompletion",
+      "listTaskOccurrences",
+      "deleteTaskTag",
+      "upsertTaskTag",
+      "deleteTask",
+      "upsertTask",
+      "leaveCircle",
+      "completeOnboarding",
+      "getCurrentEntitlement",
+      "verifyPlayPurchase",
+      "redeemAdministratorInvite",
+      "redeemMemberInvite",
+      "submitFeedback"
+    ],
+    "shared_runtime_owner": "BackendServices/BackendRuntime/BackendWireEncoder/BackendResultMapper",
+    "status": "runtime_transport_foundation_ready_auth_asset_circle_task_ledger_reward_redemption_read_models_and_support_preintegrated",
+    "unknown_operation_policy": "fail_closed"
+  },
+  "sync_foundation": {
+    "android_keystore_interop_status": "not_run_production_keystore_alias_not_exercised",
+    "asset_operation_ids": [
+      "prepareAssetUpload",
+      "commitAssetUpload"
+    ],
+    "asset_state_owner": "RemoteAssetRepository/BackendAssetCoordinator/AppOwnedAssetFileReader",
+    "contract_test_owners": [
+      "SyncFoundationContractTest",
+      "BackendSyncRoomTest",
+      "AppDatabaseSyncMigrationTest",
+      "AppOwnedAssetFileReaderTest",
+      "DemoAssetContractTest",
+      "PresignedAssetUploadRequesterTest",
+      "CircleSyncIntegrationTest",
+      "AppDatabaseCircleInviteMigrationTest",
+      "CircleCanonicalProjectorRoomTest",
+      "TaskBackendContractTest",
+      "DemoTaskBackendContractTest",
+      "AppDatabaseTaskBackendMigrationTest",
+      "TaskCanonicalProjectorRoomTest",
+      "TaskMutationCoordinatorRoomTest",
+      "LedgerBackendContractTest",
+      "LedgerCanonicalProjectorRoomTest",
+      "AppDatabaseLedgerBackendMigrationTest",
+      "ModeAwareTaskLedgerTransactionsTest",
+      "StarBalanceAdjustmentServiceTest",
+      "RewardBackendContractTest",
+      "DemoRewardBackendContractTest",
+      "RewardCanonicalProjectorRoomTest",
+      "RewardMutationCoordinatorRoomTest",
+      "AppDatabaseRewardBackendMigrationTest",
+      "RewardRedemptionBackendContractTest",
+      "DemoRedemptionBackendContractTest",
+      "RewardRedemptionCanonicalProjectorRoomTest",
+      "BackendReadModelHttpFixtureContractTest",
+      "DemoReadModelBackendContractTest",
+      "BackendReadModelRoomTest"
+    ],
+    "database_schema_version": 13,
+    "demo_asset_owner": "DemoAssetHandlers/DemoAssetBinaryUploadPort/FileDemoAssetStateStore",
+    "demo_business_sync_status": "circle_task_ledger_reward_redemption_and_read_models_wired_support_direct_operations_owned_outside_sync",
+    "live_asset_owner": "RuntimeBackendAssetRemotePort/PresignedAssetUploadRequester",
+    "outbox_owner": "SyncOutboxRepository/AndroidKeystoreSyncPayloadCipher",
+    "projector_owner": "AtomicSyncProjector/SyncDomainProjectorRegistry",
+    "real_asset_upload_interop_status": "not_run_no_presigned_object_store_or_trusted_endpoint",
+    "real_backend_interop_status": "not_run_missing_trusted_live_configuration_and_server",
+    "room_migration_device_status": "passed_pixel_6_api_34",
+    "room_migration_owner": "MIGRATION_8_9/MIGRATION_9_10/AppDatabaseSyncMigrationTest/AppDatabaseCircleInviteMigrationTest/MIGRATION_10_11/AppDatabaseTaskBackendMigrationTest/MIGRATION_11_12/AppDatabaseLedgerBackendMigrationTest/MIGRATION_12_13/AppDatabaseRewardBackendMigrationTest",
+    "scheduler_owner": "BackendSyncCoordinator/WorkManagerBackendSessionScheduleController/BackendSyncWorker",
+    "status": "client_sync_and_demo_asset_foundation_ready_circle_task_ledger_reward_redemption_and_read_models_wired_support_operations_owned_outside_sync",
+    "sync_state_owner": "SyncOutboxEntity/SyncCursorEntity/SyncRecordEntity/SyncRemoteHandoffEntity/SyncBootstrapStageEntity",
+    "wired_domain_projector_entity_types": [
+      "circle",
+      "membership",
+      "administrator",
+      "member",
+      "circle_selection",
+      "outgoing_invite",
+      "task_tag",
+      "task",
+      "task_occurrence",
+      "task_completion",
+      "task_cancellation",
+      "ledger_entry",
+      "star_balance",
+      "reward",
+      "reward_cooldown",
+      "exchange",
+      "notification_outbox_entry"
+    ],
+    "wired_mutation_decoder_operation_ids": [
+      "selectCurrentCircle",
+      "updateCircle",
+      "deleteCircle",
+      "leaveCircle",
+      "completeOnboarding",
+      "createCircleMember",
+      "upsertMember",
+      "deleteMember",
+      "upsertAdministrator",
+      "deleteAdministrator",
+      "createInvite",
+      "refreshInvite",
+      "revokeInvite",
+      "upsertTaskTag",
+      "deleteTaskTag",
+      "upsertTask",
+      "deleteTask",
+      "completeTask",
+      "cancelTaskCompletion",
+      "adjustMemberStars",
+      "upsertReward",
+      "deleteReward",
+      "redeemReward"
+    ]
+  },
+  "inventory_commit": "75a201d8432f2bc4ca7a48880416d53c954a3c2f",
+  "inventory_source": "ai/aw-evidence/wave9-backend/01-inventory/backend-capability-matrix.md"
+}
