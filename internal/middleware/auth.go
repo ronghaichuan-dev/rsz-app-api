@@ -50,7 +50,7 @@ func isPublicKidsPath(path string) bool {
 	if _, ok := publicKidsPaths[path]; ok {
 		return true
 	}
-	// 合同路由使用自己的 principal 解析，不能由 legacy JWT 中间件提前拦截。
+	// 接口路由使用自己的 principal 解析，不能由 legacy JWT 中间件提前拦截。
 	if strings.HasPrefix(path, "/v1/") && !strings.HasPrefix(path, "/v1/kids/") && path != "/v1/health" {
 		return true
 	}

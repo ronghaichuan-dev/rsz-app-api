@@ -1,0 +1,19 @@
+[Unit]
+Description=rsz kids 测试微服务
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rsz-kids
+Group=rsz-kids
+WorkingDirectory=/opt/rsz/kids/releases/current
+Environment=APP_ENV=test
+Environment=APP_CONFIG_DIR=/etc/rsz/kids
+ExecStart=/opt/rsz/kids/releases/current/kids -e test
+Restart=always
+RestartSec=3
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

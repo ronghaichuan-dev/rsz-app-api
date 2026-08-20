@@ -8,7 +8,7 @@ import (
 	"rslytics-app-api/internal/service"
 )
 
-// CircleController 复用圈子领域的合同路由声明，避免建立重复的圈子控制器目录。
+// CircleController 复用圈子领域的接口路由声明，避免建立重复的圈子控制器目录。
 type CircleController struct{}
 
 // New 创建根路径下的圈子路由控制器。

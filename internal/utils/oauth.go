@@ -21,9 +21,9 @@ const (
 	googleJWKSURL = "https://www.googleapis.com/oauth2/v3/certs"
 	// appleJWKSURL 是 Apple Sign in 公钥地址。
 	appleJWKSURL = "https://appleid.apple.com/auth/keys"
-	// googleIssuerWithScheme 是 Google identityToken 带协议的签发方。
+	// googleIssuerWithScheme 是 Google identityToken 带接口的签发方。
 	googleIssuerWithScheme = "https://accounts.google.com"
-	// googleIssuerWithoutScheme 是 Google identityToken 不带协议的签发方。
+	// googleIssuerWithoutScheme 是 Google identityToken 不带接口的签发方。
 	googleIssuerWithoutScheme = "accounts.google.com"
 	// appleIssuer 是 Apple identityToken 的签发方。
 	appleIssuer = "https://appleid.apple.com"
@@ -37,18 +37,28 @@ type OAuthIdentity struct {
 	Avatar   string
 }
 
+// VerifyGoogleIdentityTokenWithNonce 校验 Google identityToken，并验证调用方绑定的 nonce。
+func VerifyGoogleIdentityTokenWithNonce(ctx context.Context, identityToken, clientId, nonce string) (*OAuthIdentity, error) {
+	return verifyOIDCIdentityTokenWithNonce(ctx, identityToken, clientId, []string{googleIssuerWithScheme, googleIssuerWithoutScheme}, googleJWKSURL, nonce)
+}
+
 // VerifyGoogleIdentityToken 校验 Google identityToken 并返回服务端可信身份。
 func VerifyGoogleIdentityToken(ctx context.Context, identityToken, clientId string) (*OAuthIdentity, error) {
-	return verifyOIDCIdentityToken(ctx, identityToken, clientId, []string{googleIssuerWithScheme, googleIssuerWithoutScheme}, googleJWKSURL)
+	return verifyOIDCIdentityTokenWithNonce(ctx, identityToken, clientId, []string{googleIssuerWithScheme, googleIssuerWithoutScheme}, googleJWKSURL, "")
 }
 
 // VerifyAppleIdentityToken 校验 Apple identityToken 并返回服务端可信身份。
 func VerifyAppleIdentityToken(ctx context.Context, identityToken, clientId string) (*OAuthIdentity, error) {
-	return verifyOIDCIdentityToken(ctx, identityToken, clientId, []string{appleIssuer}, appleJWKSURL)
+	return verifyOIDCIdentityTokenWithNonce(ctx, identityToken, clientId, []string{appleIssuer}, appleJWKSURL, "")
 }
 
 // verifyOIDCIdentityToken 按 OpenID Connect 规则校验 identityToken。
 func verifyOIDCIdentityToken(ctx context.Context, identityToken, audience string, issuers []string, jwksURL string) (*OAuthIdentity, error) {
+	return verifyOIDCIdentityTokenWithNonce(ctx, identityToken, audience, issuers, jwksURL, "")
+}
+
+// verifyOIDCIdentityTokenWithNonce 按 OpenID Connect 规则校验签名、签发方、受众、到期和可选 nonce。
+func verifyOIDCIdentityTokenWithNonce(ctx context.Context, identityToken, audience string, issuers []string, jwksURL, nonce string) (*OAuthIdentity, error) {
 	identityToken = strings.TrimSpace(identityToken)
 	audience = strings.TrimSpace(audience)
 	if identityToken == "" {
@@ -84,6 +94,9 @@ func verifyOIDCIdentityToken(ctx context.Context, identityToken, audience string
 	if strings.TrimSpace(payload.Subject) == "" {
 		return nil, gerror.NewCode(gcode.CodeNotAuthorized, "identityToken subject invalid")
 	}
+	if nonce != "" && payload.Nonce != nonce {
+		return nil, gerror.NewCode(gcode.CodeNotAuthorized, "identityToken nonce invalid")
+	}
 	return &OAuthIdentity{
 		OpenId:   payload.Subject,
 		Email:    payload.Email,
@@ -117,6 +130,7 @@ type oidcTokenPayload struct {
 	Email     string `json:"email"`
 	Name      string `json:"name"`
 	Picture   string `json:"picture"`
+	Nonce     string `json:"nonce"`
 }
 
 // MatchAudience 判断 token 的 aud 是否包含指定客户端 ID。

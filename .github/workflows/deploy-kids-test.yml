@@ -1,0 +1,20 @@
+name: 部署 kids 到测试服务器
+
+on:
+  push:
+    branches: [test]
+  workflow_dispatch:
+
+# 同一时间只允许一个发布任务，避免两个版本交叉切换 current 软链接。
+concurrency:
+  group: deploy-kids-test
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy-go-service.yml
+    with:
+      service_name: kids
+      app_env: test
+      health_url: http://127.0.0.1:18002/v1/health
+    secrets: inherit

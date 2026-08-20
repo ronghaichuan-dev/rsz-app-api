@@ -1,2 +1,4 @@
 docs/
 resource/
+config/kids/config.dev.yaml
+backend-contract

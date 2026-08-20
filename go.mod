@@ -1,6 +1,6 @@
 module rslytics-app-api
 
-go 1.24
+go 1.23.0
 
 require (
 	github.com/gogf/gf/contrib/drivers/mysql/v2 v2.10.0

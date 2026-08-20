@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gogf/gf/v2/frame/g"
@@ -18,6 +19,7 @@ var supportedEnvs = map[string]struct{}{
 	"prod": {},
 }
 
+// ResolveEnv 按命令行参数和环境变量优先级解析当前服务运行环境。
 func ResolveEnv(parser *gcmd.Parser) string {
 	env := ""
 	if parser != nil {
@@ -47,8 +49,14 @@ func ResolveEnv(parser *gcmd.Parser) string {
 	return env
 }
 
+// SetFile 按环境选择配置文件；设置 APP_CONFIG_DIR 时优先使用服务器私有配置目录。
 func SetFile(appName, env string) string {
-	file := fmt.Sprintf("config/%s/config.%s.yaml", appName, env)
+	file := ""
+	if configDir := strings.TrimSpace(os.Getenv("APP_CONFIG_DIR")); configDir != "" {
+		file = filepath.Join(configDir, fmt.Sprintf("config.%s.yaml", env))
+	} else {
+		file = fmt.Sprintf("config/%s/config.%s.yaml", appName, env)
+	}
 	if adapter, ok := g.Cfg().GetAdapter().(*gcfg.AdapterFile); ok {
 		adapter.SetFileName(file)
 	}

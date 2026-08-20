@@ -632,12 +632,6 @@ POST /v1/kids/users/login
 - 绑定成功后游客账号应升级为正式授权账号。
 - 如果授权身份已存在，则直接返回授权身份对应账号，不再绑定当前设备游客账号。
 
-数据库表建议见：
-
-```text
-manifest/sql/kids_auth.sql
-```
-
 生成 DAO/Model 前先创建表，然后执行：
 
 ```bash

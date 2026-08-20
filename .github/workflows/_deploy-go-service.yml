@@ -1,0 +1,85 @@
+name: 部署 Go 微服务基础工作流
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: 微服务名称，同时对应 cmd/<服务名> 入口目录
+        required: true
+        type: string
+      app_env:
+        description: 服务运行环境，仅允许 dev、test 或 prod
+        required: true
+        type: string
+      health_url:
+        description: 服务器本机健康检查地址
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: 构建并部署 ${{ inputs.service_name }}
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: ${{ inputs.app_env }}
+      CGO_ENABLED: "0"
+      GOOS: linux
+      GOARCH: ${{ vars.RSZ_DEPLOY_GOARCH || 'amd64' }}
+      SERVICE_NAME: ${{ inputs.service_name }}
+      HEALTH_URL: ${{ inputs.health_url }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Go 环境
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 执行测试
+        run: go test ./...
+
+      - name: 构建发布包
+        env:
+          RELEASE_VERSION: ${{ github.sha }}
+        run: |
+          go build -trimpath -ldflags="-s -w" -o "dist/${SERVICE_NAME}" "./cmd/${SERVICE_NAME}"
+          mkdir -p dist/package/manifest
+          install -m 0755 "dist/${SERVICE_NAME}" "dist/package/${SERVICE_NAME}"
+          cp -R manifest/i18n dist/package/manifest/i18n
+          tar -C dist/package -czf "dist/${SERVICE_NAME}-${RELEASE_VERSION}.tar.gz" .
+
+      - name: 配置部署 SSH 连接
+        env:
+          DEPLOY_KEY: ${{ secrets.RSZ_DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.RSZ_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 0700 ~/.ssh
+          printf '%s' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: 上传发布包和安装脚本
+        env:
+          DEPLOY_HOST: ${{ secrets.RSZ_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.RSZ_DEPLOY_USER }}
+          RELEASE_VERSION: ${{ github.sha }}
+        run: |
+          scp "dist/${SERVICE_NAME}-${RELEASE_VERSION}.tar.gz" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/${SERVICE_NAME}-${RELEASE_VERSION}.tar.gz"
+          scp manifest/deploy/common/install-release.sh \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/rsz-install-release.sh"
+
+      - name: 切换版本、重启并检查健康状态
+        env:
+          DEPLOY_HOST: ${{ secrets.RSZ_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.RSZ_DEPLOY_USER }}
+          RELEASE_VERSION: ${{ github.sha }}
+        run: |
+          ssh "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "bash /tmp/rsz-install-release.sh '${SERVICE_NAME}' '${APP_ENV}' '${RELEASE_VERSION}' '/tmp/${SERVICE_NAME}-${RELEASE_VERSION}.tar.gz' '${HEALTH_URL}'"

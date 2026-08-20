@@ -40,56 +40,66 @@ const (
 	KidsStarRecordTable = "kids_star_record"
 	// KidsNotificationTable 是 kids 通知表名。
 	KidsNotificationTable = "kids_notification"
-	// KidsV1SessionTable 是合同会话表名。
-	KidsV1SessionTable = "kids_contract_session"
-	// KidsV1IdempotencyTable 是合同幂等记录表名。
-	KidsV1IdempotencyTable = "kids_contract_idempotency"
-	// KidsV1CommitTable 是合同同步提交表名。
-	KidsV1CommitTable = "kids_contract_commit"
-	// KidsV1ReceiptTable 是合同写入回执表名。
-	KidsV1ReceiptTable = "kids_contract_receipt"
-	// KidsV1AssetUploadTable 是合同资产上传表名。
-	KidsV1AssetUploadTable = "kids_contract_asset_upload"
-	// KidsV1AssetTable 是合同已提交资产表名。
-	KidsV1AssetTable = "kids_contract_asset"
-	// KidsV1FeedbackTable 是合同反馈表名。
-	KidsV1FeedbackTable = "kids_contract_feedback"
-	// KidsV1EntitlementTable 是合同权益表名。
-	KidsV1EntitlementTable = "kids_contract_entitlement"
-	// KidsV1SequenceTable 是合同提交序列表名。
-	KidsV1SequenceTable = "kids_contract_sequence"
-	// KidsV1AccountTable 是合同账号表名。
-	KidsV1AccountTable = "kids_contract_account"
-	// KidsV1AccountBindingTable 是合同账号绑定表名。
-	KidsV1AccountBindingTable = "kids_contract_account_binding"
-	// KidsV1CircleTable 是合同圈子表名。
-	KidsV1CircleTable = "kids_contract_circle"
-	// KidsV1AdministratorTable 是合同管理员表名。
-	KidsV1AdministratorTable = "kids_contract_administrator"
-	// KidsV1MemberTable 是合同成员表名。
-	KidsV1MemberTable = "kids_contract_member"
-	// KidsV1MembershipTable 是合同成员身份表名。
-	KidsV1MembershipTable = "kids_contract_membership"
-	// KidsV1CircleSelectionTable 是合同圈子选择表名。
-	KidsV1CircleSelectionTable = "kids_contract_circle_selection"
-	// KidsV1InviteTable 是合同邀请码表名。
-	KidsV1InviteTable = "kids_contract_invite"
-	// KidsV1TaskTagTable 是合同任务标签表名。
-	KidsV1TaskTagTable = "kids_contract_task_tag"
-	// KidsV1TaskTable 是合同任务定义事实表名。
-	KidsV1TaskTable = "kids_contract_task"
-	// KidsV1TaskAssignmentTable 是合同任务成员分配事实表名。
-	KidsV1TaskAssignmentTable = "kids_contract_task_assignment"
-	// KidsV1TaskOccurrenceTable 是合同任务 occurrence 事实表名。
-	KidsV1TaskOccurrenceTable = "kids_contract_task_occurrence"
-	// KidsV1TaskCompletionTable 是合同任务完成审计事实表名。
-	KidsV1TaskCompletionTable = "kids_contract_task_completion"
-	// KidsV1TaskCancellationTable 是合同任务取消审计事实表名。
-	KidsV1TaskCancellationTable = "kids_contract_task_cancellation"
-	// KidsV1LedgerTable 是合同星星流水事实表名。
-	KidsV1LedgerTable = "kids_contract_ledger"
-	// KidsV1BalanceTable 是合同成员星星余额投影表名。
-	KidsV1BalanceTable = "kids_contract_balance"
+	// KidsV1SessionTable 是接口会话表名。
+	KidsV1SessionTable = "kids_identity_session"
+	// KidsV1IdempotencyTable 是接口幂等记录表名。
+	KidsV1IdempotencyTable = "kids_request_deduplication"
+	// KidsV1CommitTable 是接口同步提交表名。
+	KidsV1CommitTable = "kids_sync_commit"
+	// KidsV1ReceiptTable 是接口写入回执表名。
+	KidsV1ReceiptTable = "kids_mutation_receipt"
+	// KidsV1AssetUploadTable 是接口资产上传表名。
+	KidsV1AssetUploadTable = "kids_asset_upload"
+	// KidsV1AssetTable 是接口已提交资产表名。
+	KidsV1AssetTable = "kids_asset"
+	// KidsV1FeedbackTable 是接口反馈表名。
+	KidsV1FeedbackTable = "kids_feedback"
+	// KidsV1EntitlementTable 是接口权益表名。
+	KidsV1EntitlementTable = "kids_entitlement"
+	// KidsV1SequenceTable 是接口提交序列表名。
+	KidsV1SequenceTable = "kids_sync_sequence"
+	// KidsV1AccountTable 是接口账号表名。
+	KidsV1AccountTable = "kids_account"
+	// KidsV1AccountBindingTable 是接口账号绑定表名。
+	KidsV1AccountBindingTable = "kids_account_binding"
+	// KidsV1CircleTable 是接口圈子表名。
+	KidsV1CircleTable = "kids_circle_info"
+	// KidsV1AdministratorTable 是接口管理员表名。
+	KidsV1AdministratorTable = "kids_administrator"
+	// KidsV1MemberTable 是接口成员表名。
+	KidsV1MemberTable = "kids_member"
+	// KidsV1MembershipTable 是接口成员身份表名。
+	KidsV1MembershipTable = "kids_circle_membership"
+	// KidsV1CircleSelectionTable 是接口圈子选择表名。
+	KidsV1CircleSelectionTable = "kids_circle_selection"
+	// KidsV1InviteTable 是接口邀请码表名。
+	KidsV1InviteTable = "kids_invitation"
+	// KidsV1TaskTagTable 是接口任务标签表名。
+	KidsV1TaskTagTable = "kids_task_tag_definition"
+	// KidsV1TaskTable 是接口任务定义事实表名。
+	KidsV1TaskTable = "kids_task_definition"
+	// KidsV1TaskAssignmentTable 是接口任务成员分配事实表名。
+	KidsV1TaskAssignmentTable = "kids_task_assignment"
+	// KidsV1TaskOccurrenceTable 是接口任务 occurrence 事实表名。
+	KidsV1TaskOccurrenceTable = "kids_task_occurrence"
+	// KidsV1TaskCompletionTable 是接口任务完成审计事实表名。
+	KidsV1TaskCompletionTable = "kids_task_completion"
+	// KidsV1TaskCancellationTable 是接口任务取消审计事实表名。
+	KidsV1TaskCancellationTable = "kids_task_cancellation"
+	// KidsV1LedgerTable 是接口星星流水事实表名。
+	KidsV1LedgerTable = "kids_star_ledger"
+	// KidsV1BalanceTable 是接口成员星星余额投影表名。
+	KidsV1BalanceTable = "kids_star_balance"
+	// KidsV1RewardTable 是接口奖励定义事实表名。
+	KidsV1RewardTable = "kids_reward_definition"
+	// KidsV1RewardAssignmentTable 是接口奖励成员分配表名。
+	KidsV1RewardAssignmentTable = "kids_reward_assignment"
+	// KidsV1RewardCooldownTable 是接口奖励冷却投影表名。
+	KidsV1RewardCooldownTable = "kids_reward_cooldown"
+	// KidsV1ExchangeTable 是接口奖励兑换审计事实表名。
+	KidsV1ExchangeTable = "kids_reward_exchange"
+	// KidsV1NotificationOutboxTable 是接口通知 outbox 表名。
+	KidsV1NotificationOutboxTable = "kids_notification_outbox"
 	// DefaultDBGroup 是当前微服务配置文件中默认数据库分组名。
 	DefaultDBGroup = "default"
 	// MySQLTimeLayout 是 MySQL DATETIME 字段格式。
@@ -102,15 +112,15 @@ const (
 const (
 	// KidsAccessTokenTTL 是 kids 访问令牌默认有效期。
 	KidsAccessTokenTTL = DefaultAccessTokenTTL
-	// KidsV1PermissionManageCircle 表示合同圈子配置管理权限。
+	// KidsV1PermissionManageCircle 表示接口圈子配置管理权限。
 	KidsV1PermissionManageCircle = "manage_circle"
-	// KidsV1PermissionManageMembers 表示合同成员与管理员管理权限。
+	// KidsV1PermissionManageMembers 表示接口成员与管理员管理权限。
 	KidsV1PermissionManageMembers = "manage_members"
-	// KidsV1PermissionManageTasks 表示合同任务管理权限。
+	// KidsV1PermissionManageTasks 表示接口任务管理权限。
 	KidsV1PermissionManageTasks = "manage_tasks"
-	// KidsV1PermissionManageRewards 表示合同奖励管理权限。
+	// KidsV1PermissionManageRewards 表示接口奖励管理权限。
 	KidsV1PermissionManageRewards = "manage_rewards"
-	// KidsV1PermissionAdjustStars 表示合同星星调整权限。
+	// KidsV1PermissionAdjustStars 表示接口星星调整权限。
 	KidsV1PermissionAdjustStars = "adjust_stars"
 )
 
