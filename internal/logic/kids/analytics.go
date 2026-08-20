@@ -2,7 +2,6 @@ package kids
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"time"
 
@@ -14,89 +13,6 @@ import (
 	"rslytics-app-api/internal/consts"
 	"rslytics-app-api/internal/utils"
 )
-
-// GetStatisticsV1 以合同任务完成和星星账本事实返回成员统计序列。
-func (s *sKids) GetStatisticsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error) {
-	return s.runV1(ctx, in, func(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-		return s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "member_id"))
-	})
-}
-
-// CompareStatisticsV1 在相同快照、时区和 bucket 规则下比较两名成员。
-func (s *sKids) CompareStatisticsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error) {
-	return s.runV1(ctx, in, func(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-		base, cursor, err := s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "base_member_id"))
-		if err != nil {
-			return nil, "", err
-		}
-		compare, _, err := s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "compare_member_id"))
-		if err != nil {
-			return nil, "", err
-		}
-		return map[string]any{"base_member": base, "compare_member": compare, "snapshot_cursor": cursor}, cursor, nil
-	})
-}
-
-// v1StatisticsSeries 根据请求的日、周或月 bucket 生成零值完整的合同统计序列。
-func (s *sKids) v1StatisticsSeries(ctx context.Context, in v1.V1OperationInput, memberID string) (map[string]any, string, error) {
-	circleID := in.PathParameters["circle_id"]
-	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
-		return nil, "", err
-	}
-	member, err := utils.KidsDB(ctx).Model(consts.KidsV1MemberTable).Ctx(ctx).Where("circle_id", circleID).Where("member_id", memberID).Where("status", "active").One()
-	if err != nil {
-		return nil, "", err
-	}
-	if member.IsEmpty() {
-		return nil, "", v1Error(404, "NOT_FOUND", false, "member is missing")
-	}
-	startAt, err := strconv.ParseInt(v1QueryFirst(in.Query, "start_at_ms"), 10, 64)
-	if err != nil {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "statistics start time is invalid")
-	}
-	endAt, err := strconv.ParseInt(v1QueryFirst(in.Query, "end_at_ms"), 10, 64)
-	if err != nil || endAt <= startAt {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "statistics end time is invalid")
-	}
-	zoneID := v1QueryFirst(in.Query, "zone_id")
-	location, err := time.LoadLocation(zoneID)
-	if err != nil {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "statistics zone is invalid")
-	}
-	start, end := time.UnixMilli(startAt), time.UnixMilli(endAt)
-	metric, unit, weekStart := v1QueryFirst(in.Query, "metric"), v1QueryFirst(in.Query, "bucket_unit"), v1QueryFirst(in.Query, "week_start")
-	values, err := s.v1StatisticsValues(ctx, circleID, memberID, metric, start, end, location, unit, weekStart)
-	if err != nil {
-		return nil, "", err
-	}
-	buckets := make([]map[string]any, 0)
-	var total, peak, nonZero int64
-	localEnd := end.In(location)
-	for current, index := v1BucketStart(start.In(location), unit, weekStart), 0; current.Before(localEnd); current, index = v1NextBucketStart(current, unit), index+1 {
-		next := v1NextBucketStart(current, unit)
-		bucketStart, bucketEnd := current.UTC().UnixMilli(), next.UTC().UnixMilli()
-		if bucketStart < startAt {
-			bucketStart = startAt
-		}
-		if bucketEnd > endAt {
-			bucketEnd = endAt
-		}
-		value := values[current.Format(time.RFC3339Nano)]
-		total += value
-		if index == 0 || value > peak {
-			peak = value
-		}
-		if value != 0 {
-			nonZero++
-		}
-		buckets = append(buckets, map[string]any{"index": index, "start_at_ms": bucketStart, "end_at_ms": bucketEnd, "local_start_date": current.Format(consts.DateLayout), "local_end_date_exclusive": next.Format(consts.DateLayout), "value": value})
-	}
-	cursor, err := v1LatestCursor(ctx)
-	if err != nil {
-		return nil, "", err
-	}
-	return map[string]any{"member_id": memberID, "metric": metric, "period_type": v1QueryFirst(in.Query, "period_type"), "bucket_unit": unit, "zone_id": zoneID, "start_at_ms": startAt, "end_at_ms": endAt, "buckets": buckets, "summary": map[string]any{"total": total, "peak_value": peak, "non_zero_bucket_count": nonZero}, "as_of_cursor": cursor}, cursor, nil
-}
 
 // v1StatisticsValues 把合同任务完成或星星流水按请求时区归入对应统计 bucket。
 func (s *sKids) v1StatisticsValues(ctx context.Context, circleID, memberID, metric string, start, end time.Time, location *time.Location, unit, weekStart string) (map[string]int64, error) {

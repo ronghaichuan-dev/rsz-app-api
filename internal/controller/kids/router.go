@@ -20,7 +20,6 @@ import (
 	"rslytics-app-api/internal/controller/kids/task"
 	"rslytics-app-api/internal/controller/kids/upload"
 	"rslytics-app-api/internal/controller/kids/user"
-	"rslytics-app-api/internal/controller/kids/v1"
 )
 
 func Register(ctx context.Context, group *ghttp.RouterGroup) {
@@ -28,8 +27,6 @@ func Register(ctx context.Context, group *ghttp.RouterGroup) {
 		group.Bind(
 			health.New(),
 			analytics.NewV1(),
-			// 合同中不属于圈子领域的根路径由专用控制器统一注册。
-			v1.New(),
 		)
 		group.Group("/kids", func(group *ghttp.RouterGroup) {
 			group.Bind(

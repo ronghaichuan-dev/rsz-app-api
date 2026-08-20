@@ -4,7 +4,6 @@ import (
 	"context"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
-	v1controller "rslytics-app-api/internal/controller/kids/v1"
 	"rslytics-app-api/internal/service"
 )
 
@@ -49,30 +48,4 @@ func (c *Controller) Compare(ctx context.Context, req *v1.AnalyticsCompareReq) (
 		return nil, err
 	}
 	return &v1.AnalyticsCompareRes{Metric: out.Metric, Range: out.Range, From: out.From, To: out.To, Left: out.Left, Right: out.Right}, nil
-}
-
-// GetStatistics 返回 Clearwave v1 要求的成员统计序列。
-func (c *V1Controller) GetStatistics(ctx context.Context, req *v1.GetStatisticsReq) (*v1.V1Response, error) {
-	in, err := v1controller.RequestInput(ctx, "getStatistics", "GET")
-	if err != nil {
-		return nil, err
-	}
-	out, err := service.Kids().GetStatisticsV1(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	return v1controller.SuccessResponse(in, out), nil
-}
-
-// CompareStatistics 返回 Clearwave v1 要求的成员统计对比序列。
-func (c *V1Controller) CompareStatistics(ctx context.Context, req *v1.CompareStatisticsReq) (*v1.V1Response, error) {
-	in, err := v1controller.RequestInput(ctx, "compareStatistics", "GET")
-	if err != nil {
-		return nil, err
-	}
-	out, err := service.Kids().CompareStatisticsV1(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	return v1controller.SuccessResponse(in, out), nil
 }

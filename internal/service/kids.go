@@ -12,10 +12,6 @@ import (
 
 type (
 	IKids interface {
-		// GetStatisticsV1 以合同任务完成和星星账本事实返回成员统计序列。
-		GetStatisticsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// CompareStatisticsV1 在相同快照、时区和 bucket 规则下比较两名成员。
-		CompareStatisticsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
 		// GetAnalyticsSummary 查询单个儿童在指定时间范围内的任务或星星统计。
 		GetAnalyticsSummary(ctx context.Context, in v1.AnalyticsSummaryInput) (*v1.AnalyticsSummaryOutput, error)
 		// ListCompletedTaskDetails 查询指定儿童在时间范围内的已完成任务明细。
@@ -60,72 +56,6 @@ type (
 		ListNotifications(ctx context.Context, in v1.NotificationListInput) (*v1.NotificationListOutput, error)
 		// ReadNotification 将指定通知持久化标记为已读。
 		ReadNotification(ctx context.Context, in v1.NotificationReadInput) (*v1.NotificationReadOutput, error)
-		// GetCurrentAccount 获取当前账号合同 bootstrap。
-		GetAccountBootstrap(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// SelectCurrentCircle 选择当前合同圈子。
-		SelectCircle(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// CreateInviteGuestSession 创建合同游客会话。
-		CreateGuestSession(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// RefreshSession 刷新合同会话。
-		RefreshV1Session(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// RevokeSession 撤销合同会话。
-		RevokeSession(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// ListMyCircles 查询合同圈子列表。
-		ListV1Circles(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// GetCircleBootstrap 获取合同圈子 bootstrap。
-		GetV1CircleBootstrap(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// UpdateCircleWithVersion 更新合同圈子。
-		UpdateCircleWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// DeleteCircleWithVersion 删除合同圈子。
-		DeleteCircleWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// LeaveCircleWithVersion 退出合同圈子。
-		LeaveCircleWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// CreateCircleMember 创建合同成员。
-		CreateCircleMember(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// UpsertCircleMember 更新合同成员。
-		UpsertCircleMember(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// DeleteCircleMember 删除合同成员。
-		DeleteCircleMember(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// UpsertCircleAdministrator 更新合同管理员。
-		UpsertCircleAdministrator(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// DeleteCircleAdministrator 删除合同管理员。
-		DeleteCircleAdministrator(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// CreateCircleInvite 创建合同邀请。
-		CreateCircleInvite(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// RefreshCircleInvite 刷新合同邀请。
-		RefreshCircleInvite(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// RevokeCircleInvite 撤销合同邀请。
-		RevokeCircleInvite(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// RedeemAdministratorInvite 兑换管理员合同邀请。
-		RedeemAdministratorInvite(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// RedeemMemberInvite 兑换成员合同邀请。
-		RedeemMemberInvite(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// GetCurrentEntitlement 获取合同权益。
-		GetEntitlement(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// SubmitFeedback 提交合同反馈。
-		SubmitFeedbackV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// CompleteOnboarding 完成合同 onboarding。
-		CompleteOnboardingV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// UpsertTaskTagWithVersion 更新合同任务标签。
-		UpsertTaskTagWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// DeleteTaskTagWithVersion 删除合同任务标签。
-		DeleteTaskTagWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// UpsertTaskWithVersion 更新合同任务。
-		UpsertTaskWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// DeleteTaskWithVersion 删除合同任务。
-		DeleteTaskWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// ListTaskOccurrences 查询合同任务 occurrence。
-		ListTaskOccurrencesV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// CompleteTaskWithVersion 完成合同任务。
-		CompleteTaskWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// CancelTaskCompletionWithVersion 取消合同任务完成记录。
-		CancelTaskCompletionWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// ListTaskCompletionDetails 查询合同任务完成明细。
-		ListTaskCompletionDetailsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// AdjustMemberStarsWithVersion 调整合同成员星星。
-		AdjustMemberStarsWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// Unavailable 返回尚未实现的合同 operation 错误。
-		Unavailable(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
 		// GetStarRanking 查询群组内儿童星星排行榜。
 		GetStarRanking(ctx context.Context, in v1.StarRankingInput) (*v1.StarRankingOutput, error)
 		// ListRewardPresets 从数据库读取启用的奖励预设，并支持按关键字搜索。
@@ -144,10 +74,6 @@ type (
 		RedeemReward(ctx context.Context, in v1.RewardRedeemInput) (*v1.RewardRedeemOutput, error)
 		// ListRewardRedeemRecords 从数据库查询奖励兑换历史，支持月份和日期范围筛选。
 		ListRewardRedeemRecords(ctx context.Context, in v1.RewardRecordListInput) (*v1.RewardRecordListOutput, error)
-		// GetMemberBalancesV1 从合同余额投影读取指定成员的当前星星余额。
-		GetMemberBalancesV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// ListStarTransactionsV1 查询合同账本中指定成员的追加式星星流水。
-		ListStarTransactionsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
 		// GetStarBalance 从星星流水表读取指定儿童的当前星星余额。
 		GetStarBalance(ctx context.Context, in v1.StarBalanceInput) (*v1.StarBalanceOutput, error)
 		// AdjustStars 在事务中写入手动调整流水，并返回调整后的星星余额。

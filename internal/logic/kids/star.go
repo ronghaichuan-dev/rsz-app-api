@@ -2,9 +2,7 @@ package kids
 
 import (
 	"context"
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gcode"
@@ -15,127 +13,6 @@ import (
 	"rslytics-app-api/internal/consts"
 	"rslytics-app-api/internal/utils"
 )
-
-// GetMemberBalancesV1 从合同余额投影读取指定成员的当前星星余额。
-func (s *sKids) GetMemberBalancesV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error) {
-	return s.runV1(ctx, in, s.v1GetMemberBalances)
-}
-
-// ListStarTransactionsV1 查询合同账本中指定成员的追加式星星流水。
-func (s *sKids) ListStarTransactionsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error) {
-	return s.runV1(ctx, in, s.v1ListStarTransactions)
-}
-
-// v1GetMemberBalances 校验当前账号的圈子成员身份后，返回指定成员的规范余额投影。
-func (s *sKids) v1GetMemberBalances(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-	circleID := in.PathParameters["circle_id"]
-	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
-		return nil, "", err
-	}
-
-	memberIDs := in.Query["member_id"]
-	items := make([]map[string]any, 0, len(memberIDs))
-	for _, memberID := range memberIDs {
-		member, err := utils.KidsDB(ctx).Model(consts.KidsV1MemberTable).Ctx(ctx).
-			Where("circle_id", circleID).Where("member_id", memberID).Where("status", "active").One()
-		if err != nil {
-			return nil, "", err
-		}
-		if member.IsEmpty() {
-			return nil, "", v1Error(404, "NOT_FOUND", false, "member is missing")
-		}
-		balance, err := utils.KidsDB(ctx).Model(consts.KidsV1BalanceTable).Ctx(ctx).
-			Where("circle_id", circleID).Where("member_id", memberID).One()
-		if err != nil {
-			return nil, "", err
-		}
-		if balance.IsEmpty() {
-			items = append(items, v1BalanceProjection(circleID, memberID, 0, 1, v1ID("commit", "00000000-0000-4000-8000-000000000000"), 0, member["created_at"].Time()))
-			continue
-		}
-		items = append(items, v1BalanceProjection(
-			circleID,
-			memberID,
-			balance["balance"].Int64(),
-			balance["version"].Int64(),
-			balance["source_commit_id"].String(),
-			balance["source_commit_sequence"].Int64(),
-			balance["updated_at"].Time(),
-		))
-	}
-	cursor, err := v1LatestCursor(ctx)
-	if err != nil {
-		return nil, "", err
-	}
-	return map[string]any{"items": items, "snapshot_cursor": cursor}, cursor, nil
-}
-
-// v1ListStarTransactions 返回经过成员权限、时间范围和来源类型筛选后的合同账本分页。
-func (s *sKids) v1ListStarTransactions(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-	circleID := in.PathParameters["circle_id"]
-	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
-		return nil, "", err
-	}
-	limit := v1QueryFirst(in.Query, "limit")
-	offset, err := v1PageOffset(v1QueryFirst(in.Query, "cursor"))
-	if err != nil {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "ledger cursor is invalid")
-	}
-	var pageSize int
-	if _, err = fmt.Sscan(limit, &pageSize); err != nil || pageSize < 1 || pageSize > 200 {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "ledger limit is invalid")
-	}
-	pageOffset := offset
-	model := utils.KidsDB(ctx).Model(consts.KidsV1LedgerTable).Ctx(ctx).
-		Where("circle_id", circleID).Where("member_id", v1QueryFirst(in.Query, "member_id"))
-	if startText := v1QueryFirst(in.Query, "start_at_ms"); startText != "" {
-		var startAt int64
-		if _, err = fmt.Sscan(startText, &startAt); err != nil {
-			return nil, "", v1Error(422, "VALIDATION_FAILED", false, "ledger start time is invalid")
-		}
-		model = model.Where("created_at >= ?", time.UnixMilli(startAt))
-	}
-	if endText := v1QueryFirst(in.Query, "end_at_ms"); endText != "" {
-		var endAt int64
-		if _, err = fmt.Sscan(endText, &endAt); err != nil {
-			return nil, "", v1Error(422, "VALIDATION_FAILED", false, "ledger end time is invalid")
-		}
-		model = model.Where("created_at < ?", time.UnixMilli(endAt))
-	}
-	rows, err := model.Order("created_at DESC,id DESC").All()
-	if err != nil {
-		return nil, "", err
-	}
-	sourceType := v1QueryFirst(in.Query, "source_type")
-	items := make([]map[string]any, 0, pageSize)
-	for _, row := range rows {
-		source, _ := v1JSONValue(row["source"].String()).(map[string]any)
-		if source == nil || (sourceType != "" && source["source_type"] != sourceType) {
-			continue
-		}
-		if offset > 0 {
-			offset--
-			continue
-		}
-		items = append(items, v1LedgerRecordProjection(row))
-		if len(items) > pageSize {
-			break
-		}
-	}
-	hasMore := len(items) > pageSize
-	if hasMore {
-		items = items[:pageSize]
-	}
-	cursor, err := v1LatestCursor(ctx)
-	if err != nil {
-		return nil, "", err
-	}
-	next := any(nil)
-	if hasMore {
-		next = v1PageCursor(pageOffset + len(items))
-	}
-	return map[string]any{"items": items, "next_cursor": next, "has_more": hasMore, "snapshot_cursor": cursor}, cursor, nil
-}
 
 // GetStarBalance 从星星流水表读取指定儿童的当前星星余额。
 func (s *sKids) GetStarBalance(ctx context.Context, in v1.StarBalanceInput) (*v1.StarBalanceOutput, error) {
