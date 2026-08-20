@@ -41,6 +41,8 @@ sudo systemctl enable rsz-kids-test
 
 编辑 `/etc/rsz/kids/config.test.yaml`，填入测试数据库连接、独立 JWT 密钥与 OAuth 参数。该文件不能提交到 Git，也不能由 GitHub Actions 上传覆盖。
 
+`rsz-deploy` 不应读取 `/etc/rsz/kids` 下的私有配置；发布脚本只切换版本并重启服务，配置文件由 `rsz-kids` 服务账号在启动时读取。
+
 为部署用户添加最小 sudo 权限，执行 `sudo visudo -f /etc/sudoers.d/rsz-deploy` 并写入：
 
 ```sudoers

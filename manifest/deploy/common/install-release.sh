@@ -4,8 +4,6 @@ set -Eeuo pipefail
 
 # DEPLOY_ROOT 定义所有微服务发布目录的公共根路径。
 readonly DEPLOY_ROOT="${RSZ_DEPLOY_ROOT:-/opt/rsz}"
-# CONFIG_ROOT 定义所有微服务私有配置目录的公共根路径。
-readonly CONFIG_ROOT="${RSZ_CONFIG_ROOT:-/etc/rsz}"
 # SYSTEMCTL_BIN 指定 Alibaba Cloud Linux 上 systemctl 的绝对路径，便于与 sudoers 精确匹配。
 readonly SYSTEMCTL_BIN="${RSZ_SYSTEMCTL_BIN:-/usr/bin/systemctl}"
 
@@ -79,12 +77,7 @@ main() {
   local base_dir="${DEPLOY_ROOT}/${app_name}"
   local releases_dir="${base_dir}/releases"
   local release_dir="${releases_dir}/${version}"
-  local config_file="${CONFIG_ROOT}/${app_name}/config.${app_env}.yaml"
 
-  if [[ ! -f $config_file ]]; then
-    echo "未找到服务器私有配置: $config_file" >&2
-    exit 1
-  fi
   if [[ ! -x $SYSTEMCTL_BIN ]]; then
     echo "未找到 systemctl: $SYSTEMCTL_BIN" >&2
     exit 1
