@@ -20,7 +20,7 @@ auth:
   jwt:
     secret: "rslytics-kids-jwt-secret"
   google:
-    clientId: ""
+    clientId: "745375182989-oh5700da76bcq8qukis91n3jghcta68s.apps.googleusercontent.com"
   apple:
     clientId: ""
     teamId: ""
