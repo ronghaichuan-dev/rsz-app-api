@@ -70,6 +70,24 @@ jobs:
           ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
 
+      - name: 校验部署连接参数
+        env:
+          DEPLOY_HOST: ${{ secrets.RSZ_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.RSZ_DEPLOY_USER }}
+        run: |
+          if [[ -z "$DEPLOY_HOST" ]]; then
+            echo "RSZ_DEPLOY_HOST 未注入。请在当前 GitHub Environment 的 Secrets 中配置该值，而不是 Actions Variables。" >&2
+            exit 1
+          fi
+          if [[ "$DEPLOY_HOST" == *[!A-Za-z0-9.-]* || "$DEPLOY_HOST" == .* || "$DEPLOY_HOST" == *. || "$DEPLOY_HOST" == *..* ]]; then
+            echo "RSZ_DEPLOY_HOST 格式无效。仅填写 IP 或域名，不要包含协议、用户名、端口、引号或空白字符。" >&2
+            exit 1
+          fi
+          if [[ ! "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+            echo "RSZ_DEPLOY_USER 格式无效。仅填写 Linux 用户名，例如 rsz-deploy。" >&2
+            exit 1
+          fi
+
       - name: 上传发布包和安装脚本
         env:
           DEPLOY_HOST: ${{ secrets.RSZ_DEPLOY_HOST }}
