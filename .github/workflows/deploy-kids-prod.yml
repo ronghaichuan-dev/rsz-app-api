@@ -1,0 +1,21 @@
+name: 部署 kids 到生产服务器
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时间只允许一个生产发布任务，避免两个版本交叉切换 current 软链接。
+concurrency:
+  group: deploy-kids-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy-go-service.yml
+    with:
+      service_name: kids
+      app_env: prod
+      health_url: http://127.0.0.1:8002/v1/health
+      deployment_environment: production
+    secrets: inherit

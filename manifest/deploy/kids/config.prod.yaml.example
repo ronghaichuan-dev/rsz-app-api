@@ -1,0 +1,30 @@
+# 此文件仅作服务器配置模板，真实配置请保存到服务器，不要提交到仓库。
+server:
+  # 仅监听本机回环地址，由 Nginx 对外提供 HTTPS 服务。
+  address: "127.0.0.1:8002"
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+logger:
+  level: "info"
+  stdout: true
+
+app:
+  name: "kids"
+  env: "prod"
+
+database:
+  default:
+    link: "mysql:数据库用户:数据库密码@tcp(127.0.0.1:3306)/rslytics_kids?loc=Local&parseTime=true"
+    debug: false
+
+auth:
+  jwt:
+    secret: "请替换为随机且足够长的 JWT 密钥"
+  google:
+    clientId: ""
+  apple:
+    clientId: ""
+    teamId: ""
+    keyId: ""
+    privateKey: ""

@@ -17,4 +17,5 @@ jobs:
       service_name: kids
       app_env: test
       health_url: http://127.0.0.1:18002/v1/health
+      deployment_environment: test
     secrets: inherit

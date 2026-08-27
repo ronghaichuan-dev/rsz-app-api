@@ -15,6 +15,10 @@ on:
         description: 服务器本机健康检查地址
         required: true
         type: string
+      deployment_environment:
+        description: GitHub Actions 部署环境，用于隔离不同环境的部署凭据
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -23,6 +27,7 @@ jobs:
   deploy:
     name: 构建并部署 ${{ inputs.service_name }}
     runs-on: ubuntu-latest
+    environment: ${{ inputs.deployment_environment }}
     env:
       APP_ENV: ${{ inputs.app_env }}
       CGO_ENABLED: "0"

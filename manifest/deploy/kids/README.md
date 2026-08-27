@@ -53,20 +53,46 @@ Alibaba Cloud Linux 4 LTS 通常使用 `/usr/bin/systemctl`。如 `command -v sy
 
 ## GitHub Actions 配置
 
-`deploy-kids-test.yml` 在推送 `test` 分支时调用可复用工作流 `_deploy-go-service.yml`。为仓库配置以下 Actions Secrets：
+`deploy-kids-test.yml` 在推送 `test` 分支时调用可复用工作流 `_deploy-go-service.yml`；`deploy-kids-prod.yml` 在推送 `main` 分支时以 `prod` 环境部署。两个工作流分别使用 GitHub Actions 的 `test` 和 `production` Environment，避免测试和生产共用部署凭据。
+
+在对应的 GitHub Environment 中配置以下 Actions Secrets：
 
 | 名称 | 内容 |
 | --- | --- |
-| `RSZ_DEPLOY_HOST` | 测试服务器的 IP 或域名 |
+| `RSZ_DEPLOY_HOST` | 当前环境服务器的 IP 或域名 |
 | `RSZ_DEPLOY_USER` | `rsz-deploy` |
 | `RSZ_DEPLOY_SSH_KEY` | 对应的 SSH 私钥 |
 | `RSZ_DEPLOY_KNOWN_HOSTS` | `ssh-keyscan -H <服务器地址>` 得到的主机指纹 |
 
-服务器为 ARM64 时，在仓库 Actions Variables 添加 `RSZ_DEPLOY_GOARCH=arm64`；x86_64 服务器不需要设置，默认使用 `amd64`。
+服务器为 ARM64 时，在对应 GitHub Environment 的 Variables 添加 `RSZ_DEPLOY_GOARCH=arm64`；x86_64 服务器不需要设置，默认使用 `amd64`。
 
 `RSZ_DEPLOY_SSH_KEY` 必须是完整的私钥文本，首行为 `-----BEGIN OPENSSH PRIVATE KEY-----`，末行为 `-----END OPENSSH PRIVATE KEY-----`，不能填写 `.pub` 公钥、文件路径或 SSH 配置内容。工作流会在连接服务器前使用 `ssh-keygen` 校验私钥；校验失败时请重新复制本地私钥全文。
 
 工作流固定执行以下流程：测试、构建 Linux 二进制、上传发布包、切换 `current`、重启 systemd 服务和健康检查。发布成功后只保留最新五个版本。
+
+## 初始化 kids 生产服务器
+
+生产服务器沿用测试环境的目录、用户与权限模型，但使用独立数据库、配置和 systemd 单元。部署前执行以下初始化，并将真实数据库、JWT 与 OAuth 参数写入服务器私有配置：
+
+```bash
+sudo install -o root -g rsz-kids -m 0640 \
+  manifest/deploy/kids/config.prod.yaml.example \
+  /etc/rsz/kids/config.prod.yaml
+
+sudo install -o root -g root -m 0644 \
+  manifest/deploy/kids/rsz-kids-prod.service \
+  /etc/systemd/system/rsz-kids-prod.service
+sudo systemctl daemon-reload
+sudo systemctl enable rsz-kids-prod
+```
+
+为 `rsz-deploy` 增加仅针对生产服务的最小 sudo 权限：
+
+```sudoers
+rsz-deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart rsz-kids-prod, /usr/bin/systemctl status rsz-kids-prod
+```
+
+服务监听 `127.0.0.1:8002`；请为生产域名单独配置 Nginx 与 HTTPS。GitHub 中 `production` Environment 可按需配置审批规则，审批通过后每次推送到 `main` 都会自动发布。
 
 ## Nginx、HTTPS 与阿里云安全组
 

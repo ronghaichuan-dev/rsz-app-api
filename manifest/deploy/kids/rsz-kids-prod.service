@@ -1,0 +1,19 @@
+[Unit]
+Description=rsz kids 生产微服务
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rsz-kids
+Group=rsz-kids
+WorkingDirectory=/opt/rsz/kids/releases/current
+Environment=APP_ENV=prod
+Environment=APP_CONFIG_DIR=/etc/rsz/kids
+ExecStart=/opt/rsz/kids/releases/current/kids -e prod
+Restart=always
+RestartSec=3
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
