@@ -11,18 +11,8 @@ import (
 // Controller 处理 kids 数据统计和对比接口。
 type Controller struct{}
 
-// New 创建数据统计控制器实例。
-func New() *Controller {
-	return &Controller{}
-}
-
 // V1Controller 处理 Clearwave v1 的统计领域路由。
 type V1Controller struct{}
-
-// NewV1 创建v1统计控制器实例。
-func NewV1() *V1Controller {
-	return &V1Controller{}
-}
 
 // Summary 查询单成员任务或星星统计汇总。
 func (c *Controller) Summary(ctx context.Context, req *v1.AnalyticsSummaryReq) (res *v1.AnalyticsSummaryRes, err error) {
