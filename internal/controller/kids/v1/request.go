@@ -9,10 +9,14 @@ import (
 	"github.com/gogf/gf/v2/net/ghttp"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
+	"rslytics-app-api/internal/consts"
 )
 
 // RequestInput 在 Controller 层严格解析一个接口路由的 HTTP 参数和 JSON 请求体。
 func RequestInput(ctx context.Context, operationID, method string) (v1.V1OperationInput, error) {
+	if r := ghttp.RequestFromCtx(ctx); r != nil {
+		r.SetCtxVar(consts.CtxV1OperationIDKey, operationID)
+	}
 	r := ghttp.RequestFromCtx(ctx)
 	if r == nil {
 		return v1.V1OperationInput{}, &v1.V1Error{Status: 422, Code: "VALIDATION_FAILED", Message: "v1 request is missing"}

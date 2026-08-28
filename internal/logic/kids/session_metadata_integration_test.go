@@ -54,12 +54,12 @@ func TestV1SessionMetadataIntegrationExchangeRefreshAndBootstrap(t *testing.T) {
 // v1TestPersistedAccountSession 构造数据库读取后的账号 session 记录，时间值固定为带非零毫秒的值。
 func v1TestPersistedAccountSession(sessionID string, issuedAt time.Time) gdb.Record {
 	return gdb.Record{
-		"session_id":         gvar.New(sessionID),
-		"principal_kind":     gvar.New("account"),
-		"revoked_at":         gvar.New(nil),
-		"created_at":         gvar.New(issuedAt),
-		"expires_at":         gvar.New(issuedAt.Add(time.Hour)),
-		"refresh_expires_at": gvar.New(issuedAt.Add(30 * 24 * time.Hour)),
+		"session_id":            gvar.New(sessionID),
+		"principal_kind":        gvar.New("account"),
+		"status":                gvar.New("active"),
+		"issued_at_ms":          gvar.New(issuedAt.UnixMilli()),
+		"access_expires_at_ms":  gvar.New(issuedAt.Add(time.Hour).UnixMilli()),
+		"refresh_expires_at_ms": gvar.New(issuedAt.Add(30 * 24 * time.Hour).UnixMilli()),
 	}
 }
 
