@@ -16,6 +16,7 @@ app:
 database:
   default:
     link: "mysql:数据库用户:数据库密码@tcp(127.0.0.1:3306)/rslytics_kids_test?loc=Local&parseTime=true"
+    charset: "utf8mb4"
     debug: false
 
 auth:

@@ -27,6 +27,7 @@ gfcli:
       #   doPath: "internal/model/admin/do"
       #   entityPath: "internal/model/admin/entity"
       - link: "mysql:root:chuan1992@tcp(127.0.0.1:3306)/rslytics_kids?loc=Local&parseTime=true"
+        charset: "utf8mb4"
         group: "kids"
         tables: "kids_*"
         removePrefix: ""
