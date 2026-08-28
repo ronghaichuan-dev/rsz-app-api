@@ -112,6 +112,8 @@ const (
 const (
 	// KidsAccessTokenTTL 是 kids 访问令牌默认有效期。
 	KidsAccessTokenTTL = DefaultAccessTokenTTL
+	// KidsV1AccountBindingEnvironmentLive 表示接口账号绑定的正式环境。
+	KidsV1AccountBindingEnvironmentLive = "live"
 	// KidsV1PermissionManageCircle 表示接口圈子配置管理权限。
 	KidsV1PermissionManageCircle = "manage_circle"
 	// KidsV1PermissionManageMembers 表示接口成员与管理员管理权限。

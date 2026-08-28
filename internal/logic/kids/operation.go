@@ -2176,12 +2176,18 @@ func (s *sKids) v1ExchangeGoogleProof(ctx context.Context, in v1.V1OperationInpu
 		}
 		if bindingRow.IsEmpty() {
 			bindingID := v1ID("binding", uuid.NewString())
-			if _, queryErr = tx.Model(consts.KidsV1AccountBindingTable).Ctx(ctx).Data(gdb.Map{"binding_id": bindingID, "account_id": accountID, "environment": "demo", "migration_policy": "no_merge", "version": 1, "issued_at": now, "created_at": now, "updated_at": now}).Insert(); queryErr != nil {
+			if _, queryErr = tx.Model(consts.KidsV1AccountBindingTable).Ctx(ctx).Data(gdb.Map{"binding_id": bindingID, "account_id": accountID, "environment": consts.KidsV1AccountBindingEnvironmentLive, "migration_policy": "no_merge", "version": 1, "issued_at": now, "created_at": now, "updated_at": now}).Insert(); queryErr != nil {
 				return queryErr
 			}
-			binding = map[string]any{"binding_id": bindingID, "account_id": accountID, "environment": "demo", "migration_policy": "no_merge", "version": int64(1), "issued_at_ms": now.UnixMilli()}
+			binding = map[string]any{"binding_id": bindingID, "account_id": accountID, "environment": consts.KidsV1AccountBindingEnvironmentLive, "migration_policy": "no_merge", "version": int64(1), "issued_at_ms": now.UnixMilli()}
 		} else {
+			if bindingRow["environment"].String() != consts.KidsV1AccountBindingEnvironmentLive {
+				if _, queryErr = tx.Model(consts.KidsV1AccountBindingTable).Ctx(ctx).Where("id", bindingRow["id"].Int64()).Data(gdb.Map{"environment": consts.KidsV1AccountBindingEnvironmentLive, "updated_at": now}).Update(); queryErr != nil {
+					return queryErr
+				}
+			}
 			binding = v1AccountBindingRecordProjection(bindingRow)
+			binding["environment"] = consts.KidsV1AccountBindingEnvironmentLive
 		}
 		if _, queryErr = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Data(gdb.Map{"session_id": sessionID, "account_id": accountID, "principal_kind": "account", "access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "expires_at": accessExpiry, "refresh_expires_at": refreshExpiry, "created_at": now, "updated_at": now}).Insert(); queryErr != nil {
 			return queryErr
