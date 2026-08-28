@@ -493,6 +493,7 @@ entityPath: "internal/model/kids/entity"
 - 数据库表注释和字段注释必须统一使用中文，禁止新增英文 COMMENT。
 - SQL 文件中的说明性注释也应使用中文，便于团队和生成后的模型描述保持一致。
 - 新增 SQL migration 文件必须放在 `manifest/sql/`，并使用六位递增编号命名：`000001_业务说明.sql`、`000002_业务说明.sql`。创建前必须读取该目录现有 migration 的最大编号，使用下一个连续编号；禁止复用、跳号或修改已执行 migration 的编号。
+- SQL migration 一经创建即视为不可变，即使尚未确认目标环境是否执行也不得编辑、重命名、删除或合并已有 migration 文件。后续任何表结构、数据修复或索引变更必须新建下一个连续编号的 migration 文件追加；需要兼容部分执行状态时，应在新 migration 中进行前置检测或修复，不能回改旧 migration。
 
 推荐表命名：
 
