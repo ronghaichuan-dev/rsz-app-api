@@ -2390,7 +2390,16 @@ func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID stri
 		return nil, err
 	}
 	if sequenceRecord.IsEmpty() {
-		return nil, fmt.Errorf("v1 commit sequence is missing")
+		if _, err = tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Data(gdb.Map{"id": 1, "next_commit_sequence": 1}).InsertIgnore(); err != nil {
+			return nil, err
+		}
+		sequenceRecord, err = tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Where("id", 1).LockUpdate().One()
+		if err != nil {
+			return nil, err
+		}
+		if sequenceRecord.IsEmpty() {
+			return nil, v1Error(503, "UNAVAILABLE", true, "v1 commit sequence is unavailable")
+		}
 	}
 	sequence := sequenceRecord["next_commit_sequence"].Int64()
 	if sequence < 1 {
