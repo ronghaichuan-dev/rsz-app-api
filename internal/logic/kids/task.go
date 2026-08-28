@@ -1504,13 +1504,13 @@ func v1Integer(value any) (int64, bool) {
 
 // v1TaskOccurrences 按日期窗口返回任务 occurrence 的稳定分页快照。
 func (s *sKids) v1TaskOccurrences(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
+	limit, err := v1ValidateTaskOccurrencesQuery(in.Query)
+	if err != nil {
+		return nil, "", err
+	}
 	circleID := in.PathParameters["circle_id"]
 	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
 		return nil, "", err
-	}
-	limit, err := strconv.Atoi(v1QueryFirst(in.Query, "limit"))
-	if err != nil || limit < 1 || limit > 200 {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "occurrence limit is invalid")
 	}
 	offset, err := v1PageOffset(v1QueryFirst(in.Query, "cursor"))
 	if err != nil {
@@ -1545,6 +1545,26 @@ func (s *sKids) v1TaskOccurrences(ctx context.Context, in v1.V1OperationInput) (
 		next = v1PageCursor(offset + limit)
 	}
 	return map[string]any{"items": items, "next_cursor": next, "has_more": hasMore, "snapshot_cursor": cursor}, cursor, nil
+}
+
+// v1ValidateTaskOccurrencesQuery 校验 occurrence 日历窗口、时区和分页边界，防止错误客户端放宽服务端合同。
+func v1ValidateTaskOccurrencesQuery(query map[string][]string) (int, error) {
+	startDate, err := time.Parse(consts.DateLayout, v1QueryFirst(query, "start_date"))
+	if err != nil {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence start date is invalid")
+	}
+	endDate, err := time.Parse(consts.DateLayout, v1QueryFirst(query, "end_date_exclusive"))
+	if err != nil || !endDate.After(startDate) {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence end date is invalid")
+	}
+	if _, err = time.LoadLocation(v1QueryFirst(query, "zone_id")); err != nil {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence zone is invalid")
+	}
+	limit, err := strconv.Atoi(v1QueryFirst(query, "limit"))
+	if err != nil || limit < 1 || limit > 200 {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence limit is invalid")
+	}
+	return limit, nil
 }
 
 // v1CompletionDetails 返回完成和取消流水的关联审计明细。

@@ -58,6 +58,45 @@ func TestV1DeploymentValidationSmoke(t *testing.T) {
 	}
 }
 
+// TestV1DeploymentTaskOccurrencesRejectsOversizedLimits 在真实部署环境固定 occurrence 的 1..200 分页边界。
+func TestV1DeploymentTaskOccurrencesRejectsOversizedLimits(t *testing.T) {
+	baseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_BASE_URL")), "/")
+	if baseURL == "" {
+		t.Skip("未配置 KIDS_DEPLOY_SMOKE_BASE_URL，跳过部署级 occurrence 负向 smoke")
+	}
+	client := &http.Client{Timeout: 15 * time.Second}
+	circleID := "circle:v1:00000000-0000-4000-8000-000000000001"
+	for _, limit := range []string{"201", "500"} {
+		t.Run("limit_"+limit, func(t *testing.T) {
+			requestID := "smoke:task-occurrences:" + limit
+			request, err := http.NewRequest(http.MethodGet, baseURL+"/v1/circles/"+circleID+"/task-occurrences?start_date=2026-03-01&end_date_exclusive=2026-04-01&zone_id=Asia%2FShanghai&limit="+limit, nil)
+			if err != nil {
+				t.Fatalf("构造 occurrence 负向请求失败: %v", err)
+			}
+			request.Header.Set("Authorization", "Bearer deployment-smoke-invalid-token")
+			request.Header.Set(V1RequestIDHeader, requestID)
+			request.Header.Set(V1VersionHeader, V1Version)
+			request.Header.Set(V1ClientVersionHeader, "deployment-smoke-v1")
+			response, err := client.Do(request)
+			if err != nil {
+				t.Fatalf("occurrence 负向请求失败: %v", err)
+			}
+			defer response.Body.Close()
+			body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+			if err != nil {
+				t.Fatalf("读取 occurrence 负向响应失败: %v", err)
+			}
+			if response.StatusCode != http.StatusUnprocessableEntity {
+				t.Fatalf("limit=%s 应返回 422，实际 status=%d body=%s", limit, response.StatusCode, string(body))
+			}
+			v1SmokeAssertErrorEnvelope(t, "listTaskOccurrences", requestID, response, body)
+			if v1SmokeErrorCode(body) != "VALIDATION_FAILED" {
+				t.Fatalf("limit=%s 应返回 VALIDATION_FAILED，实际 body=%s", limit, string(body))
+			}
+		})
+	}
+}
+
 // v1SmokePath 将 OpenAPI path 参数替换为符合冻结 ID 规则的合成值，不使用真实用户数据。
 func v1SmokePath(path string) string {
 	replacements := map[string]string{
@@ -99,4 +138,17 @@ func v1SmokeAssertErrorEnvelope(t *testing.T, operationID, requestID string, res
 	if !ok || len(traceID) < 8 || response.Header.Get("X-Trace-Id") != traceID {
 		t.Fatalf("响应缺少可关联 traceId，operation=%s", operationID)
 	}
+}
+
+// v1SmokeErrorCode 从受控 ErrorEnvelope 提取稳定错误码，供部署级断言使用。
+func v1SmokeErrorCode(body []byte) string {
+	var envelope struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return ""
+	}
+	return envelope.Error.Code
 }
