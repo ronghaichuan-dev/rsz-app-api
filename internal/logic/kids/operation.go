@@ -29,12 +29,23 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 	if err := validateV1Input(in); err != nil {
 		return nil, err
 	}
+	bodyFingerprint := v1BodyFingerprint(in.Body)
+	routeFingerprint := v1RouteFingerprint(in)
+	if in.OperationID == "refreshSession" {
+		if output, conflict, pending, err := v1RefreshIdempotencyReplay(ctx, in, routeFingerprint, bodyFingerprint); err != nil {
+			return nil, err
+		} else if conflict {
+			return nil, v1Error(409, "IDEMPOTENCY_CONFLICT", false, "idempotency key conflicts with an earlier request")
+		} else if pending {
+			return nil, v1Error(503, "UNAVAILABLE", true, "v1 request is still being committed")
+		} else if output != nil {
+			return output, nil
+		}
+	}
 	if err := resolveV1Principal(ctx, &in); err != nil {
 		return nil, err
 	}
 	principalScope := v1PrincipalScope(ctx, in)
-	bodyFingerprint := v1BodyFingerprint(in.Body)
-	routeFingerprint := v1RouteFingerprint(in)
 	if v1OperationSupportsIdempotency(in) {
 		if output, conflict, pending, err := v1IdempotencyBegin(ctx, principalScope, in, routeFingerprint, bodyFingerprint); err != nil {
 			return nil, err
@@ -587,6 +598,13 @@ func (s *sKids) v1CreateCircleMember(ctx context.Context, in v1.V1OperationInput
 		out = v1MemberRecordProjection(row)
 		var ce error
 		receipt, ce = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{"member": out})
+		if ce != nil {
+			return ce
+		}
+		_, ce = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(gdb.Map{
+			"circle_id": circleID, "member_id": memberID, "balance": 0, "version": 1,
+			"source_commit_id": receipt["commit_id"], "source_commit_sequence": receipt["commit_sequence"], "updated_at": now,
+		}).Insert()
 		return ce
 	})
 	if err != nil {
@@ -1284,6 +1302,18 @@ func v1LatestCursor(ctx context.Context) (string, error) {
 	return v1CommitCursor(commit["commit_sequence"].Int64()), nil
 }
 
+// v1LatestCursorTx 在当前数据库事务的同一读取快照中获取最新提交游标。
+func v1LatestCursorTx(ctx context.Context, tx gdb.TX) (string, error) {
+	commit, err := tx.Model(consts.KidsV1CommitTable).Ctx(ctx).OrderDesc("commit_sequence").One()
+	if err != nil {
+		return "", err
+	}
+	if commit.IsEmpty() {
+		return v1CommitCursor(0), nil
+	}
+	return v1CommitCursor(commit["commit_sequence"].Int64()), nil
+}
+
 // v1CircleRecordProjection 将接口圈子数据库记录还原为冻结 wire 投影。
 func v1CircleRecordProjection(record gdb.Record) map[string]any {
 	return map[string]any{"circle_id": record["circle_id"].String(), "name": record["name"].String(), "icon": v1JSONValue(record["icon"].String()), "owner_administrator_id": record["owner_administrator_id"].String(), "status": record["status"].String(), "version": record["version"].Int64(), "created_at_ms": record["created_at"].Time().UnixMilli(), "updated_at_ms": record["updated_at"].Time().UnixMilli(), "deleted_at_ms": v1NullableTimeMillis(record["deleted_at"].Time())}
@@ -1437,7 +1467,18 @@ func (s *sKids) v1CompleteOnboarding(ctx context.Context, in v1.V1OperationInput
 		receipt, commitErr = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{
 			"circle": circle, "owner_administrator": owner, "initial_members": members, "membership": membership, "selection": selection,
 		})
-		return commitErr
+		if commitErr != nil {
+			return commitErr
+		}
+		for _, member := range members {
+			if _, insertErr := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(gdb.Map{
+				"circle_id": circleID, "member_id": member["member_id"], "balance": 0, "version": 1,
+				"source_commit_id": receipt["commit_id"], "source_commit_sequence": receipt["commit_sequence"], "updated_at": now,
+			}).Insert(); insertErr != nil {
+				return insertErr
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, "", err
@@ -1536,14 +1577,13 @@ func (s *sKids) v1RefreshSession(ctx context.Context, in v1.V1OperationInput) (m
 	issuedAtMs := time.Now().UnixMilli()
 	accessExpiryMs := issuedAtMs + int64(time.Hour/time.Millisecond)
 	refreshExpiryMs := issuedAtMs + int64((30*24*time.Hour)/time.Millisecond)
-	rotatedSessionID := v1ID("session", uuid.NewString())
-	accessToken, err := v1IssueAccessToken(ctx, rotatedSessionID, in.PrincipalID, "account", issuedAtMs, accessExpiryMs)
+	accessToken, err := v1IssueAccessToken(ctx, in.SessionID, in.PrincipalID, "account", issuedAtMs, accessExpiryMs)
 	if err != nil {
 		return nil, "", err
 	}
 	refreshToken := v1Secret()
 	receiptID := v1ID("receipt", uuid.NewString())
-	var rotatedSession gdb.Record
+	var sessionRecord gdb.Record
 	err = utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		session, err := tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).Where("account_id", in.PrincipalID).Where("principal_kind", "account").Where("refresh_token_hash", sha256Hex(in.AccessToken)).Where("status", "active").LockUpdate().One()
 		if err != nil {
@@ -1552,17 +1592,17 @@ func (s *sKids) v1RefreshSession(ctx context.Context, in v1.V1OperationInput) (m
 		if session.IsEmpty() {
 			return v1Error(401, "UNAUTHENTICATED", false, "account session is missing")
 		}
-		if _, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).Data(gdb.Map{"status": "revoked", "revoked_at_ms": issuedAtMs}).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).Data(gdb.Map{
+			"access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "issued_at_ms": issuedAtMs,
+			"access_expires_at_ms": accessExpiryMs, "refresh_expires_at_ms": refreshExpiryMs, "status": "active", "revoked_at_ms": nil,
+		}).Update(); err != nil {
 			return err
 		}
-		if _, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Data(gdb.Map{"session_id": rotatedSessionID, "account_id": in.PrincipalID, "principal_kind": "account", "status": "active", "access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "issued_at_ms": issuedAtMs, "access_expires_at_ms": accessExpiryMs, "refresh_expires_at_ms": refreshExpiryMs}).Insert(); err != nil {
-			return err
-		}
-		rotatedSession, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", rotatedSessionID).One()
+		sessionRecord, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).One()
 		if err != nil {
 			return err
 		}
-		if rotatedSession.IsEmpty() {
+		if sessionRecord.IsEmpty() || !v1SessionIsActive(sessionRecord) {
 			return v1Error(503, "UNAVAILABLE", true, "rotated account session is unavailable")
 		}
 		if _, err = tx.Model(consts.KidsV1ReceiptTable).Ctx(ctx).Data(gdb.Map{"receipt_id": receiptID, "commit_id": "", "operation_id": in.OperationID, "result_kind": "first_committed", "committed_at": time.UnixMilli(issuedAtMs)}).Insert(); err != nil {
@@ -1573,7 +1613,7 @@ func (s *sKids) v1RefreshSession(ctx context.Context, in v1.V1OperationInput) (m
 	if err != nil {
 		return nil, "", err
 	}
-	return map[string]any{"session": v1AuthSessionProjection(rotatedSession, accessToken, refreshToken), "rotation_receipt_id": receiptID}, "", nil
+	return map[string]any{"session": v1AuthSessionProjection(sessionRecord, accessToken, refreshToken), "rotation_receipt_id": receiptID}, "", nil
 }
 
 // v1RevokeSession 撤销当前账号拥有的指定 session，并对重复撤销返回稳定结果。
@@ -2407,6 +2447,29 @@ func v1IdempotencyRecord(record gdb.Record, routeHash, bodyHash string) (*v1.V1O
 	return &v1.V1OperationOutput{Data: data, Status: record["response_status"].Int(), ChangeCursor: record["response_change_cursor"].String(), ETag: record["response_etag"].String()}, false, false, nil
 }
 
+// v1RefreshIdempotencyReplay 在旧 refresh credential 已失效后仍按固定 session 作用域返回首次轮换结果。
+func v1RefreshIdempotencyReplay(ctx context.Context, in v1.V1OperationInput, routeHash, bodyHash string) (*v1.V1OperationOutput, bool, bool, error) {
+	session, err := utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).
+		Where("session_id", fmt.Sprint(in.Body["session_id"])).Where("status", "active").One()
+	if err != nil || session.IsEmpty() {
+		return nil, false, false, err
+	}
+	record, err := utils.KidsDB(ctx).Model(consts.KidsV1IdempotencyTable).Ctx(ctx).
+		Where("principal_scope", v1RefreshIdempotencyScope(in)).Where("idempotency_key", in.IdempotencyKey).One()
+	if err != nil || record.IsEmpty() {
+		return nil, false, false, err
+	}
+	output, conflict, pending, err := v1IdempotencyRecord(record, routeHash, bodyHash)
+	if err != nil || output == nil {
+		return output, conflict, pending, err
+	}
+	output = v1ReplayOutput(output)
+	if err = v1.ValidateV1ResponseData(in.OperationID, output.Data); err != nil {
+		return nil, false, false, v1Error(503, "UNAVAILABLE", true, "stored v1 response is unavailable")
+	}
+	return output, false, false, nil
+}
+
 // v1IdempotencySave 保存接口首次响应，保证断线重放返回同一结果。
 func v1IdempotencySave(ctx context.Context, scope string, in v1.V1OperationInput, routeHash, bodyHash string, out *v1.V1OperationOutput) error {
 	body, err := json.Marshal(out.Data)
@@ -2484,10 +2547,18 @@ func v1Receipt(operationID string) map[string]any {
 
 // v1PrincipalScope 计算接口幂等查询作用域。
 func v1PrincipalScope(ctx context.Context, in v1.V1OperationInput) string {
+	if in.OperationID == "refreshSession" {
+		return v1RefreshIdempotencyScope(in)
+	}
 	if in.PrincipalID != "" {
 		return in.PrincipalKind + ":" + in.PrincipalID + ":" + in.SessionID
 	}
 	return "public"
+}
+
+// v1RefreshIdempotencyScope 以请求 session ID 固定 refresh 重放作用域，避免轮换后丢失首次结果。
+func v1RefreshIdempotencyScope(in v1.V1OperationInput) string {
+	return "refresh:" + fmt.Sprint(in.Body["session_id"])
 }
 
 // v1AccountID 返回服务端解析的账号标识。

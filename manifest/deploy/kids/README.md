@@ -224,4 +224,6 @@ curl --fail http://127.0.0.1:18002/v1/health
 
 发布验收至少包含：Google exchange、refresh、使用刷新后 access token 调用 `selectCurrentCircle`、onboarding 首次提交和同一幂等键重放。所有失败响应都应回显 `request_id` 与 `trace_id`；用二者在 Nginx、应用日志和 MySQL 错误日志中关联。排查 onboarding 503 时按顺序确认二进制版本、私有配置、migration、数据库事务错误和连接池容量；没有明确可重试的依赖故障时，不应返回 503。
 
+部署级路由、参数校验和可观测性 smoke 由 CI 的 `go test ./...` 同步执行；配置 `KIDS_DEPLOY_SMOKE_BASE_URL` 后会对全部 46 个 operation 发出隔离的无效请求，并校验受控 4xx ErrorEnvelope、`request_id` 和 `trace_id`。运行命令为：`KIDS_DEPLOY_SMOKE_BASE_URL=https://<测试域名> go test ./internal/api/kids/v1 -run TestV1DeploymentValidationSmoke`。成功、授权、幂等、版本冲突和 503/429 的写入场景必须使用独立测试账号与测试数据执行，禁止复用真实用户数据。
+
 如果测试 session 或 refresh credential 已进入客户端日志，不要收集或回传明文 token。使用受控工单确认受影响 `session_id` 后，通过受保护的 session revoke 能力定向撤销，并清理含凭据的客户端日志和 CI 附件。轮换后客户端必须重新认证。

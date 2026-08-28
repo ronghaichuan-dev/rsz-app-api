@@ -34,15 +34,15 @@ func TestV1SessionMetadataIntegrationExchangeRefreshAndBootstrap(t *testing.T) {
 		t.Fatal("测试时间必须包含非零毫秒")
 	}
 
-	// refresh 撤销旧 session 并持久化新 session；后续 bootstrap 必须读取新记录的 metadata。
+	// refresh 在同一 session 上原地轮换 token pair；后续 bootstrap 必须读取同一条记录的最新 metadata。
 	rotatedIssuedAt := time.UnixMilli(1787900222377)
-	rotatedSession := v1TestPersistedAccountSession("session:v1:00000000-0000-4000-8000-000000000002", rotatedIssuedAt)
+	rotatedSession := v1TestPersistedAccountSession("session:v1:00000000-0000-4000-8000-000000000001", rotatedIssuedAt)
 	refreshResponse := v1AuthSessionProjection(rotatedSession, "rotated-access-token", "rotated-refresh-token")
 	refreshMetadata, ok := refreshResponse["metadata"].(map[string]any)
 	if !ok {
 		t.Fatal("refresh 响应缺少 session metadata")
 	}
-	rotatedExpected := v1ExpectedSessionMetadata("session:v1:00000000-0000-4000-8000-000000000002", rotatedIssuedAt)
+	rotatedExpected := v1ExpectedSessionMetadata("session:v1:00000000-0000-4000-8000-000000000001", rotatedIssuedAt)
 	if !reflect.DeepEqual(refreshMetadata, rotatedExpected) {
 		t.Fatalf("refresh session metadata 不符合新持久化记录: got=%v want=%v", refreshMetadata, rotatedExpected)
 	}

@@ -188,7 +188,7 @@ func (s *sKids) v1RedeemReward(ctx context.Context, in v1.V1OperationInput) (map
 			return err
 		}
 		if assigned.IsEmpty() {
-			return v1Error(409, "NOT_ASSIGNED", false, "reward is not assigned to member")
+			return v1Error(422, "NOT_ASSIGNED", false, "reward is not assigned to member")
 		}
 		member, err := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).Where("member_id", memberID).Where("circle_id", circleID).Where("status", "active").One()
 		if err != nil {
@@ -201,15 +201,21 @@ func (s *sKids) v1RedeemReward(ctx context.Context, in v1.V1OperationInput) (map
 		if err != nil {
 			return err
 		}
-		if !cooldown.IsEmpty() && (cooldown["permanently_unavailable"].Bool() || (!cooldown["cooldown_until_at"].Time().IsZero() && now.Before(cooldown["cooldown_until_at"].Time()))) {
-			return v1Error(409, "COOLING_DOWN", false, "reward is cooling down")
+		if !cooldown.IsEmpty() && cooldown["permanently_unavailable"].Bool() {
+			return v1Error(422, "PERMANENTLY_UNAVAILABLE", false, "reward is permanently unavailable")
+		}
+		if !cooldown.IsEmpty() && !cooldown["cooldown_until_at"].Time().IsZero() && now.Before(cooldown["cooldown_until_at"].Time()) {
+			return v1Error(422, "COOLDOWN_ACTIVE", false, "reward is cooling down")
 		}
 		balanceRow, err := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("circle_id", circleID).Where("member_id", memberID).LockUpdate().One()
 		if err != nil {
 			return err
 		}
-		if balanceRow.IsEmpty() || balanceRow["balance"].Int64() < reward["stars_required"].Int64() {
-			return v1Error(409, "INSUFFICIENT_STARS", false, "member balance is insufficient")
+		if balanceRow.IsEmpty() {
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
+		}
+		if balanceRow["balance"].Int64() < reward["stars_required"].Int64() {
+			return v1Error(422, "INSUFFICIENT_BALANCE", false, "member balance is insufficient")
 		}
 		actor, err := v1ActorSnapshotTx(ctx, tx, membership)
 		if err != nil {

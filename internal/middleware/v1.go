@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,8 +39,15 @@ func V1Envelope(r *ghttp.Request) {
 
 // writeV1Error 只输出 OpenAPI 冻结的错误 envelope，不泄漏内部异常。
 func writeV1Error(r *ghttp.Request, v1Err *v1.V1Error) {
+	if v1Err.Code == "UNAVAILABLE" && v1Err.Retryable && v1Err.RetryAfterMs == nil {
+		retryAfterMs := int64(1000)
+		v1Err.RetryAfterMs = &retryAfterMs
+	}
 	writeV1Headers(r, r.Header.Get(v1.V1RequestIDHeader))
 	r.Response.Status = v1Err.Status
+	if v1Err.RetryAfterMs != nil {
+		r.Response.Header().Set("Retry-After", strconv.FormatInt((*v1Err.RetryAfterMs+999)/1000, 10))
+	}
 	logV1Failure(r, v1Err.Code)
 	r.Response.WriteJson(map[string]any{
 		"contract_version": v1.V1Version,

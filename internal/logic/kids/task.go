@@ -1440,10 +1440,10 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if err != nil {
 			return err
 		}
-		current, version := int64(0), int64(1)
-		if !row.IsEmpty() {
-			current, version = row["balance"].Int64(), row["version"].Int64()
+		if row.IsEmpty() {
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
 		}
+		current, version := row["balance"].Int64(), row["version"].Int64()
 		if version != expected {
 			return &v1.V1Error{Status: 409, Code: "VERSION_CONFLICT", Version: &version, Message: "balance version conflicts"}
 		}
@@ -1470,12 +1470,7 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		}
 		nextVersion := version + 1
 		values := gdb.Map{"balance": next, "version": nextVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": now}
-		if row.IsEmpty() {
-			values["circle_id"], values["member_id"] = circleID, memberID
-			if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(values).Insert(); err != nil {
-				return err
-			}
-		} else if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(values).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(values).Update(); err != nil {
 			return err
 		}
 		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)

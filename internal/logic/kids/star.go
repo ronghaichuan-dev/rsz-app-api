@@ -29,41 +29,44 @@ func (s *sKids) ListStarTransactionsV1(ctx context.Context, in v1.V1OperationInp
 // v1GetMemberBalances 校验当前账号的圈子成员身份后，返回指定成员的规范余额投影。
 func (s *sKids) v1GetMemberBalances(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
 	circleID := in.PathParameters["circle_id"]
-	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
-		return nil, "", err
-	}
-
 	memberIDs := in.Query["member_id"]
 	items := make([]map[string]any, 0, len(memberIDs))
-	for _, memberID := range memberIDs {
-		member, err := utils.KidsDB(ctx).Model(consts.KidsV1MemberTable).Ctx(ctx).
-			Where("circle_id", circleID).Where("member_id", memberID).Where("status", "active").One()
-		if err != nil {
-			return nil, "", err
+	cursor := ""
+	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		if _, txErr := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, ""); txErr != nil {
+			return txErr
 		}
-		if member.IsEmpty() {
-			return nil, "", v1Error(404, "NOT_FOUND", false, "member is missing")
+		for _, memberID := range memberIDs {
+			member, txErr := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).
+				Where("circle_id", circleID).Where("member_id", memberID).Where("status", "active").One()
+			if txErr != nil {
+				return txErr
+			}
+			if member.IsEmpty() {
+				return v1Error(404, "NOT_FOUND", false, "member is missing")
+			}
+			balance, txErr := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).
+				Where("circle_id", circleID).Where("member_id", memberID).One()
+			if txErr != nil {
+				return txErr
+			}
+			if balance.IsEmpty() {
+				return v1Error(502, "PROTOCOL_ERROR", false, "canonical member balance is missing")
+			}
+			items = append(items, v1BalanceProjection(
+				circleID,
+				memberID,
+				balance["balance"].Int64(),
+				balance["version"].Int64(),
+				balance["source_commit_id"].String(),
+				balance["source_commit_sequence"].Int64(),
+				balance["updated_at"].Time(),
+			))
 		}
-		balance, err := utils.KidsDB(ctx).Model(consts.KidsV1BalanceTable).Ctx(ctx).
-			Where("circle_id", circleID).Where("member_id", memberID).One()
-		if err != nil {
-			return nil, "", err
-		}
-		if balance.IsEmpty() {
-			items = append(items, v1BalanceProjection(circleID, memberID, 0, 1, v1ID("commit", "00000000-0000-4000-8000-000000000000"), 0, member["created_at"].Time()))
-			continue
-		}
-		items = append(items, v1BalanceProjection(
-			circleID,
-			memberID,
-			balance["balance"].Int64(),
-			balance["version"].Int64(),
-			balance["source_commit_id"].String(),
-			balance["source_commit_sequence"].Int64(),
-			balance["updated_at"].Time(),
-		))
-	}
-	cursor, err := v1LatestCursor(ctx)
+		var txErr error
+		cursor, txErr = v1LatestCursorTx(ctx, tx)
+		return txErr
+	})
 	if err != nil {
 		return nil, "", err
 	}
