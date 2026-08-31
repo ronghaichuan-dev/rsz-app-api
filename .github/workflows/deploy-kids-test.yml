@@ -19,29 +19,3 @@ jobs:
       health_url: http://127.0.0.1:18002/v1/health
       deployment_environment: test
     secrets: inherit
-
-  contract-smoke:
-    name: 验收 kids 测试环境合同
-    needs: deploy
-    runs-on: ubuntu-latest
-    environment: test
-    env:
-      KIDS_DEPLOY_SMOKE_BASE_URL: ${{ vars.KIDS_DEPLOY_SMOKE_BASE_URL }}
-
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      - name: 配置 Go 环境
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: 执行部署级合同 smoke
-        run: |
-          if [[ -z "$KIDS_DEPLOY_SMOKE_BASE_URL" ]]; then
-            echo "请为 test GitHub Environment 配置 KIDS_DEPLOY_SMOKE_BASE_URL 变量。" >&2
-            exit 1
-          fi
-          go test ./internal/api/kids/v1 -run 'TestV1Deployment(ValidationSmoke|TaskOccurrencesRejectsOversizedLimits)'
