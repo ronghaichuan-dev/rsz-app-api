@@ -1424,7 +1424,7 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "adjustment delta is invalid")
 	}
 	now := time.Now()
-	var ledger, balance, receipt map[string]any
+	var bundle map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		membership, err := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, consts.KidsV1PermissionAdjustStars)
 		if err != nil {
@@ -1461,7 +1461,7 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": delta, "reason": in.Body["reason"], "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": now}).Insert(); err != nil {
 			return err
 		}
-		receipt, err = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{})
+		receipt, err := v1CreateCommitAtTx(ctx, tx, circleID, in.OperationID, now, map[string]any{})
 		if err != nil {
 			return err
 		}
@@ -1474,13 +1474,13 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(values).Update(); err != nil {
 			return err
 		}
-		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
-		balance = v1BalanceProjection(circleID, memberID, next, nextVersion, commitID, sequence, now)
-		bundle := map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
+		ledger := v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
+		balance := v1BalanceProjection(circleID, memberID, next, nextVersion, commitID, sequence, now)
+		bundle = map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
 		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"ledger_entry": ledger, "balance": balance}); err != nil {
 			return err
 		}
-		if err = v1.ValidateV1ResponseData(in.OperationID, bundle); err != nil {
+		if err = v1ValidateAdjustmentCommitBundle(bundle, circleID, memberID, fmt.Sprint(in.Body["adjustment_id"]), expected, delta, fmt.Sprint(in.Body["reason"]), now); err != nil {
 			g.Log().Errorf(ctx, "adjustment 响应合同校验失败 operation_id=%s request_id=%s error=%v", in.OperationID, in.RequestID, err)
 			return v1Error(502, "PROTOCOL_ERROR", false, "adjustment response projection violates the protocol")
 		}
@@ -1493,8 +1493,40 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 	if err != nil {
 		return nil, "", err
 	}
-	cursor := v1CommitCursor(receipt["commit_sequence"].(int64))
-	return map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": cursor}, cursor, nil
+	cursor := bundle["change_cursor"].(string)
+	return bundle, cursor, nil
+}
+
+// v1ValidateAdjustmentCommitBundle 校验人工调整的 receipt、流水、余额和 cursor 是否构成同一原子提交。
+func v1ValidateAdjustmentCommitBundle(bundle map[string]any, circleID, memberID, adjustmentID string, expectedVersion, delta int64, reason string, committedAt time.Time) error {
+	if err := v1.ValidateV1ResponseData("adjustMemberStars", bundle); err != nil {
+		return err
+	}
+	receipt := bundle["receipt"].(map[string]any)
+	ledger := bundle["ledger_entry"].(map[string]any)
+	balance := bundle["balance"].(map[string]any)
+	sequence, ok := v1Integer(receipt["commit_sequence"])
+	if !ok {
+		return fmt.Errorf("adjustment receipt commit sequence is invalid")
+	}
+	if bundle["change_cursor"] != v1CommitCursor(sequence) || ledger["commit_sequence"] != sequence || balance["source_commit_sequence"] != sequence {
+		return fmt.Errorf("adjustment commit cursor or sequence is inconsistent")
+	}
+	if ledger["circle_id"] != circleID || ledger["member_id"] != memberID || ledger["delta"] != delta || ledger["reason"] != reason || ledger["reversal_of_ledger_id"] != nil {
+		return fmt.Errorf("adjustment ledger does not match the requested mutation")
+	}
+	source, ok := ledger["source"].(map[string]any)
+	if !ok || source["source_type"] != "adjustment" || source["source_id"] != adjustmentID {
+		return fmt.Errorf("adjustment ledger source is inconsistent")
+	}
+	if balance["circle_id"] != circleID || balance["member_id"] != memberID || balance["version"] != expectedVersion+1 || balance["source_commit_id"] != receipt["commit_id"] {
+		return fmt.Errorf("adjustment balance is inconsistent")
+	}
+	committedAtMs := committedAt.UnixMilli()
+	if receipt["committed_at_ms"] != committedAtMs || ledger["created_at_ms"] != committedAtMs || balance["updated_at_ms"] != committedAtMs {
+		return fmt.Errorf("adjustment committed time is inconsistent")
+	}
+	return nil
 }
 
 // v1Integer 将经过 schema 校验的 JSON 整数转为 int64。

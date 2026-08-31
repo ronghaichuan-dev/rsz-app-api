@@ -60,6 +60,10 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay", err)
 				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response violates the protocol")
 			}
+			if err = v1ValidateAdjustmentOutputCursor(in.OperationID, output); err != nil {
+				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay_cursor", err)
+				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response cursor violates the protocol")
+			}
 			return output, nil
 		}
 	}
@@ -79,12 +83,34 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response projection violates the protocol")
 	}
 	output := &v1.V1OperationOutput{Data: data, Status: 200, ChangeCursor: changeCursor}
+	if err = v1ValidateAdjustmentOutputCursor(in.OperationID, output); err != nil {
+		v1LogResponseProjectionFailure(ctx, in, "operation_result_cursor", err)
+		if v1OperationSupportsIdempotency(in) {
+			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
+		}
+		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response cursor violates the protocol")
+	}
 	if v1OperationSupportsIdempotency(in) {
 		if err = v1IdempotencySave(ctx, principalScope, in, routeFingerprint, bodyFingerprint, output); err != nil {
 			return nil, err
 		}
 	}
 	return output, nil
+}
+
+// v1ValidateAdjustmentOutputCursor 确保 adjustment data 内 cursor 与最终 success envelope 的 cursor 完全一致。
+func v1ValidateAdjustmentOutputCursor(operationID string, output *v1.V1OperationOutput) error {
+	if operationID != "adjustMemberStars" {
+		return nil
+	}
+	if output == nil {
+		return fmt.Errorf("adjustment output is missing")
+	}
+	cursor, ok := output.Data["change_cursor"].(string)
+	if !ok || cursor == "" || cursor != output.ChangeCursor {
+		return fmt.Errorf("adjustment envelope change cursor is inconsistent")
+	}
+	return nil
 }
 
 // v1LogResponseProjectionFailure 记录响应合同失败的关联信息，不记录 credential、proof 或完整请求正文。
@@ -2527,6 +2553,11 @@ func v1IdempotencyAbort(ctx context.Context, scope string, in v1.V1OperationInpu
 
 // v1CreateCommitTx 在业务写入的同一事务中分配提交序列并持久化 commit 和 receipt。
 func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID string, changes map[string]any) (map[string]any, error) {
+	return v1CreateCommitAtTx(ctx, tx, circleID, operationID, time.Now(), changes)
+}
+
+// v1CreateCommitAtTx 使用调用方提供的单一提交时刻创建 commit 和 receipt，确保同一原子 bundle 的时间字段一致。
+func v1CreateCommitAtTx(ctx context.Context, tx gdb.TX, circleID, operationID string, committedAt time.Time, changes map[string]any) (map[string]any, error) {
 	sequenceRecord, err := tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Where("id", 1).LockUpdate().One()
 	if err != nil {
 		return nil, err
@@ -2550,7 +2581,6 @@ func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID stri
 	if _, err = tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Where("id", 1).Data(gdb.Map{"next_commit_sequence": sequence + 1}).Update(); err != nil {
 		return nil, err
 	}
-	now := time.Now()
 	commitID := v1ID("commit", uuid.NewString())
 	receiptID := v1ID("receipt", uuid.NewString())
 	changePayload, err := json.Marshal(v1SyncChanges(changes))
@@ -2558,18 +2588,18 @@ func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID stri
 		return nil, err
 	}
 	if _, err = tx.Model(consts.KidsV1CommitTable).Ctx(ctx).Data(gdb.Map{
-		"commit_id": commitID, "circle_id": circleID, "commit_sequence": sequence, "change_payload": string(changePayload),
+		"commit_id": commitID, "circle_id": circleID, "commit_sequence": sequence, "change_payload": string(changePayload), "created_at": committedAt,
 	}).Insert(); err != nil {
 		return nil, err
 	}
 	if _, err = tx.Model(consts.KidsV1ReceiptTable).Ctx(ctx).Data(gdb.Map{
-		"receipt_id": receiptID, "commit_id": commitID, "operation_id": operationID, "result_kind": "first_committed", "committed_at": now,
+		"receipt_id": receiptID, "commit_id": commitID, "operation_id": operationID, "result_kind": "first_committed", "committed_at": committedAt,
 	}).Insert(); err != nil {
 		return nil, err
 	}
 	return map[string]any{
 		"receipt_id": receiptID, "commit_id": commitID, "commit_sequence": sequence,
-		"result_kind": "first_committed", "committed_at_ms": now.UnixMilli(),
+		"result_kind": "first_committed", "committed_at_ms": committedAt.UnixMilli(),
 	}, nil
 }
 
