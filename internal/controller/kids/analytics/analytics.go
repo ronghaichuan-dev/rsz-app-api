@@ -14,6 +14,9 @@ type Controller struct{}
 // V1Controller 处理 Clearwave v1 的统计领域路由。
 type V1Controller struct{}
 
+// NewV1 创建 Clearwave v1 统计路由控制器。
+func NewV1() *V1Controller { return &V1Controller{} }
+
 // Summary 查询单成员任务或星星统计汇总。
 func (c *Controller) Summary(ctx context.Context, req *v1.AnalyticsSummaryReq) (res *v1.AnalyticsSummaryRes, err error) {
 	out, err := service.Kids().GetAnalyticsSummary(ctx, v1.AnalyticsSummaryInput{KidId: req.KidId, Metric: req.Metric, Range: req.Range, From: req.From, To: req.To, BaseDate: req.BaseDate})
