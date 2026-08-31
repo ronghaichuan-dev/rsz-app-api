@@ -25,6 +25,37 @@ import (
 // v1Operation 是单个接口路由对应的领域操作。
 type v1Operation func(context.Context, v1.V1OperationInput) (map[string]any, string, error)
 
+// v1IdempotentMutationOperations 集中声明已具备完整首次快照和安全重放能力的写操作。
+var v1IdempotentMutationOperations = map[string]struct{}{
+	"adjustMemberStars":         {},
+	"cancelTaskCompletion":      {},
+	"completeOnboarding":        {},
+	"completeTask":              {},
+	"createCircleMember":        {},
+	"createInvite":              {},
+	"createInviteGuestSession":  {},
+	"deleteAdministrator":       {},
+	"deleteCircle":              {},
+	"deleteMember":              {},
+	"deleteTask":                {},
+	"deleteTaskTag":             {},
+	"leaveCircle":               {},
+	"redeemAdministratorInvite": {},
+	"redeemMemberInvite":        {},
+	"redeemReward":              {},
+	"refreshInvite":             {},
+	"refreshSession":            {},
+	"revokeInvite":              {},
+	"revokeSession":             {},
+	"selectCurrentCircle":       {},
+	"submitFeedback":            {},
+	"updateCircle":              {},
+	"upsertAdministrator":       {},
+	"upsertMember":              {},
+	"upsertTask":                {},
+	"upsertTaskTag":             {},
+}
+
 // runV1 执行单个接口路由的公共认证、幂等和响应校验流程。
 func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1Operation) (*v1.V1OperationOutput, error) {
 	if err := validateV1Input(in); err != nil {
@@ -347,7 +378,11 @@ func v1ReplayOutput(output *v1.V1OperationOutput) *v1.V1OperationOutput {
 
 // v1OperationSupportsIdempotency 仅允许已经具备完整重放快照的 operation 进入幂等提交流程。
 func v1OperationSupportsIdempotency(in v1.V1OperationInput) bool {
-	return in.Method != "GET" && in.Method != "HEAD" && (in.OperationID == "createInviteGuestSession" || in.OperationID == "refreshSession" || in.OperationID == "revokeSession" || in.OperationID == "createInvite" || in.OperationID == "refreshInvite" || in.OperationID == "revokeInvite" || in.OperationID == "redeemAdministratorInvite" || in.OperationID == "redeemMemberInvite" || in.OperationID == "upsertTaskTag" || in.OperationID == "deleteTaskTag" || in.OperationID == "upsertTask" || in.OperationID == "deleteTask" || in.OperationID == "completeTask" || in.OperationID == "cancelTaskCompletion" || in.OperationID == "adjustMemberStars" || in.OperationID == "completeOnboarding" || in.OperationID == "selectCurrentCircle" || in.OperationID == "updateCircle" || in.OperationID == "deleteCircle" || in.OperationID == "createCircleMember" || in.OperationID == "upsertMember" || in.OperationID == "deleteMember" || in.OperationID == "upsertAdministrator" || in.OperationID == "deleteAdministrator" || in.OperationID == "leaveCircle" || in.OperationID == "submitFeedback")
+	if in.Method == "GET" || in.Method == "HEAD" {
+		return false
+	}
+	_, supported := v1IdempotentMutationOperations[in.OperationID]
+	return supported
 }
 
 // resolveV1Principal 从持久化 session 解析接口认证上下文，拒绝过期、撤销或类型不匹配的凭据。
