@@ -13,6 +13,7 @@ import (
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/google/uuid"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
@@ -56,6 +57,7 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		} else if output != nil {
 			output = v1ReplayOutput(output)
 			if err = v1.ValidateV1ResponseData(in.OperationID, output.Data); err != nil {
+				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay", err)
 				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response violates the protocol")
 			}
 			return output, nil
@@ -70,6 +72,7 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		return nil, err
 	}
 	if err = v1.ValidateV1ResponseData(in.OperationID, data); err != nil {
+		v1LogResponseProjectionFailure(ctx, in, "operation_result", err)
 		if v1OperationSupportsIdempotency(in) {
 			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
 		}
@@ -82,6 +85,15 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		}
 	}
 	return output, nil
+}
+
+// v1LogResponseProjectionFailure 记录响应合同失败的关联信息，不记录 credential、proof 或完整请求正文。
+func v1LogResponseProjectionFailure(ctx context.Context, in v1.V1OperationInput, stage string, err error) {
+	traceID := ""
+	if request := ghttp.RequestFromCtx(ctx); request != nil {
+		traceID = request.GetCtxVar(consts.CtxTraceIDKey).String()
+	}
+	g.Log().Errorf(ctx, "event=kids_v1_response_projection_invalid operation_id=%s request_id=%s trace_id=%s stage=%s error=%v", in.OperationID, in.RequestID, traceID, stage, err)
 }
 
 // GetCurrentAccount 获取当前账号接口 bootstrap。

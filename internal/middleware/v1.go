@@ -25,6 +25,7 @@ func V1Envelope(r *ghttp.Request) {
 			writeV1Error(r, v1Err)
 			return
 		}
+		g.Log().Errorf(r.Context(), "event=kids_v1_unexpected_handler_failure operation_id=%s request_id=%s trace_id=%s error_type=%T error=%+v", r.GetCtxVar(consts.CtxV1OperationIDKey).String(), r.Header.Get(v1.V1RequestIDHeader), v1TraceID(r), err, err)
 		writeV1Error(r, &v1.V1Error{Status: 502, Code: "PROTOCOL_ERROR", Retryable: false})
 		return
 	}

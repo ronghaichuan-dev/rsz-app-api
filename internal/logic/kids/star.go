@@ -184,7 +184,12 @@ func (s *sKids) v1ListStarTransactions(ctx context.Context, in v1.V1OperationInp
 	if hasMore {
 		next = v1PageCursor(offset + len(items))
 	}
-	return map[string]any{"items": items, "next_cursor": next, "has_more": hasMore, "snapshot_cursor": cursor}, cursor, nil
+	page := map[string]any{"items": items, "next_cursor": next, "has_more": hasMore, "snapshot_cursor": cursor}
+	if validationErr := v1.ValidateV1ResponseData(in.OperationID, page); validationErr != nil {
+		v1LogStarTransactionProjectionFailure(ctx, in, len(items), validationErr)
+		return nil, "", v1Error(409, "AUDIT_INCONSISTENT", false, "star transaction projection is inconsistent")
+	}
+	return page, cursor, nil
 }
 
 // v1StarTransactionDependencyError 保留稳定业务错误，并将真实流水读取依赖故障映射为可重试 UNAVAILABLE。
@@ -202,6 +207,15 @@ func v1StarTransactionDependencyError(ctx context.Context, dependency string, er
 	g.Log().Errorf(ctx, "event=kids_star_transaction_unavailable operation_id=%s request_id=%s trace_id=%s dependency=%s error=%+v", operationID, requestID, traceID, dependency, err)
 	retryAfterMs := int64(1000)
 	return &v1.V1Error{Status: 503, Code: "UNAVAILABLE", Retryable: true, RetryAfterMs: &retryAfterMs, Message: "star transaction ledger dependency is unavailable"}
+}
+
+// v1LogStarTransactionProjectionFailure 记录不含请求正文的流水投影合同故障，供 requestId 与 traceId 关联排查。
+func v1LogStarTransactionProjectionFailure(ctx context.Context, in v1.V1OperationInput, itemCount int, err error) {
+	traceID := ""
+	if request := ghttp.RequestFromCtx(ctx); request != nil {
+		traceID = request.GetCtxVar(consts.CtxTraceIDKey).String()
+	}
+	g.Log().Errorf(ctx, "event=kids_star_transaction_projection_invalid operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s item_count=%d error=%v", in.OperationID, in.RequestID, traceID, in.PathParameters["circle_id"], v1QueryFirst(in.Query, "member_id"), itemCount, err)
 }
 
 // GetStarBalance 从星星流水表读取指定儿童的当前星星余额。
