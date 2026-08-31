@@ -2482,6 +2482,29 @@ func v1IdempotencySave(ctx context.Context, scope string, in v1.V1OperationInput
 	return err
 }
 
+// v1IdempotencySaveTx 在业务写入事务内固化首次响应，避免写入已提交但重放快照未保存。
+func v1IdempotencySaveTx(ctx context.Context, tx gdb.TX, scope string, in v1.V1OperationInput, routeHash, bodyHash string, out *v1.V1OperationOutput) error {
+	record, err := tx.Model(consts.KidsV1IdempotencyTable).Ctx(ctx).
+		Where("principal_scope", scope).Where("idempotency_key", in.IdempotencyKey).LockUpdate().One()
+	if err != nil {
+		return err
+	}
+	if record.IsEmpty() || record["response_status"].Int() != 0 {
+		return v1Error(503, "UNAVAILABLE", true, "idempotency response store is unavailable")
+	}
+	if record["route_fingerprint"].String() != routeHash || record["body_fingerprint"].String() != bodyHash {
+		return v1Error(409, "IDEMPOTENCY_CONFLICT", false, "idempotency key conflicts with an earlier request")
+	}
+	body, err := json.Marshal(out.Data)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Model(consts.KidsV1IdempotencyTable).Ctx(ctx).Where("id", record["id"].Int64()).Data(gdb.Map{
+		"response_status": out.Status, "response_body": string(body), "response_change_cursor": nullableV1String(out.ChangeCursor), "response_etag": nullableV1String(out.ETag),
+	}).Update()
+	return err
+}
+
 // v1IdempotencyAbort 清理未产生副作用的占位记录，使同一请求可安全重试。
 func v1IdempotencyAbort(ctx context.Context, scope string, in v1.V1OperationInput, routeHash, bodyHash string) error {
 	_, err := utils.KidsDB(ctx).Model(consts.KidsV1IdempotencyTable).Ctx(ctx).
@@ -2536,6 +2559,16 @@ func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID stri
 		"receipt_id": receiptID, "commit_id": commitID, "commit_sequence": sequence,
 		"result_kind": "first_committed", "committed_at_ms": now.UnixMilli(),
 	}, nil
+}
+
+// v1UpdateCommitChangesTx 在同一事务中回填依赖 commit sequence 的完整同步投影。
+func v1UpdateCommitChangesTx(ctx context.Context, tx gdb.TX, commitID string, changes map[string]any) error {
+	changePayload, err := json.Marshal(v1SyncChanges(changes))
+	if err != nil {
+		return err
+	}
+	_, err = tx.Model(consts.KidsV1CommitTable).Ctx(ctx).Where("commit_id", commitID).Data(gdb.Map{"change_payload": string(changePayload)}).Update()
+	return err
 }
 
 // v1Receipt 构造符合接口字段集的稳定回执，持久化由具体事务负责。
@@ -2597,7 +2630,7 @@ func v1ID(kind string, value any) string {
 	prefixes := map[string]string{
 		"account": "account", "adjustment": "adjustment", "admin": "admin", "asset": "asset", "binding": "binding",
 		"circle": "circle", "commit": "commit", "completion": "completion", "entitlement": "entitlement", "exchange": "exchange",
-		"feedback": "feedback", "invite": "invite", "member": "member", "membership": "membership", "notification": "notification",
+		"feedback": "feedback", "invite": "invite", "ledger": "star-transaction", "member": "member", "membership": "membership", "notification": "notification",
 		"receipt": "receipt", "reward": "reward", "selection": "selection", "session": "session", "task": "task", "task-tag": "task-tag", "upload": "upload",
 	}
 	prefix, ok := prefixes[kind]

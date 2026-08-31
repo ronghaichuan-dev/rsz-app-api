@@ -11,6 +11,7 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
 	"github.com/google/uuid"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
@@ -1460,7 +1461,7 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": delta, "reason": in.Body["reason"], "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": now}).Insert(); err != nil {
 			return err
 		}
-		receipt, err = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{"ledger_id": ledgerID})
+		receipt, err = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{})
 		if err != nil {
 			return err
 		}
@@ -1475,6 +1476,18 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		}
 		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
 		balance = v1BalanceProjection(circleID, memberID, next, nextVersion, commitID, sequence, now)
+		bundle := map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
+		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"ledger_entry": ledger, "balance": balance}); err != nil {
+			return err
+		}
+		if err = v1.ValidateV1ResponseData(in.OperationID, bundle); err != nil {
+			g.Log().Errorf(ctx, "adjustment 响应合同校验失败 operation_id=%s request_id=%s error=%v", in.OperationID, in.RequestID, err)
+			return v1Error(502, "PROTOCOL_ERROR", false, "adjustment response projection violates the protocol")
+		}
+		out := &v1.V1OperationOutput{Data: bundle, Status: 200, ChangeCursor: v1CommitCursor(sequence)}
+		if err = v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), out); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {

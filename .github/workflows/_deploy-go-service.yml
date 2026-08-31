@@ -119,4 +119,5 @@ jobs:
           KIDS_DEPLOY_SMOKE_ZERO_BALANCE_MEMBER_ID: ${{ vars.KIDS_DEPLOY_SMOKE_ZERO_BALANCE_MEMBER_ID }}
           KIDS_DEPLOY_SMOKE_LEDGER_MEMBER_ID: ${{ vars.KIDS_DEPLOY_SMOKE_LEDGER_MEMBER_ID }}
           KIDS_DEPLOY_SMOKE_UNAVAILABLE_URL: ${{ vars.KIDS_DEPLOY_SMOKE_UNAVAILABLE_URL }}
+          KIDS_DEPLOY_SMOKE_ADJUST_ENABLED: ${{ vars.KIDS_DEPLOY_SMOKE_ADJUST_ENABLED }}
         run: go test ./internal/api/kids/v1 -run 'TestV1Deployment(MemberBalancesContract|ValidationSmoke|TaskOccurrencesRejectsOversizedLimits)'

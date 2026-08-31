@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // TestV1DeploymentMemberBalancesContract 使用隔离账号验证余额快照、权限、故障 envelope 与故障恢复后的首个成功读取。
@@ -41,6 +43,9 @@ func TestV1DeploymentMemberBalancesContract(t *testing.T) {
 	assertMemberBalances("forbidden", fixture.forbiddenAccessToken, fixture.memberIDs[:1], http.StatusForbidden)
 	assertMemberBalances("missing", fixture.accessToken, []string{"member:v1:00000000-0000-4000-8000-000000000404"}, http.StatusNotFound)
 	assertMemberBalances("invalid", fixture.accessToken, []string{"invalid-member-id"}, http.StatusUnprocessableEntity)
+	if strings.EqualFold(strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_ADJUST_ENABLED")), "true") {
+		v1DeploymentAdjustAndReverse(t, client, fixture)
+	}
 
 	if fixture.unavailableURL == "" {
 		return
@@ -69,6 +74,168 @@ func TestV1DeploymentMemberBalancesContract(t *testing.T) {
 		t.Fatalf("余额依赖故障演练应返回 UNAVAILABLE，body=%s", string(body))
 	}
 	assertMemberBalances("recovered", fixture.accessToken, []string{fixture.zeroBalanceMemberID}, http.StatusOK)
+}
+
+// v1DeploymentAdjustAndReverse 使用受控零余额成员验证 adjustment 200、幂等重放、账本读取和 append-only 反向调整。
+func v1DeploymentAdjustAndReverse(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture) {
+	t.Helper()
+	before := v1DeploymentReadBalance(t, client, fixture, "before-adjust")
+	first := v1DeploymentAdjust(t, client, fixture, "increase", before.memberID, before.version, 1)
+	replay := v1DeploymentAdjustReplay(t, client, fixture, first)
+	if replay.ledgerID != first.ledgerID || replay.receiptID != first.receiptID || replay.balanceVersion != first.balanceVersion {
+		t.Fatal("同一 adjustment 幂等重放没有返回首次 canonical bundle")
+	}
+	if first.balance != before.balance+1 || first.balanceVersion != before.version+1 {
+		t.Fatal("正向 adjustment 没有按 canonical version 更新余额")
+	}
+	v1DeploymentAssertAdjustmentLedger(t, client, fixture, first.adjustmentID)
+	reversal := v1DeploymentAdjust(t, client, fixture, "reverse", first.memberID, first.balanceVersion, -1)
+	if reversal.balance != before.balance || reversal.balanceVersion != first.balanceVersion+1 {
+		t.Fatal("反向 adjustment 没有以 append-only 方式恢复测试余额")
+	}
+	v1DeploymentAssertAdjustmentLedger(t, client, fixture, reversal.adjustmentID)
+	after := v1DeploymentReadBalance(t, client, fixture, "after-adjust")
+	if after.balance != before.balance || after.version != reversal.balanceVersion {
+		t.Fatal("重启前读取的余额投影与 adjustment 结果不一致")
+	}
+}
+
+// v1DeploymentBalance 保存读取到的单成员 canonical 余额版本。
+type v1DeploymentBalance struct {
+	memberID string
+	balance  int64
+	version  int64
+}
+
+// v1DeploymentAdjustment 保存服务端返回的 adjustment canonical bundle 关键关联字段。
+type v1DeploymentAdjustment struct {
+	adjustmentID   string
+	memberID       string
+	ledgerID       string
+	receiptID      string
+	balance        int64
+	balanceVersion int64
+	requestBody    []byte
+	idempotencyKey string
+}
+
+// v1DeploymentReadBalance 读取受控成员的单条余额并提取后续 adjustment 所需 version。
+func v1DeploymentReadBalance(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, name string) v1DeploymentBalance {
+	t.Helper()
+	requestID := "smoke:adjustment:" + name
+	response, body := v1DeploymentMemberBalanceRequest(t, client, fixture.baseURL, fixture.circleID, fixture.accessToken, requestID, []string{fixture.zeroBalanceMemberID})
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("读取 adjustment 前余额失败 status=%d body=%s", response.StatusCode, string(body))
+	}
+	var envelope struct {
+		Data struct {
+			Items []struct {
+				MemberID string `json:"member_id"`
+				Balance  int64  `json:"balance"`
+				Version  int64  `json:"version"`
+			} `json:"items"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil || len(envelope.Data.Items) != 1 {
+		t.Fatalf("解析 adjustment 前余额失败: err=%v body=%s", err, string(body))
+	}
+	item := envelope.Data.Items[0]
+	return v1DeploymentBalance{memberID: item.MemberID, balance: item.Balance, version: item.Version}
+}
+
+// v1DeploymentAdjust 发起一次受权 adjustment，并校验完整 200 canonical bundle。
+func v1DeploymentAdjust(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, name, memberID string, version, delta int64) v1DeploymentAdjustment {
+	t.Helper()
+	adjustmentID := "adjustment:v1:" + uuid.NewString()
+	requestBody, err := json.Marshal(map[string]any{"adjustment_id": adjustmentID, "member_id": memberID, "delta": delta, "reason": "deployment smoke adjustment", "expected_balance_version": version})
+	if err != nil {
+		t.Fatalf("序列化 adjustment 请求失败: %v", err)
+	}
+	idempotencyKey := "idem:v1:" + uuid.NewString()
+	return v1DeploymentPostAdjustment(t, client, fixture, "smoke:adjustment:"+name, requestBody, idempotencyKey, adjustmentID)
+}
+
+// v1DeploymentAdjustReplay 使用完全相同的请求体和幂等键重放首次 adjustment。
+func v1DeploymentAdjustReplay(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, first v1DeploymentAdjustment) v1DeploymentAdjustment {
+	t.Helper()
+	return v1DeploymentPostAdjustment(t, client, fixture, "smoke:adjustment:replay", first.requestBody, first.idempotencyKey, first.adjustmentID)
+}
+
+// v1DeploymentPostAdjustment 执行 adjustment HTTP 请求并校验错误不会被伪装为 200。
+func v1DeploymentPostAdjustment(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, requestID string, requestBody []byte, idempotencyKey, adjustmentID string) v1DeploymentAdjustment {
+	t.Helper()
+	request, err := http.NewRequest(http.MethodPost, fixture.baseURL+"/v1/circles/"+url.PathEscape(fixture.circleID)+"/star-adjustments", bytes.NewReader(requestBody))
+	if err != nil {
+		t.Fatalf("构造 adjustment 请求失败: %v", err)
+	}
+	request.Header.Set("Authorization", "Bearer "+fixture.accessToken)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set(V1RequestIDHeader, requestID)
+	request.Header.Set(V1VersionHeader, V1Version)
+	request.Header.Set(V1ClientVersionHeader, "deployment-smoke-v1")
+	request.Header.Set(V1IdempotencyHeader, idempotencyKey)
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("adjustment 请求失败: %v", err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	if err != nil {
+		t.Fatalf("读取 adjustment 响应失败: %v", err)
+	}
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("adjustment 应返回 200，实际 status=%d body=%s", response.StatusCode, string(body))
+	}
+	var envelope struct {
+		Data map[string]any `json:"data"`
+	}
+	if err = json.Unmarshal(body, &envelope); err != nil {
+		t.Fatalf("解析 adjustment 成功响应失败: %v", err)
+	}
+	if err = ValidateV1ResponseData("adjustMemberStars", envelope.Data); err != nil {
+		t.Fatalf("adjustment 成功 bundle 不符合合同: %v body=%s", err, string(body))
+	}
+	ledger := envelope.Data["ledger_entry"].(map[string]any)
+	balance := envelope.Data["balance"].(map[string]any)
+	receipt := envelope.Data["receipt"].(map[string]any)
+	return v1DeploymentAdjustment{adjustmentID: adjustmentID, memberID: balance["member_id"].(string), ledgerID: ledger["ledger_id"].(string), receiptID: receipt["receipt_id"].(string), balance: int64(balance["balance"].(float64)), balanceVersion: int64(balance["version"].(float64)), requestBody: requestBody, idempotencyKey: idempotencyKey}
+}
+
+// v1DeploymentAssertAdjustmentLedger 验证 push 后 pull 读取能够看到对应 append-only adjustment 流水。
+func v1DeploymentAssertAdjustmentLedger(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, adjustmentID string) {
+	t.Helper()
+	query := url.Values{"member_id": {fixture.zeroBalanceMemberID}, "source_type": {"adjustment"}, "limit": {"20"}}
+	request, err := http.NewRequest(http.MethodGet, fixture.baseURL+"/v1/circles/"+url.PathEscape(fixture.circleID)+"/star-transactions?"+query.Encode(), nil)
+	if err != nil {
+		t.Fatalf("构造 adjustment 流水读取请求失败: %v", err)
+	}
+	request.Header.Set("Authorization", "Bearer "+fixture.accessToken)
+	request.Header.Set(V1RequestIDHeader, "smoke:adjustment:ledger")
+	request.Header.Set(V1VersionHeader, V1Version)
+	request.Header.Set(V1ClientVersionHeader, "deployment-smoke-v1")
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("adjustment 流水读取请求失败: %v", err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	if err != nil || response.StatusCode != http.StatusOK {
+		t.Fatalf("adjustment 流水读取失败 status=%d err=%v body=%s", response.StatusCode, err, string(body))
+	}
+	var envelope struct {
+		Data map[string]any `json:"data"`
+	}
+	if err = json.Unmarshal(body, &envelope); err != nil || ValidateV1ResponseData("listStarTransactions", envelope.Data) != nil {
+		t.Fatalf("adjustment 流水响应不符合合同: err=%v body=%s", err, string(body))
+	}
+	for _, rawItem := range envelope.Data["items"].([]any) {
+		item := rawItem.(map[string]any)
+		source := item["source"].(map[string]any)
+		if source["source_id"] == adjustmentID {
+			return
+		}
+	}
+	t.Fatalf("流水读取未包含 adjustment_id=%s", adjustmentID)
 }
 
 // v1MemberBalanceDeploymentFixture 保存部署回归所需的隔离账号、圈子和可控成员信息。
