@@ -1303,6 +1303,19 @@ func v1BalanceProjection(circleID, memberID string, amount, version int64, commi
 	return map[string]any{"circle_id": circleID, "member_id": memberID, "balance": amount, "version": version, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at_ms": at.UnixMilli()}
 }
 
+// v1BalanceProjectionFromRecord 只使用持久化余额行构造规范余额投影，避免同一版本在写入响应和读取路径出现不同字段。
+func v1BalanceProjectionFromRecord(row gdb.Record) map[string]any {
+	return v1BalanceProjection(
+		row["circle_id"].String(),
+		row["member_id"].String(),
+		row["balance"].Int64(),
+		row["version"].Int64(),
+		row["source_commit_id"].String(),
+		row["source_commit_sequence"].Int64(),
+		row["updated_at"].Time(),
+	)
+}
+
 // v1CancelTaskCompletion 保留原 completion 和正向流水，并原子追加 cancellation 与冲销流水。
 func (s *sKids) v1CancelTaskCompletion(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
 	circleID, completionID := in.PathParameters["circle_id"], in.PathParameters["completion_id"]
@@ -1474,8 +1487,15 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(values).Update(); err != nil {
 			return err
 		}
+		persistedBalance, err := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).One()
+		if err != nil {
+			return err
+		}
+		if persistedBalance.IsEmpty() {
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
+		}
 		ledger := v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
-		balance := v1BalanceProjection(circleID, memberID, next, nextVersion, commitID, sequence, now)
+		balance := v1BalanceProjectionFromRecord(persistedBalance)
 		bundle = map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
 		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"ledger_entry": ledger, "balance": balance}); err != nil {
 			return err

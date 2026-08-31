@@ -65,15 +65,7 @@ func (s *sKids) v1GetMemberBalances(ctx context.Context, in v1.V1OperationInput)
 			if !ok {
 				return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
 			}
-			items = append(items, v1BalanceProjection(
-				circleID,
-				memberID,
-				balance["balance"].Int64(),
-				balance["version"].Int64(),
-				balance["source_commit_id"].String(),
-				balance["source_commit_sequence"].Int64(),
-				balance["updated_at"].Time(),
-			))
+			items = append(items, v1BalanceProjectionFromRecord(balance))
 		}
 		var cursorErr error
 		cursor, cursorErr = v1LatestCursorTx(ctx, tx)
