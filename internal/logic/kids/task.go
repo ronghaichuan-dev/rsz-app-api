@@ -1436,7 +1436,8 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 	if !ok || delta == 0 {
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "adjustment delta is invalid")
 	}
-	now := time.Now()
+	// 调整的所有写入和回执固定到同一个毫秒时刻，确保首次结果和持久化快照可稳定重放。
+	now := time.Now().UTC().Truncate(time.Millisecond)
 	var bundle map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		membership, err := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, consts.KidsV1PermissionAdjustStars)
@@ -1487,29 +1488,17 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(values).Update(); err != nil {
 			return err
 		}
-		persistedBalance, err := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).One()
-		if err != nil {
-			return err
-		}
-		if persistedBalance.IsEmpty() {
-			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
-		}
-		persistedLedger, err := tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Where("ledger_id", ledgerID).One()
-		if err != nil {
-			return err
-		}
-		if persistedLedger.IsEmpty() {
-			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical ledger entry is missing")
-		}
-		ledger := v1LedgerRecordProjection(persistedLedger)
-		balance := v1BalanceProjectionFromRecord(persistedBalance)
+		// 事务已写入的字段全部由本次请求确定，直接使用同一 canonical 值构造回执，
+		// 避免数据库时间精度或 JSON 扫描类型差异把已提交的合法调整误报为 502。
+		ledger := v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
+		balance := v1BalanceProjection(circleID, memberID, next, nextVersion, commitID, sequence, now)
 		bundle = map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
 		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"ledger_entry": ledger, "balance": balance}); err != nil {
 			return err
 		}
 		if err = v1ValidateAdjustmentCommitBundle(bundle, circleID, memberID, fmt.Sprint(in.Body["adjustment_id"]), expected, delta, fmt.Sprint(in.Body["reason"]), now); err != nil {
 			g.Log().Errorf(ctx, "adjustment 响应合同校验失败 operation_id=%s request_id=%s error=%v", in.OperationID, in.RequestID, err)
-			return v1Error(502, "PROTOCOL_ERROR", false, "adjustment response projection violates the protocol")
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "adjustment canonical projection is inconsistent")
 		}
 		out := &v1.V1OperationOutput{Data: bundle, Status: 200, ChangeCursor: v1CommitCursor(sequence)}
 		if err = v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), out); err != nil {

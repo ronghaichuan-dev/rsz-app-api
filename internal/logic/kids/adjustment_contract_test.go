@@ -26,6 +26,16 @@ func TestV1AdjustmentBundleUsesCanonicalLedgerID(t *testing.T) {
 	}
 }
 
+// TestV1AdjustmentBundleSupportsLargestLegalIncrease 验证合同允许的最大人工加星仍可组成规范的原子提交响应。
+func TestV1AdjustmentBundleSupportsLargestLegalIncrease(t *testing.T) {
+	bundle := v1AdjustmentBundleFixture()
+	bundle["ledger_entry"].(map[string]any)["delta"] = int64(1_000_000)
+	bundle["balance"].(map[string]any)["balance"] = int64(1_000_000)
+	if err := v1ValidateAdjustmentCommitBundle(bundle, "circle:v1:00000000-0000-4000-8000-000000000001", "member:v1:00000000-0000-4000-8000-000000000001", "adjustment:v1:00000000-0000-4000-8000-000000000001", 1, 1_000_000, "测试调整", time.UnixMilli(1_700_000_000_000)); err != nil {
+		t.Fatalf("最大合法人工加星不应被响应合同拒绝: %v", err)
+	}
+}
+
 // TestV1AdjustmentBundleRejectsInconsistentCommittedTime 防止 receipt、ledger 与 balance 使用不同时间却返回 200。
 func TestV1AdjustmentBundleRejectsInconsistentCommittedTime(t *testing.T) {
 	bundle := v1AdjustmentBundleFixture()

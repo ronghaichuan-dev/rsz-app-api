@@ -2174,24 +2174,32 @@ func (s *sKids) v1SubmitFeedback(ctx context.Context, in v1.V1OperationInput) (m
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "feedback content is required")
 	}
 	attachmentJSON, _ := json.Marshal(in.Body["attachment_asset_ids"])
-	now := time.Now()
+	var committedAt time.Time
 	var receipt map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// 反馈事实与 mutation receipt 共用同一个毫秒级提交时刻，避免客户端将成功回执判为协议失败。
+		committedAt = time.Now().UTC().Truncate(time.Millisecond)
 		if _, err := tx.Model(consts.KidsV1FeedbackTable).Ctx(ctx).Data(gdb.Map{
 			"feedback_id": feedbackID, "account_id": v1AccountID(ctx, in), "category": in.Body["category"], "content": content,
 			"contact_type": nullableV1String(in.Body["contact_type"]), "contact": nullableV1String(in.Body["contact"]),
-			"privacy_consent_version": in.Body["privacy_consent_version"], "attachment_asset_ids": string(attachmentJSON),
+			"privacy_consent_version": in.Body["privacy_consent_version"], "attachment_asset_ids": string(attachmentJSON), "created_at": committedAt,
 		}).Insert(); err != nil {
 			return err
 		}
 		var commitErr error
-		receipt, commitErr = v1CreateCommitTx(ctx, tx, "", in.OperationID, map[string]any{"feedback_ids": []string{feedbackID}})
+		receipt, commitErr = v1CreateCommitAtTx(ctx, tx, "", in.OperationID, committedAt, map[string]any{"feedback_ids": []string{feedbackID}})
 		return commitErr
 	})
 	if err != nil {
 		return nil, "", err
 	}
-	return map[string]any{"feedback_id": feedbackID, "status": "accepted", "received_at_ms": now.UnixMilli(), "version": 1, "receipt": receipt}, "", nil
+	return v1FeedbackReceiptData(feedbackID, committedAt, receipt), "", nil
+}
+
+// v1FeedbackReceiptData 使用 receipt 的同一 canonical commit 时刻构造反馈成功回执。
+func v1FeedbackReceiptData(feedbackID string, committedAt time.Time, receipt map[string]any) map[string]any {
+	committedAtMs := committedAt.UnixMilli()
+	return map[string]any{"feedback_id": feedbackID, "status": "accepted", "received_at_ms": committedAtMs, "version": int64(1), "receipt": receipt}
 }
 
 // v1Mutation 统一生成持久化接口回执，领域迁移期间保持稳定 wire 结构。
