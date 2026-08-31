@@ -1494,7 +1494,14 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if persistedBalance.IsEmpty() {
 			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
 		}
-		ledger := v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
+		persistedLedger, err := tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Where("ledger_id", ledgerID).One()
+		if err != nil {
+			return err
+		}
+		if persistedLedger.IsEmpty() {
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical ledger entry is missing")
+		}
+		ledger := v1LedgerRecordProjection(persistedLedger)
 		balance := v1BalanceProjectionFromRecord(persistedBalance)
 		bundle = map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
 		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"ledger_entry": ledger, "balance": balance}); err != nil {

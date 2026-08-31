@@ -3,10 +3,12 @@ package v1
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -142,12 +144,14 @@ func v1DeploymentAdjustAndReverse(t *testing.T, client *http.Client, fixture v1M
 	if first.balance != before.balance+1 || first.balanceVersion != before.version+1 {
 		t.Fatal("正向 adjustment 没有按 canonical version 更新余额")
 	}
-	v1DeploymentAssertAdjustmentLedger(t, client, fixture, first.adjustmentID)
+	v1DeploymentAssertAdjustmentLedger(t, client, fixture, first)
+	v1DeploymentAssertAdjustmentSyncLedger(t, client, fixture, first)
 	reversal := v1DeploymentAdjust(t, client, fixture, "reverse", first.memberID, first.balanceVersion, -1)
 	if reversal.balance != before.balance || reversal.balanceVersion != first.balanceVersion+1 {
 		t.Fatal("反向 adjustment 没有以 append-only 方式恢复测试余额")
 	}
-	v1DeploymentAssertAdjustmentLedger(t, client, fixture, reversal.adjustmentID)
+	v1DeploymentAssertAdjustmentLedger(t, client, fixture, reversal)
+	v1DeploymentAssertAdjustmentSyncLedger(t, client, fixture, reversal)
 	after := v1DeploymentReadBalance(t, client, fixture, "after-adjust")
 	if after.balance != before.balance || after.version != reversal.balanceVersion {
 		t.Fatal("重启前读取的余额投影与 adjustment 结果不一致")
@@ -166,6 +170,9 @@ type v1DeploymentAdjustment struct {
 	adjustmentID   string
 	memberID       string
 	ledgerID       string
+	ledger         map[string]any
+	commitID       string
+	commitSequence int64
 	receiptID      string
 	balance        int64
 	balanceVersion int64
@@ -252,11 +259,11 @@ func v1DeploymentPostAdjustment(t *testing.T, client *http.Client, fixture v1Mem
 	ledger := envelope.Data["ledger_entry"].(map[string]any)
 	balance := envelope.Data["balance"].(map[string]any)
 	receipt := envelope.Data["receipt"].(map[string]any)
-	return v1DeploymentAdjustment{adjustmentID: adjustmentID, memberID: balance["member_id"].(string), ledgerID: ledger["ledger_id"].(string), receiptID: receipt["receipt_id"].(string), balance: int64(balance["balance"].(float64)), balanceVersion: int64(balance["version"].(float64)), requestBody: requestBody, idempotencyKey: idempotencyKey}
+	return v1DeploymentAdjustment{adjustmentID: adjustmentID, memberID: balance["member_id"].(string), ledgerID: ledger["ledger_id"].(string), ledger: ledger, commitID: receipt["commit_id"].(string), commitSequence: int64(receipt["commit_sequence"].(float64)), receiptID: receipt["receipt_id"].(string), balance: int64(balance["balance"].(float64)), balanceVersion: int64(balance["version"].(float64)), requestBody: requestBody, idempotencyKey: idempotencyKey}
 }
 
-// v1DeploymentAssertAdjustmentLedger 验证 push 后 pull 读取能够看到对应 append-only adjustment 流水。
-func v1DeploymentAssertAdjustmentLedger(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, adjustmentID string) {
+// v1DeploymentAssertAdjustmentLedger 验证调整后读取能够看到对应的不可变流水，并保持与变更响应一致。
+func v1DeploymentAssertAdjustmentLedger(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, adjustment v1DeploymentAdjustment) {
 	t.Helper()
 	query := url.Values{"member_id": {fixture.zeroBalanceMemberID}, "source_type": {"adjustment"}, "limit": {"20"}}
 	request, err := http.NewRequest(http.MethodGet, fixture.baseURL+"/v1/circles/"+url.PathEscape(fixture.circleID)+"/star-transactions?"+query.Encode(), nil)
@@ -285,11 +292,64 @@ func v1DeploymentAssertAdjustmentLedger(t *testing.T, client *http.Client, fixtu
 	for _, rawItem := range envelope.Data["items"].([]any) {
 		item := rawItem.(map[string]any)
 		source := item["source"].(map[string]any)
-		if source["source_id"] == adjustmentID {
+		if source["source_id"] == adjustment.adjustmentID {
+			v1DeploymentAssertCanonicalLedger(t, adjustment.ledger, item, "listStarTransactions")
 			return
 		}
 	}
-	t.Fatalf("流水读取未包含 adjustment_id=%s", adjustmentID)
+	t.Fatalf("流水读取未包含 adjustment_id=%s", adjustment.adjustmentID)
+}
+
+// v1DeploymentAssertAdjustmentSyncLedger 验证调整对应的同步提交保留与变更响应相同的不可变流水投影。
+func v1DeploymentAssertAdjustmentSyncLedger(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, adjustment v1DeploymentAdjustment) {
+	t.Helper()
+	query := url.Values{"change_cursor": {fmt.Sprintf("cur:v1:%08x", adjustment.commitSequence-1)}, "limit": {"20"}}
+	request, err := http.NewRequest(http.MethodGet, fixture.baseURL+"/v1/circles/"+url.PathEscape(fixture.circleID)+"/sync?"+query.Encode(), nil)
+	if err != nil {
+		t.Fatalf("构造 adjustment 同步读取请求失败: %v", err)
+	}
+	request.Header.Set("Authorization", "Bearer "+fixture.accessToken)
+	request.Header.Set(V1RequestIDHeader, "smoke:adjustment:sync")
+	request.Header.Set(V1VersionHeader, V1Version)
+	request.Header.Set(V1ClientVersionHeader, "deployment-smoke-v1")
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("adjustment 同步读取请求失败: %v", err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	if err != nil || response.StatusCode != http.StatusOK {
+		t.Fatalf("adjustment 同步读取失败 status=%d err=%v body=%s", response.StatusCode, err, string(body))
+	}
+	var envelope struct {
+		Data map[string]any `json:"data"`
+	}
+	if err = json.Unmarshal(body, &envelope); err != nil || ValidateV1ResponseData("pullCircleBootstrapDelta", envelope.Data) != nil {
+		t.Fatalf("adjustment 同步响应不符合合同: err=%v body=%s", err, string(body))
+	}
+	for _, rawCommit := range envelope.Data["commits"].([]any) {
+		commit := rawCommit.(map[string]any)
+		if commit["commit_id"] != adjustment.commitID {
+			continue
+		}
+		for _, rawLedger := range commit["changes"].(map[string]any)["ledger_entries"].([]any) {
+			ledger := rawLedger.(map[string]any)
+			if ledger["ledger_id"] == adjustment.ledgerID {
+				v1DeploymentAssertCanonicalLedger(t, adjustment.ledger, ledger, "pullCircleBootstrapDelta")
+				return
+			}
+		}
+		t.Fatalf("同步提交未包含 ledger_id=%s", adjustment.ledgerID)
+	}
+	t.Fatalf("同步响应未包含 commit_id=%s", adjustment.commitID)
+}
+
+// v1DeploymentAssertCanonicalLedger 验证同一流水标识在不同接口中逐字段保持同一不可变事实。
+func v1DeploymentAssertCanonicalLedger(t *testing.T, expected, actual map[string]any, source string) {
+	t.Helper()
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("同一 ledger_id 的规范投影不一致 source=%s expected=%v actual=%v", source, expected, actual)
+	}
 }
 
 // v1MemberBalanceDeploymentFixture 保存部署回归所需的隔离账号、圈子和可控成员信息。
