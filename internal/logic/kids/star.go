@@ -121,9 +121,6 @@ func v1MemberBalanceDependencyError(ctx context.Context, dependency string, err 
 // v1ListStarTransactions 返回经过成员权限、时间范围和来源类型筛选后的接口账本分页。
 func (s *sKids) v1ListStarTransactions(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
 	circleID := in.PathParameters["circle_id"]
-	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
-		return nil, "", err
-	}
 	limit := v1QueryFirst(in.Query, "limit")
 	offset, err := v1PageOffset(v1QueryFirst(in.Query, "cursor"))
 	if err != nil {
@@ -133,56 +130,78 @@ func (s *sKids) v1ListStarTransactions(ctx context.Context, in v1.V1OperationInp
 	if _, err = fmt.Sscan(limit, &pageSize); err != nil || pageSize < 1 || pageSize > 200 {
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "ledger limit is invalid")
 	}
-	pageOffset := offset
-	model := utils.KidsDB(ctx).Model(consts.KidsV1LedgerTable).Ctx(ctx).
-		Where("circle_id", circleID).Where("member_id", v1QueryFirst(in.Query, "member_id"))
-	if startText := v1QueryFirst(in.Query, "start_at_ms"); startText != "" {
-		var startAt int64
-		if _, err = fmt.Sscan(startText, &startAt); err != nil {
-			return nil, "", v1Error(422, "VALIDATION_FAILED", false, "ledger start time is invalid")
-		}
-		model = model.Where("created_at >= ?", time.UnixMilli(startAt))
-	}
-	if endText := v1QueryFirst(in.Query, "end_at_ms"); endText != "" {
-		var endAt int64
-		if _, err = fmt.Sscan(endText, &endAt); err != nil {
-			return nil, "", v1Error(422, "VALIDATION_FAILED", false, "ledger end time is invalid")
-		}
-		model = model.Where("created_at < ?", time.UnixMilli(endAt))
-	}
-	rows, err := model.Order("created_at DESC,id DESC").All()
-	if err != nil {
-		return nil, "", err
-	}
 	sourceType := v1QueryFirst(in.Query, "source_type")
 	items := make([]map[string]any, 0, pageSize)
-	for _, row := range rows {
-		source, _ := v1JSONValue(row["source"].String()).(map[string]any)
-		if source == nil || (sourceType != "" && source["source_type"] != sourceType) {
-			continue
+	cursor := ""
+	hasMore := false
+	err = utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		if _, txErr := v1ReadMembershipTx(ctx, tx, in.PrincipalID, circleID); txErr != nil {
+			return v1StarTransactionDependencyError(ctx, "membership", txErr)
 		}
-		if offset > 0 {
-			offset--
-			continue
+		model := tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).
+			Fields("ledger_id,circle_id,member_id,source,delta,reason,actor,reversal_of_ledger_id,commit_sequence,created_at").
+			Where("circle_id", circleID).
+			Where("member_id", v1QueryFirst(in.Query, "member_id"))
+		if startText := v1QueryFirst(in.Query, "start_at_ms"); startText != "" {
+			var startAt int64
+			if _, txErr := fmt.Sscan(startText, &startAt); txErr != nil {
+				return v1Error(422, "VALIDATION_FAILED", false, "ledger start time is invalid")
+			}
+			model = model.Where("created_at >= ?", time.UnixMilli(startAt))
 		}
-		items = append(items, v1LedgerRecordProjection(row))
-		if len(items) > pageSize {
-			break
+		if endText := v1QueryFirst(in.Query, "end_at_ms"); endText != "" {
+			var endAt int64
+			if _, txErr := fmt.Sscan(endText, &endAt); txErr != nil {
+				return v1Error(422, "VALIDATION_FAILED", false, "ledger end time is invalid")
+			}
+			model = model.Where("created_at < ?", time.UnixMilli(endAt))
 		}
-	}
-	hasMore := len(items) > pageSize
-	if hasMore {
-		items = items[:pageSize]
-	}
-	cursor, err := v1LatestCursor(ctx)
+		if sourceType != "" {
+			model = model.Where("JSON_UNQUOTE(JSON_EXTRACT(source, '$.source_type')) = ?", sourceType)
+		}
+		rows, txErr := model.Order("created_at DESC,id DESC").Limit(offset, pageSize+1).All()
+		if txErr != nil {
+			return v1StarTransactionDependencyError(ctx, "ledger_read_store", txErr)
+		}
+		hasMore = len(rows) > pageSize
+		if hasMore {
+			rows = rows[:pageSize]
+		}
+		for _, row := range rows {
+			items = append(items, v1LedgerRecordProjection(row))
+		}
+		var cursorErr error
+		cursor, cursorErr = v1LatestCursorTx(ctx, tx)
+		if cursorErr != nil {
+			return v1StarTransactionDependencyError(ctx, "commit_snapshot_store", cursorErr)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, "", err
 	}
 	next := any(nil)
 	if hasMore {
-		next = v1PageCursor(pageOffset + len(items))
+		next = v1PageCursor(offset + len(items))
 	}
 	return map[string]any{"items": items, "next_cursor": next, "has_more": hasMore, "snapshot_cursor": cursor}, cursor, nil
+}
+
+// v1StarTransactionDependencyError 保留稳定业务错误，并将真实流水读取依赖故障映射为可重试 UNAVAILABLE。
+func v1StarTransactionDependencyError(ctx context.Context, dependency string, err error) error {
+	var protocolErr *v1.V1Error
+	if errors.As(err, &protocolErr) {
+		return err
+	}
+	requestID, traceID, operationID := "", "", "listStarTransactions"
+	if request := ghttp.RequestFromCtx(ctx); request != nil {
+		requestID = request.Header.Get(v1.V1RequestIDHeader)
+		traceID = request.GetCtxVar(consts.CtxTraceIDKey).String()
+		operationID = request.GetCtxVar(consts.CtxV1OperationIDKey).String()
+	}
+	g.Log().Errorf(ctx, "event=kids_star_transaction_unavailable operation_id=%s request_id=%s trace_id=%s dependency=%s error=%+v", operationID, requestID, traceID, dependency, err)
+	retryAfterMs := int64(1000)
+	return &v1.V1Error{Status: 503, Code: "UNAVAILABLE", Retryable: true, RetryAfterMs: &retryAfterMs, Message: "star transaction ledger dependency is unavailable"}
 }
 
 // GetStarBalance 从星星流水表读取指定儿童的当前星星余额。

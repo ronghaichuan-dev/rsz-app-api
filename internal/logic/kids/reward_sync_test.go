@@ -9,7 +9,7 @@ import (
 func TestV1SyncChanges(t *testing.T) {
 	changes := v1SyncChanges(map[string]any{
 		"circle":           map[string]any{"circle_id": "circle:v1:00000000-0000-4000-8000-000000000001"},
-		"ledger_entry":     map[string]any{"ledger_id": "ledger:v1:00000000-0000-4000-8000-000000000001"},
+		"ledger_entry":     map[string]any{"ledger_id": "star-transaction:v1:00000000-0000-4000-8000-000000000001"},
 		"reward_tombstone": map[string]any{"entity_id": "reward:v1:00000000-0000-4000-8000-000000000001"},
 	})
 	if len(changes) != 19 {

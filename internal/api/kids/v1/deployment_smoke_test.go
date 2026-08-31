@@ -43,6 +43,8 @@ func TestV1DeploymentMemberBalancesContract(t *testing.T) {
 	assertMemberBalances("forbidden", fixture.forbiddenAccessToken, fixture.memberIDs[:1], http.StatusForbidden)
 	assertMemberBalances("missing", fixture.accessToken, []string{"member:v1:00000000-0000-4000-8000-000000000404"}, http.StatusNotFound)
 	assertMemberBalances("invalid", fixture.accessToken, []string{"invalid-member-id"}, http.StatusUnprocessableEntity)
+	v1DeploymentAssertStarTransactionPage(t, client, fixture, "empty", fixture.zeroBalanceMemberID)
+	v1DeploymentAssertStarTransactionPage(t, client, fixture, "existing", fixture.ledgerMemberID)
 	if strings.EqualFold(strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_ADJUST_ENABLED")), "true") {
 		v1DeploymentAdjustAndReverse(t, client, fixture)
 	}
@@ -74,6 +76,58 @@ func TestV1DeploymentMemberBalancesContract(t *testing.T) {
 		t.Fatalf("余额依赖故障演练应返回 UNAVAILABLE，body=%s", string(body))
 	}
 	assertMemberBalances("recovered", fixture.accessToken, []string{fixture.zeroBalanceMemberID}, http.StatusOK)
+}
+
+// v1DeploymentAssertStarTransactionPage 验证空流水和已有流水均返回可被客户端解码的规范分页响应。
+func v1DeploymentAssertStarTransactionPage(t *testing.T, client *http.Client, fixture v1MemberBalanceDeploymentFixture, name, memberID string) {
+	t.Helper()
+	query := url.Values{"member_id": {memberID}, "limit": {"20"}}
+	requestID := "smoke:star-transactions:" + name
+	request, err := http.NewRequest(http.MethodGet, fixture.baseURL+"/v1/circles/"+url.PathEscape(fixture.circleID)+"/star-transactions?"+query.Encode(), nil)
+	if err != nil {
+		t.Fatalf("构造星星流水读取请求失败: %v", err)
+	}
+	request.Header.Set("Authorization", "Bearer "+fixture.accessToken)
+	request.Header.Set(V1RequestIDHeader, requestID)
+	request.Header.Set(V1VersionHeader, V1Version)
+	request.Header.Set(V1ClientVersionHeader, "deployment-smoke-v1")
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("星星流水读取请求失败: %v", err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	if err != nil {
+		t.Fatalf("读取星星流水响应失败: %v", err)
+	}
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("星星流水读取应返回 200 case=%s got=%d body=%s", name, response.StatusCode, string(body))
+	}
+	var envelope struct {
+		Data map[string]any `json:"data"`
+	}
+	if err = json.Unmarshal(body, &envelope); err != nil {
+		t.Fatalf("解析星星流水成功响应失败: %v", err)
+	}
+	if err = ValidateV1ResponseData("listStarTransactions", envelope.Data); err != nil {
+		t.Fatalf("星星流水成功响应不符合合同 case=%s err=%v body=%s", name, err, string(body))
+	}
+	items := envelope.Data["items"].([]any)
+	if name == "empty" && len(items) != 0 {
+		t.Fatalf("零余额成员应返回空流水页，实际 items=%v", items)
+	}
+	if name == "existing" && len(items) == 0 {
+		t.Fatal("已有流水成员不应返回空流水页")
+	}
+	for _, rawItem := range items {
+		item := rawItem.(map[string]any)
+		if item["circle_id"] != fixture.circleID || item["member_id"] != memberID {
+			t.Fatalf("星星流水越过请求范围 case=%s item=%v", name, item)
+		}
+	}
+	if envelope.Data["has_more"].(bool) != (envelope.Data["next_cursor"] != nil) {
+		t.Fatalf("星星流水分页字段不一致 case=%s data=%v", name, envelope.Data)
+	}
 }
 
 // v1DeploymentAdjustAndReverse 使用受控零余额成员验证 adjustment 200、幂等重放、账本读取和 append-only 反向调整。
