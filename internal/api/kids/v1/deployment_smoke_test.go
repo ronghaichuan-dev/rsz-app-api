@@ -5,11 +5,190 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
 )
+
+// TestV1DeploymentMemberBalancesContract 使用隔离账号验证余额快照、权限、故障 envelope 与故障恢复后的首个成功读取。
+func TestV1DeploymentMemberBalancesContract(t *testing.T) {
+	fixture, ok := loadV1MemberBalanceDeploymentFixture(t)
+	if !ok {
+		return
+	}
+	client := &http.Client{Timeout: 15 * time.Second}
+
+	assertMemberBalances := func(name string, token string, memberIDs []string, expectedStatus int) {
+		t.Helper()
+		requestID := "smoke:member-balances:" + name
+		response, body := v1DeploymentMemberBalanceRequest(t, client, fixture.baseURL, fixture.circleID, token, requestID, memberIDs)
+		if response.StatusCode != expectedStatus {
+			t.Fatalf("余额读取状态不正确 case=%s got=%d want=%d body=%s", name, response.StatusCode, expectedStatus, string(body))
+		}
+		if expectedStatus != http.StatusOK {
+			v1SmokeAssertErrorEnvelope(t, "getMemberBalances", requestID, response, body)
+			return
+		}
+		v1DeploymentAssertMemberBalanceSuccess(t, requestID, response, body, fixture.circleID, memberIDs)
+	}
+
+	assertMemberBalances("single", fixture.accessToken, fixture.memberIDs[:1], http.StatusOK)
+	assertMemberBalances("batch", fixture.accessToken, fixture.memberIDs, http.StatusOK)
+	assertMemberBalances("zero", fixture.accessToken, []string{fixture.zeroBalanceMemberID}, http.StatusOK)
+	assertMemberBalances("ledger", fixture.accessToken, []string{fixture.ledgerMemberID}, http.StatusOK)
+	assertMemberBalances("forbidden", fixture.forbiddenAccessToken, fixture.memberIDs[:1], http.StatusForbidden)
+	assertMemberBalances("missing", fixture.accessToken, []string{"member:v1:00000000-0000-4000-8000-000000000404"}, http.StatusNotFound)
+	assertMemberBalances("invalid", fixture.accessToken, []string{"invalid-member-id"}, http.StatusUnprocessableEntity)
+
+	if fixture.unavailableURL == "" {
+		return
+	}
+	requestID := "smoke:member-balances:unavailable"
+	request, err := http.NewRequest(http.MethodGet, fixture.unavailableURL, nil)
+	if err != nil {
+		t.Fatalf("构造余额依赖故障演练请求失败: %v", err)
+	}
+	request.Header.Set(V1RequestIDHeader, requestID)
+	request.Header.Set(V1VersionHeader, V1Version)
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("余额依赖故障演练请求失败: %v", err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	if err != nil {
+		t.Fatalf("读取余额依赖故障演练响应失败: %v", err)
+	}
+	if response.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("余额依赖故障演练应返回 503，实际 status=%d body=%s", response.StatusCode, string(body))
+	}
+	v1SmokeAssertErrorEnvelope(t, "getMemberBalances", requestID, response, body)
+	if v1SmokeErrorCode(body) != "UNAVAILABLE" {
+		t.Fatalf("余额依赖故障演练应返回 UNAVAILABLE，body=%s", string(body))
+	}
+	assertMemberBalances("recovered", fixture.accessToken, []string{fixture.zeroBalanceMemberID}, http.StatusOK)
+}
+
+// v1MemberBalanceDeploymentFixture 保存部署回归所需的隔离账号、圈子和可控成员信息。
+type v1MemberBalanceDeploymentFixture struct {
+	baseURL              string
+	accessToken          string
+	forbiddenAccessToken string
+	circleID             string
+	memberIDs            []string
+	zeroBalanceMemberID  string
+	ledgerMemberID       string
+	unavailableURL       string
+}
+
+// loadV1MemberBalanceDeploymentFixture 读取完整的部署回归环境；未配置时跳过，避免误用真实账号。
+func loadV1MemberBalanceDeploymentFixture(t *testing.T) (v1MemberBalanceDeploymentFixture, bool) {
+	t.Helper()
+	fixture := v1MemberBalanceDeploymentFixture{
+		baseURL:              strings.TrimRight(strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_BASE_URL")), "/"),
+		accessToken:          strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_ACCESS_TOKEN")),
+		forbiddenAccessToken: strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_FORBIDDEN_ACCESS_TOKEN")),
+		circleID:             strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_CIRCLE_ID")),
+		memberIDs:            v1DeploymentMemberIDs(os.Getenv("KIDS_DEPLOY_SMOKE_MEMBER_IDS")),
+		zeroBalanceMemberID:  strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_ZERO_BALANCE_MEMBER_ID")),
+		ledgerMemberID:       strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_LEDGER_MEMBER_ID")),
+		unavailableURL:       strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_UNAVAILABLE_URL")),
+	}
+	if fixture.baseURL == "" && fixture.accessToken == "" && fixture.forbiddenAccessToken == "" && fixture.circleID == "" && len(fixture.memberIDs) == 0 && fixture.zeroBalanceMemberID == "" && fixture.ledgerMemberID == "" {
+		t.Skip("未配置隔离余额部署回归资产，跳过真实余额读取验收")
+		return v1MemberBalanceDeploymentFixture{}, false
+	}
+	if fixture.baseURL == "" || fixture.accessToken == "" || fixture.forbiddenAccessToken == "" || fixture.circleID == "" || len(fixture.memberIDs) != 2 || fixture.zeroBalanceMemberID == "" || fixture.ledgerMemberID == "" {
+		t.Fatal("余额部署回归配置不完整；请配置隔离账号、圈子、两个成员、零余额成员和已有流水成员")
+	}
+	return fixture, true
+}
+
+// v1DeploymentMemberIDs 解析逗号分隔的两个受控成员标识。
+func v1DeploymentMemberIDs(value string) []string {
+	var memberIDs []string
+	for _, memberID := range strings.Split(value, ",") {
+		if memberID = strings.TrimSpace(memberID); memberID != "" {
+			memberIDs = append(memberIDs, memberID)
+		}
+	}
+	return memberIDs
+}
+
+// v1DeploymentMemberBalanceRequest 向部署环境发送一次真实的 canonical 余额读取请求。
+func v1DeploymentMemberBalanceRequest(t *testing.T, client *http.Client, baseURL, circleID, token, requestID string, memberIDs []string) (*http.Response, []byte) {
+	t.Helper()
+	query := make(url.Values, len(memberIDs))
+	for _, memberID := range memberIDs {
+		query.Add("member_id", memberID)
+	}
+	request, err := http.NewRequest(http.MethodGet, baseURL+"/v1/circles/"+url.PathEscape(circleID)+"/member-balances?"+query.Encode(), nil)
+	if err != nil {
+		t.Fatalf("构造余额读取请求失败: %v", err)
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+	request.Header.Set(V1RequestIDHeader, requestID)
+	request.Header.Set(V1VersionHeader, V1Version)
+	request.Header.Set(V1ClientVersionHeader, "deployment-smoke-v1")
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("余额读取请求失败: %v", err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	if err != nil {
+		t.Fatalf("读取余额响应失败: %v", err)
+	}
+	return response, body
+}
+
+// v1DeploymentAssertMemberBalanceSuccess 校验 200 schema、trace 关联、请求集合一一对应以及可用于调整的版本。
+func v1DeploymentAssertMemberBalanceSuccess(t *testing.T, requestID string, response *http.Response, body []byte, circleID string, memberIDs []string) {
+	t.Helper()
+	var envelope struct {
+		ContractVersion string         `json:"contract_version"`
+		RequestID       string         `json:"request_id"`
+		Data            map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		t.Fatalf("余额成功响应不是 JSON: %v", err)
+	}
+	if envelope.ContractVersion != V1Version || envelope.RequestID != requestID || response.Header.Get("X-Request-Id") != requestID || response.Header.Get("X-Trace-Id") == "" {
+		t.Fatalf("余额成功响应缺少关联字段: body=%s", string(body))
+	}
+	if err := ValidateV1ResponseData("getMemberBalances", envelope.Data); err != nil {
+		t.Fatalf("余额成功响应不符合合同: %v body=%s", err, string(body))
+	}
+	rawItems, ok := envelope.Data["items"].([]any)
+	if !ok || len(rawItems) != len(memberIDs) {
+		t.Fatalf("余额 items 数量不正确: body=%s", string(body))
+	}
+	expected := make(map[string]struct{}, len(memberIDs))
+	for _, memberID := range memberIDs {
+		expected[memberID] = struct{}{}
+	}
+	seen := make(map[string]struct{}, len(rawItems))
+	for _, rawItem := range rawItems {
+		item, ok := rawItem.(map[string]any)
+		if !ok || item["circle_id"] != circleID {
+			t.Fatalf("余额 item 不是请求圈子的成员: body=%s", string(body))
+		}
+		memberID, _ := item["member_id"].(string)
+		if _, ok = expected[memberID]; !ok {
+			t.Fatalf("余额 item 不属于请求集合: member_id=%s", memberID)
+		}
+		if _, duplicated := seen[memberID]; duplicated {
+			t.Fatalf("余额 item 出现重复成员: member_id=%s", memberID)
+		}
+		seen[memberID] = struct{}{}
+		version, ok := item["version"].(float64)
+		if !ok || version < 1 || version != float64(int64(version)) {
+			t.Fatalf("余额 item 缺少可用于调整的 canonical version: member_id=%s", memberID)
+		}
+	}
+}
 
 // TestV1DeploymentValidationSmoke 对已配置的部署环境执行 46 个 operation 的真实路由、校验和可观测性验收。
 func TestV1DeploymentValidationSmoke(t *testing.T) {

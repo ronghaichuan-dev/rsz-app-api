@@ -2,6 +2,7 @@ package kids
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/net/ghttp"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
 	commoni18n "rslytics-app-api/internal/common/i18n"
@@ -33,25 +36,34 @@ func (s *sKids) v1GetMemberBalances(ctx context.Context, in v1.V1OperationInput)
 	items := make([]map[string]any, 0, len(memberIDs))
 	cursor := ""
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		if _, txErr := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, ""); txErr != nil {
-			return txErr
+		if _, txErr := v1ReadMembershipTx(ctx, tx, in.PrincipalID, circleID); txErr != nil {
+			return v1MemberBalanceDependencyError(ctx, "membership", txErr)
+		}
+		members, txErr := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).
+			Where("circle_id", circleID).Where("member_id IN(?)", memberIDs).Where("status", "active").All()
+		if txErr != nil {
+			return v1MemberBalanceDependencyError(ctx, "member_read_store", txErr)
+		}
+		membersByID := make(map[string]gdb.Record, len(members))
+		for _, member := range members {
+			membersByID[member["member_id"].String()] = member
+		}
+		balances, txErr := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).
+			Where("circle_id", circleID).Where("member_id IN(?)", memberIDs).All()
+		if txErr != nil {
+			return v1MemberBalanceDependencyError(ctx, "balance_snapshot_store", txErr)
+		}
+		balancesByID := make(map[string]gdb.Record, len(balances))
+		for _, balance := range balances {
+			balancesByID[balance["member_id"].String()] = balance
 		}
 		for _, memberID := range memberIDs {
-			member, txErr := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).
-				Where("circle_id", circleID).Where("member_id", memberID).Where("status", "active").One()
-			if txErr != nil {
-				return txErr
-			}
-			if member.IsEmpty() {
+			if _, ok := membersByID[memberID]; !ok {
 				return v1Error(404, "NOT_FOUND", false, "member is missing")
 			}
-			balance, txErr := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).
-				Where("circle_id", circleID).Where("member_id", memberID).One()
-			if txErr != nil {
-				return txErr
-			}
-			if balance.IsEmpty() {
-				return v1Error(502, "PROTOCOL_ERROR", false, "canonical member balance is missing")
+			balance, ok := balancesByID[memberID]
+			if !ok {
+				return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
 			}
 			items = append(items, v1BalanceProjection(
 				circleID,
@@ -63,14 +75,47 @@ func (s *sKids) v1GetMemberBalances(ctx context.Context, in v1.V1OperationInput)
 				balance["updated_at"].Time(),
 			))
 		}
-		var txErr error
-		cursor, txErr = v1LatestCursorTx(ctx, tx)
-		return txErr
+		var cursorErr error
+		cursor, cursorErr = v1LatestCursorTx(ctx, tx)
+		if cursorErr != nil {
+			return v1MemberBalanceDependencyError(ctx, "commit_snapshot_store", cursorErr)
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, "", err
 	}
 	return map[string]any{"items": items, "snapshot_cursor": cursor}, cursor, nil
+}
+
+// v1ReadMembershipTx 在同一只读快照中确认当前账号仍拥有 active membership，不获取更新锁。
+func v1ReadMembershipTx(ctx context.Context, tx gdb.TX, accountID, circleID string) (gdb.Record, error) {
+	row, err := tx.Model(consts.KidsV1MembershipTable).Ctx(ctx).
+		Where("account_id", accountID).Where("circle_id", circleID).Where("status", "active").One()
+	if err != nil {
+		return nil, err
+	}
+	if row.IsEmpty() {
+		return nil, v1Error(403, "FORBIDDEN", false, "active circle membership is required")
+	}
+	return row, nil
+}
+
+// v1MemberBalanceDependencyError 保留稳定业务错误，并把真实余额读取依赖故障映射为可重试 UNAVAILABLE。
+func v1MemberBalanceDependencyError(ctx context.Context, dependency string, err error) error {
+	var protocolErr *v1.V1Error
+	if errors.As(err, &protocolErr) {
+		return err
+	}
+	requestID, traceID, operationID := "", "", "getMemberBalances"
+	if request := ghttp.RequestFromCtx(ctx); request != nil {
+		requestID = request.Header.Get(v1.V1RequestIDHeader)
+		traceID = request.GetCtxVar(consts.CtxTraceIDKey).String()
+		operationID = request.GetCtxVar(consts.CtxV1OperationIDKey).String()
+	}
+	g.Log().Errorf(ctx, "event=kids_member_balance_unavailable operation_id=%s request_id=%s trace_id=%s dependency=%s error=%+v", operationID, requestID, traceID, dependency, err)
+	retryAfterMs := int64(1000)
+	return &v1.V1Error{Status: 503, Code: "UNAVAILABLE", Retryable: true, RetryAfterMs: &retryAfterMs, Message: "member balance snapshot dependency is unavailable"}
 }
 
 // v1ListStarTransactions 返回经过成员权限、时间范围和来源类型筛选后的接口账本分页。

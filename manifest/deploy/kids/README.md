@@ -218,12 +218,16 @@ curl --fail http://127.0.0.1:18002/v1/health
 
 ## 会话迁移、验收与应急轮换
 
-本版本将 `kids_identity_session` 的会话事实统一为 `status`、`issued_at_ms`、`access_expires_at_ms`、`refresh_expires_at_ms` 和 `revoked_at_ms`。这些列都是 Unix epoch milliseconds；不得再以格式化日期、epoch seconds 或响应时刻重算 session metadata。发布前先停止旧进程，再对对应环境数据库依次执行既有 `manifest/sql/kids_session_metadata_millis_migration.sql`、`manifest/sql/000001_kids_identity_session_canonical_millis.sql`、`manifest/sql/000002_kids_star_balance_backfill.sql` 与 `manifest/sql/000003_kids_identity_session_remove_legacy_time_columns.sql`，完成后才启动新版本。
+本版本将 `kids_identity_session` 的会话事实统一为 `status`、`issued_at_ms`、`access_expires_at_ms`、`refresh_expires_at_ms` 和 `revoked_at_ms`。这些列都是 Unix epoch milliseconds；不得再以格式化日期、epoch seconds 或响应时刻重算 session metadata。发布前先停止旧进程，再对对应环境数据库依次执行既有 `manifest/sql/kids_session_metadata_millis_migration.sql`、`manifest/sql/000001_kids_identity_session_canonical_millis.sql`、`manifest/sql/000002_kids_star_balance_backfill.sql`、`manifest/sql/000003_kids_identity_session_remove_legacy_time_columns.sql` 与 `manifest/sql/000004_kids_member_balance_snapshot_repair.sql`，完成后才启动新版本。
 
 迁移完成后，在确认 `hack/config.yaml` 指向同一 kids 数据库的前提下执行 `gf gen dao -c hack/config.yaml`，使生成的 DAO/DO/Entity 与新列保持一致；生成物不应手工编辑。
 
 发布验收至少包含：Google exchange、refresh、使用刷新后 access token 调用 `selectCurrentCircle`、onboarding 首次提交和同一幂等键重放。所有失败响应都应回显 `request_id` 与 `trace_id`；用二者在 Nginx、应用日志和 MySQL 错误日志中关联。排查 onboarding 503 时按顺序确认二进制版本、私有配置、migration、数据库事务错误和连接池容量；没有明确可重试的依赖故障时，不应返回 503。
 
-部署级路由、参数校验和可观测性 smoke 由 CI 的 `go test ./...` 同步执行；配置 `KIDS_DEPLOY_SMOKE_BASE_URL` 后会对全部 46 个 operation 发出隔离的无效请求，并校验受控 4xx ErrorEnvelope、`request_id` 和 `trace_id`。测试 GitHub Environment 必须配置同名变量，发布完成后工作流会执行该套 smoke；其中 `listTaskOccurrences` 额外固定断言 `limit=201` 与 `limit=500` 返回 422/`VALIDATION_FAILED`。运行命令为：`KIDS_DEPLOY_SMOKE_BASE_URL=https://<测试域名> go test ./internal/api/kids/v1 -run 'TestV1Deployment(ValidationSmoke|TaskOccurrencesRejectsOversizedLimits)'`。成功、授权、幂等、版本冲突和 503/429 的写入场景必须使用独立测试账号与测试数据执行，禁止复用真实用户数据。
+部署级路由、参数校验和可观测性 smoke 由 CI 的 `go test ./...` 同步执行；配置 `KIDS_DEPLOY_SMOKE_BASE_URL` 后会对全部 46 个 operation 发出隔离的无效请求，并校验受控 4xx ErrorEnvelope、`request_id` 和 `trace_id`。测试 GitHub Environment 必须配置同名变量，发布完成后工作流会执行该套 smoke；其中 `listTaskOccurrences` 额外固定断言 `limit=201` 与 `limit=500` 返回 422/`VALIDATION_FAILED`。
+
+余额读取回归还需要在测试 Environment 配置隔离测试账号和资产：`KIDS_DEPLOY_SMOKE_ACCESS_TOKEN`、`KIDS_DEPLOY_SMOKE_FORBIDDEN_ACCESS_TOKEN`、`KIDS_DEPLOY_SMOKE_CIRCLE_ID`、`KIDS_DEPLOY_SMOKE_MEMBER_IDS`（两个逗号分隔成员）、`KIDS_DEPLOY_SMOKE_ZERO_BALANCE_MEMBER_ID` 与 `KIDS_DEPLOY_SMOKE_LEDGER_MEMBER_ID`。可选的 `KIDS_DEPLOY_SMOKE_UNAVAILABLE_URL` 必须指向仅测试环境可用的依赖故障演练入口；设置后会断言 503 ErrorEnvelope，随后立即读取零余额成员并断言故障恢复后的首个 200。工作流运行命令为：`go test ./internal/api/kids/v1 -run 'TestV1Deployment(MemberBalancesContract|ValidationSmoke|TaskOccurrencesRejectsOversizedLimits)'`。成功、授权、幂等、版本冲突和 503/429 的写入场景必须使用独立测试账号与测试数据执行，禁止复用真实用户数据。
+
+日志平台必须为 `event=kids_member_balance_unavailable` 配置告警：同一环境连续三条事件或五分钟内三条事件立即通知值班人员，并在通知中带上 `request_id`、`trace_id`、`operation_id` 与 `dependency`。该事件只在 membership、成员、余额快照或提交快照读存储实际报错时记录；正常 4xx 不会触发告警。
 
 如果测试 session 或 refresh credential 已进入客户端日志，不要收集或回传明文 token。使用受控工单确认受影响 `session_id` 后，通过受保护的 session revoke 能力定向撤销，并清理含凭据的客户端日志和 CI 附件。轮换后客户端必须重新认证。

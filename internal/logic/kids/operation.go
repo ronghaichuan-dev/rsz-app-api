@@ -56,7 +56,7 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		} else if output != nil {
 			output = v1ReplayOutput(output)
 			if err = v1.ValidateV1ResponseData(in.OperationID, output.Data); err != nil {
-				return nil, v1Error(503, "UNAVAILABLE", true, "stored v1 response is unavailable")
+				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response violates the protocol")
 			}
 			return output, nil
 		}
@@ -73,7 +73,7 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		if v1OperationSupportsIdempotency(in) {
 			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
 		}
-		return nil, v1Error(503, "UNAVAILABLE", true, "v1 response projection is unavailable")
+		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response projection violates the protocol")
 	}
 	output := &v1.V1OperationOutput{Data: data, Status: 200, ChangeCursor: changeCursor}
 	if v1OperationSupportsIdempotency(in) {

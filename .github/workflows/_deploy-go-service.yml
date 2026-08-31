@@ -107,3 +107,16 @@ jobs:
         run: |
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" \
             "bash /tmp/rsz-install-release.sh '${SERVICE_NAME}' '${APP_ENV}' '${RELEASE_VERSION}' '/tmp/${SERVICE_NAME}-${RELEASE_VERSION}.tar.gz' '${HEALTH_URL}'"
+
+      - name: 执行 kids 余额读取部署回归
+        if: inputs.service_name == 'kids' && vars.KIDS_DEPLOY_SMOKE_BASE_URL != ''
+        env:
+          KIDS_DEPLOY_SMOKE_BASE_URL: ${{ vars.KIDS_DEPLOY_SMOKE_BASE_URL }}
+          KIDS_DEPLOY_SMOKE_ACCESS_TOKEN: ${{ secrets.KIDS_DEPLOY_SMOKE_ACCESS_TOKEN }}
+          KIDS_DEPLOY_SMOKE_FORBIDDEN_ACCESS_TOKEN: ${{ secrets.KIDS_DEPLOY_SMOKE_FORBIDDEN_ACCESS_TOKEN }}
+          KIDS_DEPLOY_SMOKE_CIRCLE_ID: ${{ vars.KIDS_DEPLOY_SMOKE_CIRCLE_ID }}
+          KIDS_DEPLOY_SMOKE_MEMBER_IDS: ${{ vars.KIDS_DEPLOY_SMOKE_MEMBER_IDS }}
+          KIDS_DEPLOY_SMOKE_ZERO_BALANCE_MEMBER_ID: ${{ vars.KIDS_DEPLOY_SMOKE_ZERO_BALANCE_MEMBER_ID }}
+          KIDS_DEPLOY_SMOKE_LEDGER_MEMBER_ID: ${{ vars.KIDS_DEPLOY_SMOKE_LEDGER_MEMBER_ID }}
+          KIDS_DEPLOY_SMOKE_UNAVAILABLE_URL: ${{ vars.KIDS_DEPLOY_SMOKE_UNAVAILABLE_URL }}
+        run: go test ./internal/api/kids/v1 -run 'TestV1Deployment(MemberBalancesContract|ValidationSmoke|TaskOccurrencesRejectsOversizedLimits)'
