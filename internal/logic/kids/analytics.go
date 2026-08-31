@@ -9,6 +9,8 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/net/ghttp"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
 	"rslytics-app-api/internal/consts"
@@ -65,8 +67,10 @@ func (s *sKids) v1StatisticsSeries(ctx context.Context, in v1.V1OperationInput, 
 	}
 	start, end := time.UnixMilli(startAt), time.UnixMilli(endAt)
 	metric, unit, weekStart := v1QueryFirst(in.Query, "metric"), v1QueryFirst(in.Query, "bucket_unit"), v1QueryFirst(in.Query, "week_start")
+	v1LogStatisticsParameters(ctx, in, memberID, metric, unit, weekStart, startAt, endAt, zoneID)
 	values, err := s.v1StatisticsValues(ctx, circleID, memberID, metric, start, end, location, unit, weekStart)
 	if err != nil {
+		g.Log().Errorf(ctx, "event=kids_statistics_aggregate_failed operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s metric=%s bucket_unit=%s zone_id=%s start_at_ms=%d end_at_ms=%d error=%+v", in.OperationID, in.RequestID, v1StatisticsTraceID(ctx), circleID, memberID, metric, unit, zoneID, startAt, endAt, err)
 		return nil, "", err
 	}
 	buckets := make([]map[string]any, 0)
@@ -93,9 +97,25 @@ func (s *sKids) v1StatisticsSeries(ctx context.Context, in v1.V1OperationInput, 
 	}
 	cursor, err := v1LatestCursor(ctx)
 	if err != nil {
+		g.Log().Errorf(ctx, "event=kids_statistics_cursor_failed operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s error=%+v", in.OperationID, in.RequestID, v1StatisticsTraceID(ctx), circleID, memberID, err)
 		return nil, "", err
 	}
+	g.Log().Infof(ctx, "event=kids_statistics_response_ready operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s metric=%s period_type=%s bucket_unit=%s week_start=%s zone_id=%s start_at_ms=%d end_at_ms=%d bucket_count=%d non_zero_bucket_count=%d total=%d peak_value=%d as_of_cursor=%s", in.OperationID, in.RequestID, v1StatisticsTraceID(ctx), circleID, memberID, metric, v1QueryFirst(in.Query, "period_type"), unit, weekStart, zoneID, startAt, endAt, len(buckets), nonZero, total, peak, cursor)
 	return map[string]any{"member_id": memberID, "metric": metric, "period_type": v1QueryFirst(in.Query, "period_type"), "bucket_unit": unit, "zone_id": zoneID, "start_at_ms": startAt, "end_at_ms": endAt, "buckets": buckets, "summary": map[string]any{"total": total, "peak_value": peak, "non_zero_bucket_count": nonZero}, "as_of_cursor": cursor}, cursor, nil
+}
+
+// v1LogStatisticsParameters 记录已通过传输校验的统计参数，便于关联响应合同错误而不记录凭据。
+func v1LogStatisticsParameters(ctx context.Context, in v1.V1OperationInput, memberID, metric, unit, weekStart string, startAt, endAt int64, zoneID string) {
+	g.Log().Infof(ctx, "event=kids_statistics_parameters_normalized operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s metric=%s period_type=%s bucket_unit=%s week_start=%s zone_id=%s start_at_ms=%d end_at_ms=%d", in.OperationID, in.RequestID, v1StatisticsTraceID(ctx), in.PathParameters["circle_id"], memberID, metric, v1QueryFirst(in.Query, "period_type"), unit, weekStart, zoneID, startAt, endAt)
+}
+
+// v1StatisticsTraceID 从 HTTP 请求上下文读取链路标识，缺失时返回空字符串。
+func v1StatisticsTraceID(ctx context.Context) string {
+	request := ghttp.RequestFromCtx(ctx)
+	if request == nil {
+		return ""
+	}
+	return request.GetCtxVar(consts.CtxTraceIDKey).String()
 }
 
 // v1StatisticsValues 把接口任务完成或星星流水按请求时区归入对应统计 bucket。
