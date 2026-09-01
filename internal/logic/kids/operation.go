@@ -1967,8 +1967,9 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 			}
 		}
 		circle = v1CircleRecordProjection(circleRow)
+		changes := v1InviteRedemptionChanges(targetRole, circle, membership, actor)
 		var ce error
-		receipt, ce = v1CreateCommitTx(ctx, tx, invite["circle_id"].String(), in.OperationID, map[string]any{"circle": circle, "membership": membership, "actor": actor})
+		receipt, ce = v1CreateCommitTx(ctx, tx, invite["circle_id"].String(), in.OperationID, changes)
 		return ce
 	})
 	if err != nil {
@@ -1987,6 +1988,17 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 // v1MembershipProjectionForActor 构造管理员或成员加入后的接口 membership 投影。
 func v1MembershipProjectionForActor(membershipID, circleID, accountID, role, actorID string, permissions []string, now time.Time) map[string]any {
 	return map[string]any{"membership_id": membershipID, "circle_id": circleID, "account_id": accountID, "actor_type": role, "actor_id": actorID, "role": role, "permissions": permissions, "status": "active", "version": int64(1), "created_at_ms": now.UnixMilli(), "updated_at_ms": now.UnixMilli(), "deleted_at_ms": nil}
+}
+
+// v1InviteRedemptionChanges 将邀请码兑换后的完整领域事实放入同一个不可拆同步提交。
+func v1InviteRedemptionChanges(targetRole string, circle, membership, actor map[string]any) map[string]any {
+	changes := map[string]any{"circle": circle, "membership": membership}
+	if targetRole == "member" {
+		changes["member"] = actor
+		return changes
+	}
+	changes["administrator"] = actor
+	return changes
 }
 
 // mustV1JSON 序列化内部生成的简单结构，失败时返回空 JSON 数组以保证数据库 JSON 合法。
