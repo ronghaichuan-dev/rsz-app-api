@@ -449,8 +449,10 @@ func v1ReplayOutput(output *v1.V1OperationOutput) *v1.V1OperationOutput {
 	if err = json.Unmarshal(encoded, &copied); err != nil {
 		return output
 	}
-	if receipt, ok := copied["receipt"].(map[string]any); ok {
-		receipt["result_kind"] = "idempotent_replay"
+	for _, key := range []string{"receipt", "redemption_receipt"} {
+		if receipt, ok := copied[key].(map[string]any); ok {
+			receipt["result_kind"] = "idempotent_replay"
+		}
 	}
 	return &v1.V1OperationOutput{Data: copied, Status: output.Status, ChangeCursor: output.ChangeCursor, ETag: output.ETag}
 }
@@ -2120,36 +2122,37 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 	var circle map[string]any
 	var actor map[string]any
 	var membership map[string]any
+	var data map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		invite, err := tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("code_hash", sha256Hex(code)).LockUpdate().One()
 		if err != nil {
 			return err
 		}
 		if invite.IsEmpty() {
-			return v1Error(404, "NOT_FOUND", false, "invite code is invalid")
+			return v1Error(404, "INVITE_NOT_FOUND", false, "invite code is invalid")
 		}
 		if invite["target_role"].String() != targetRole {
-			return v1Error(403, "FORBIDDEN", false, "invite role does not match redemption")
+			return v1Error(403, "INVITE_ROLE_MISMATCH", false, "invite role does not match redemption")
 		}
 		if invite["status"].String() != "active" {
-			return v1Error(409, "VERSION_CONFLICT", false, "invite is no longer active")
+			return v1Error(409, "INVITE_USED", false, "invite is no longer active")
 		}
 		if !invite["expires_at"].Time().After(now) {
-			return v1Error(409, "VERSION_CONFLICT", false, "invite has expired")
+			return v1Error(410, "INVITE_EXPIRED", false, "invite has expired")
 		}
 		circleRow, err := tx.Model(consts.KidsV1CircleTable).Ctx(ctx).Where("circle_id", invite["circle_id"].String()).Where("status", "active").LockUpdate().One()
 		if err != nil {
 			return err
 		}
 		if circleRow.IsEmpty() {
-			return v1Error(404, "NOT_FOUND", false, "invite circle is missing")
+			return v1Error(410, "INVITE_TARGET_DELETED", false, "invite circle is missing")
 		}
 		existingMembership, err := tx.Model(consts.KidsV1MembershipTable).Ctx(ctx).Where("account_id", in.PrincipalID).Where("circle_id", invite["circle_id"].String()).LockUpdate().One()
 		if err != nil {
 			return err
 		}
 		if !existingMembership.IsEmpty() {
-			return v1Error(409, "VERSION_CONFLICT", false, "account already has circle membership")
+			return v1Error(409, "INVITE_USED", false, "account already has circle membership")
 		}
 		permissions := []string{}
 		actorID := ""
@@ -2164,7 +2167,7 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 				return e
 			}
 			if row.IsEmpty() {
-				return v1Error(404, "NOT_FOUND", false, "administrator target is missing")
+				return v1Error(410, "INVITE_TARGET_DELETED", false, "administrator target is missing")
 			}
 			version := row["version"].Int64() + 1
 			if _, e = tx.Model(consts.KidsV1AdministratorTable).Ctx(ctx).Where("administrator_id", actorID).Data(gdb.Map{"bound_account_id": in.PrincipalID, "permissions": mustV1JSON(permissions), "status": "active", "version": version, "updated_at": now}).Update(); e != nil {
@@ -2182,10 +2185,10 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 				return e
 			}
 			if row.IsEmpty() {
-				return v1Error(404, "NOT_FOUND", false, "member target is missing")
+				return v1Error(410, "INVITE_TARGET_DELETED", false, "member target is missing")
 			}
 			if row["bound_account_id"].String() != "" {
-				return v1Error(409, "VERSION_CONFLICT", false, "member is already bound")
+				return v1Error(409, "INVITE_USED", false, "member is already bound")
 			}
 			version := row["version"].Int64() + 1
 			if _, e = tx.Model(consts.KidsV1MemberTable).Ctx(ctx).Where("member_id", actorID).Data(gdb.Map{"bound_account_id": in.PrincipalID, "version": version, "updated_at": now}).Update(); e != nil {
@@ -2218,19 +2221,32 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 		circle = v1CircleRecordProjection(circleRow)
 		var ce error
 		receipt, ce = v1CreateCommitTx(ctx, tx, invite["circle_id"].String(), in.OperationID, map[string]any{"circle": circle, "membership": membership, "actor": actor})
-		return ce
+		if ce != nil {
+			return ce
+		}
+		cursor := v1CommitCursor(receipt["commit_sequence"].(int64))
+		data = v1RedeemInviteResponse(targetRole, receipt, membership, circle, actor, cursor)
+		if err = v1.ValidateV1ResponseData(in.OperationID, data); err != nil {
+			return err
+		}
+		return v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), &v1.V1OperationOutput{Data: data, Status: 200, ChangeCursor: cursor})
 	})
 	if err != nil {
 		return nil, "", err
 	}
 	cursor := v1CommitCursor(receipt["commit_sequence"].(int64))
+	return data, cursor, nil
+}
+
+// v1RedeemInviteResponse 组装管理员或成员邀请码兑换的稳定成功响应，供首次提交和幂等重放共用。
+func v1RedeemInviteResponse(targetRole string, receipt, membership, circle, actor map[string]any, cursor string) map[string]any {
 	data := map[string]any{"auth_session": nil, "membership": membership, "circle": circle, "redemption_receipt": receipt, "sync_cursor": cursor}
 	if targetRole == "administrator" {
 		data["administrator"] = actor
 	} else {
 		data["member"] = actor
 	}
-	return data, cursor, nil
+	return data
 }
 
 // v1MembershipProjectionForActor 构造管理员或成员加入后的接口 membership 投影。
