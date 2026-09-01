@@ -236,6 +236,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX,
       CREATE ROUTINE, ALTER ROUTINE
 ON rslytics_kids_test.* TO 'rslytics_test_ops'@'5.34.216.210';
 
+FLUSH PRIVILEGES;
+
 SHOW GRANTS FOR 'rslytics_test_ops'@'5.34.216.210';
 ```
 
