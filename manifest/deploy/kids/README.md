@@ -216,6 +216,14 @@ curl --fail http://127.0.0.1:18002/v1/health
 
 数据库 migration 必须先在测试库单独执行和验证。当前 SQL migration 未引入版本记录机制，自动部署流程不会执行 SQL 文件。
 
+### 兑换审计载荷不可变与测试 fixture 重置
+
+`ledger_id`、`exchange_id`、`kids_sync_commit.change_payload`、写入回执及幂等首响均是已发布的 append-only 审计事实。不得通过查询序列化、数据修复脚本或 migration 就地修改这些记录的时间或其他快照字段；同一标识一旦已被客户端投影，服务端必须持续回放原载荷。
+
+若测试库的旧兑换 fixture 已被错误修复脚本改写，使用专用测试账号和圈子，并在停止该 fixture 的写入后，按 [kids_test_circle_fixture_reset.sql](../../sql/runbooks/kids_test_circle_fixture_reset.sql) 受控清除该圈子的可重建 v1 事实。该手册要求 `test` 环境、当前数据库精确名称、精确圈子 ID、精确圈子名称、工单号、执行人员和固定确认字符串，并会记录重置审计；它不是 migration，禁止加入自动部署，更禁止在生产库执行。重置后必须通过 API 重建测试数据，客户端清除对应本地测试数据后重新登录；不要复用任何旧的 `ledger_id` 或 `exchange_id`。
+
+生产环境若发现同类历史问题，当前版本不提供静默修复。服务端必须继续回放此前发布的原始载荷。只有在双方先发布并验收受认证同步合同中的一次性、单调递增、可审计的 projection-reconciliation epoch 后，客户端才能在单个 environment/account/circle 分区丢弃可重建远端投影并全量同步；该流程不得删除未确认 outbox 命令或 Offline 域事实。在该协议完成前，禁止执行任何会改写生产审计载荷的 SQL。
+
 ## 会话迁移、验收与应急轮换
 
 本版本将 `kids_identity_session` 的会话事实统一为 `status`、`issued_at_ms`、`access_expires_at_ms`、`refresh_expires_at_ms` 和 `revoked_at_ms`。这些列都是 Unix epoch milliseconds；不得再以格式化日期、epoch seconds 或响应时刻重算 session metadata。发布前先停止旧进程，再对对应环境数据库依次执行既有 `manifest/sql/kids_session_metadata_millis_migration.sql`、`manifest/sql/000001_kids_identity_session_canonical_millis.sql`、`manifest/sql/000002_kids_star_balance_backfill.sql`、`manifest/sql/000003_kids_identity_session_remove_legacy_time_columns.sql` 与 `manifest/sql/000004_kids_member_balance_snapshot_repair.sql`，完成后才启动新版本。
