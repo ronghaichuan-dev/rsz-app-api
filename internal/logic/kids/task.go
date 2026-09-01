@@ -1196,9 +1196,10 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 	if !ok {
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "occurrence version is invalid")
 	}
-	now := time.Now()
 	var occurrence, completion, ledger, balance, receipt map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// committedAt 是本次原子完成唯一的规范提交时刻，所有可见投影必须使用它。
+		committedAt := time.Now()
 		membership, err := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, "")
 		if err != nil {
 			return err
@@ -1230,15 +1231,15 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 			return err
 		}
 		completionID := fmt.Sprint(in.Body["completion_id"])
-		if _, err = tx.Model(consts.KidsV1TaskCompletionTable).Ctx(ctx).Data(gdb.Map{"completion_id": completionID, "circle_id": circleID, "task_id": taskID, "member_id": memberID, "scheduled_date": date, "zone_id": in.Body["zone_id"], "proof_asset_id": proofID, "title_snapshot": row["title_snapshot"], "stars_snapshot": row["stars_snapshot"], "completed_by": mustV1JSON(actor), "completed_at": now, "commit_sequence": 0, "version": 1}).Insert(); err != nil {
+		if _, err = tx.Model(consts.KidsV1TaskCompletionTable).Ctx(ctx).Data(gdb.Map{"completion_id": completionID, "circle_id": circleID, "task_id": taskID, "member_id": memberID, "scheduled_date": date, "zone_id": in.Body["zone_id"], "proof_asset_id": proofID, "title_snapshot": row["title_snapshot"], "stars_snapshot": row["stars_snapshot"], "completed_by": mustV1JSON(actor), "completed_at": committedAt, "commit_sequence": 0, "version": 1}).Insert(); err != nil {
 			return err
 		}
-		if _, err = tx.Model(consts.KidsV1TaskOccurrenceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(gdb.Map{"state": "completed", "completion_id": completionID, "version": current + 1, "updated_at": now}).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1TaskOccurrenceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(gdb.Map{"state": "completed", "completion_id": completionID, "version": current + 1, "updated_at": committedAt}).Update(); err != nil {
 			return err
 		}
 		ledgerID := v1ID("ledger", uuid.NewString())
 		source := map[string]any{"source_type": "task", "source_id": taskID, "title_snapshot": row["title_snapshot"].String(), "stars_snapshot": row["stars_snapshot"].Int64(), "asset_id_snapshot": nullableString(proofID), "scheduled_date_snapshot": date}
-		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": row["stars_snapshot"].Int64(), "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": now}).Insert(); err != nil {
+		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": row["stars_snapshot"].Int64(), "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": committedAt}).Insert(); err != nil {
 			return err
 		}
 		balanceRow, err := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("circle_id", circleID).Where("member_id", memberID).LockUpdate().One()
@@ -1250,7 +1251,7 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 			nextBalance += balanceRow["balance"].Int64()
 			balanceVersion = balanceRow["version"].Int64() + 1
 		}
-		receipt, err = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{"completion_id": completionID, "ledger_id": ledgerID})
+		receipt, err = v1CreateCommitAtTx(ctx, tx, circleID, in.OperationID, committedAt, map[string]any{"completion_id": completionID, "ledger_id": ledgerID})
 		if err != nil {
 			return err
 		}
@@ -1262,7 +1263,7 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Where("ledger_id", ledgerID).Data(gdb.Map{"commit_sequence": sequence}).Update(); err != nil {
 			return err
 		}
-		data := gdb.Map{"balance": nextBalance, "version": balanceVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": now}
+		data := gdb.Map{"balance": nextBalance, "version": balanceVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": committedAt}
 		if balanceRow.IsEmpty() {
 			data["circle_id"], data["member_id"] = circleID, memberID
 			if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(data).Insert(); err != nil {
@@ -1276,9 +1277,22 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 			return err
 		}
 		occurrence = v1TaskOccurrenceProjection(row)
-		completion = v1CompletionProjection(completionID, circleID, taskID, memberID, date, fmt.Sprint(in.Body["zone_id"]), proofID, row["title_snapshot"].String(), row["stars_snapshot"].Int64(), actor, now, sequence, 1)
-		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, row["stars_snapshot"].Int64(), nil, actor, nil, now, sequence)
-		balance = v1BalanceProjection(circleID, memberID, nextBalance, balanceVersion, commitID, sequence, now)
+		completion = v1CompletionProjection(completionID, circleID, taskID, memberID, date, fmt.Sprint(in.Body["zone_id"]), proofID, row["title_snapshot"].String(), row["stars_snapshot"].Int64(), actor, committedAt, sequence, 1)
+		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, row["stars_snapshot"].Int64(), nil, actor, nil, committedAt, sequence)
+		balance = v1BalanceProjection(circleID, memberID, nextBalance, balanceVersion, commitID, sequence, committedAt)
+		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"occurrence": occurrence, "completion": completion, "ledger_entry": ledger, "balance": balance}); err != nil {
+			return err
+		}
+		bundle := map[string]any{"receipt": receipt, "occurrence": occurrence, "completion": completion, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
+		if err = v1.ValidateV1ResponseData(in.OperationID, bundle); err != nil {
+			return err
+		}
+		if err = v1ValidateCompleteTaskCanonicalBundle(bundle); err != nil {
+			return err
+		}
+		if err = v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), &v1.V1OperationOutput{Data: bundle, Status: 200, ChangeCursor: v1CommitCursor(sequence)}); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {

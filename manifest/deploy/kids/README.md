@@ -232,6 +232,8 @@ curl --fail http://127.0.0.1:18002/v1/health
 
 发布验收至少包含：Google exchange、refresh、使用刷新后 access token 调用 `selectCurrentCircle`、onboarding 首次提交和同一幂等键重放。所有失败响应都应回显 `request_id` 与 `trace_id`；用二者在 Nginx、应用日志和 MySQL 错误日志中关联。排查 onboarding 503 时按顺序确认二进制版本、私有配置、migration、数据库事务错误和连接池容量；没有明确可重试的依赖故障时，不应返回 503。
 
+任务完成 canonical bundle 修复依赖 `000006_kids_adjustment_commit_timestamp_precision.sql`，并在其后执行 `000009_kids_complete_task_canonical_bundle_repair.sql`。执行前停止旧版 kids 进程并备份测试库；执行后以同一 `completion_id` 验证 receipt、occurrence、completion、正向 ledger 和 balance 的毫秒时间完全一致，再用原幂等键重放以及 `/sync`、任务完成明细接口复验。该修复不新增完成、流水、余额、commit、receipt 或幂等键。
+
 部署级路由、参数校验和可观测性 smoke 由 CI 的 `go test ./...` 同步执行；配置 `KIDS_DEPLOY_SMOKE_BASE_URL` 后会对全部 46 个 operation 发出隔离的无效请求，并校验受控 4xx ErrorEnvelope、`request_id` 和 `trace_id`。测试 GitHub Environment 必须配置同名变量，发布完成后工作流会执行该套 smoke；其中 `listTaskOccurrences` 额外固定断言 `limit=201` 与 `limit=500` 返回 422/`VALIDATION_FAILED`。
 
 余额读取回归还需要在测试 Environment 配置隔离测试账号和资产：`KIDS_DEPLOY_SMOKE_ACCESS_TOKEN`、`KIDS_DEPLOY_SMOKE_FORBIDDEN_ACCESS_TOKEN`、`KIDS_DEPLOY_SMOKE_CIRCLE_ID`、`KIDS_DEPLOY_SMOKE_MEMBER_IDS`（两个逗号分隔成员）、`KIDS_DEPLOY_SMOKE_ZERO_BALANCE_MEMBER_ID` 与 `KIDS_DEPLOY_SMOKE_LEDGER_MEMBER_ID`。可选的 `KIDS_DEPLOY_SMOKE_UNAVAILABLE_URL` 必须指向仅测试环境可用的依赖故障演练入口；设置后会断言 503 ErrorEnvelope，随后立即读取零余额成员并断言故障恢复后的首个 200。将 `KIDS_DEPLOY_SMOKE_ADJUST_ENABLED=true` 配置为测试 Environment Variable 后，工作流还会对受控零余额成员执行 `+1`、同幂等键重放、流水读取和新的 `-1` 反向 adjustment，最终恢复原余额且保留 append-only 审计记录。工作流运行命令为：`go test ./internal/api/kids/v1 -run 'TestV1Deployment(MemberBalancesContract|ValidationSmoke|TaskOccurrencesRejectsOversizedLimits)'`。成功、授权、幂等、版本冲突和 503/429 的写入场景必须使用独立测试账号与测试数据执行，禁止复用真实用户数据。

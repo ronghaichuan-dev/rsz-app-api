@@ -91,6 +91,10 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay", err)
 				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response violates the protocol")
 			}
+			if err = v1ValidateCanonicalOperationBundle(in.OperationID, output.Data); err != nil {
+				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay_canonical_bundle", err)
+				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response canonical bundle violates the protocol")
+			}
 			if err = v1ValidateAdjustmentOutputCursor(in.OperationID, output); err != nil {
 				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay_cursor", err)
 				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response cursor violates the protocol")
@@ -112,6 +116,13 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
 		}
 		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response projection violates the protocol")
+	}
+	if err = v1ValidateCanonicalOperationBundle(in.OperationID, data); err != nil {
+		v1LogResponseProjectionFailure(ctx, in, "operation_result_canonical_bundle", err)
+		if v1OperationSupportsIdempotency(in) {
+			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
+		}
+		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response canonical bundle violates the protocol")
 	}
 	output := &v1.V1OperationOutput{Data: data, Status: 200, ChangeCursor: changeCursor}
 	if err = v1ValidateAdjustmentOutputCursor(in.OperationID, output); err != nil {
@@ -142,6 +153,74 @@ func v1ValidateAdjustmentOutputCursor(operationID string, output *v1.V1Operation
 		return fmt.Errorf("adjustment envelope change cursor is inconsistent")
 	}
 	return nil
+}
+
+// v1ValidateCanonicalOperationBundle 校验同一原子写入响应中必须完全一致的规范时间字段。
+func v1ValidateCanonicalOperationBundle(operationID string, data map[string]any) error {
+	if operationID != "completeTask" {
+		return nil
+	}
+	return v1ValidateCompleteTaskCanonicalBundle(data)
+}
+
+// v1ValidateCompleteTaskCanonicalBundle 确保完成、流水、余额和 occurrence 都使用 receipt 的唯一提交时刻。
+func v1ValidateCompleteTaskCanonicalBundle(data map[string]any) error {
+	receipt, ok := data["receipt"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task receipt is missing")
+	}
+	occurrence, ok := data["occurrence"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task occurrence is missing")
+	}
+	completion, ok := data["completion"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task completion is missing")
+	}
+	ledger, ok := data["ledger_entry"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task ledger is missing")
+	}
+	balance, ok := data["balance"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task balance is missing")
+	}
+	committedAt, ok := v1CanonicalMillis(receipt["committed_at_ms"])
+	if !ok {
+		return fmt.Errorf("complete task receipt time is invalid")
+	}
+	for field, value := range map[string]any{
+		"occurrence.updated_at_ms":   occurrence["updated_at_ms"],
+		"completion.completed_at_ms": completion["completed_at_ms"],
+		"ledger_entry.created_at_ms": ledger["created_at_ms"],
+		"balance.updated_at_ms":      balance["updated_at_ms"],
+	} {
+		actual, valid := v1CanonicalMillis(value)
+		if !valid || actual != committedAt {
+			return fmt.Errorf("complete task canonical time mismatches field=%s", field)
+		}
+	}
+	return nil
+}
+
+// v1CanonicalMillis 兼容首次响应和 JSON 幂等重放中的整数毫秒表示。
+func v1CanonicalMillis(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case int:
+		return int64(typed), true
+	case int64:
+		return typed, true
+	case float64:
+		if typed != float64(int64(typed)) {
+			return 0, false
+		}
+		return int64(typed), true
+	case json.Number:
+		parsed, err := typed.Int64()
+		return parsed, err == nil
+	default:
+		return 0, false
+	}
 }
 
 // v1LogResponseProjectionFailure 记录响应合同失败的关联信息，不记录 credential、proof 或完整请求正文。
