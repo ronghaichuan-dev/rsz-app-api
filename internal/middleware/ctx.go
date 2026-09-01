@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
@@ -11,20 +12,21 @@ import (
 	"rslytics-app-api/internal/consts"
 )
 
-// Ctx 初始化请求级 trace ID，并在请求结束后记录脱敏的路径和查询参数，不读取或记录请求正文。
+// Ctx 初始化请求级 trace ID，并在请求结束后记录脱敏的请求参数、响应状态和完整处理耗时，不读取或记录请求正文。
 func Ctx(r *ghttp.Request) {
+	startedAt := time.Now()
 	traceID := strings.TrimSpace(r.Header.Get("X-Trace-Id"))
 	if len(traceID) < 8 || len(traceID) > 128 {
 		traceID = "trace:" + uuid.NewString()
 	}
 	r.SetCtxVar(consts.CtxTraceIDKey, traceID)
 	r.Middleware.Next()
-	logRequestParameters(r)
+	logRequestParameters(r, time.Since(startedAt))
 }
 
-// logRequestParameters 统一记录所有 HTTP 接口的可安全诊断参数，敏感查询值会脱敏且请求正文永不写入日志。
-func logRequestParameters(r *ghttp.Request) {
-	g.Log().Infof(r.Context(), "event=http_request_parameters operation_id=%s request_id=%s trace_id=%s method=%s path=%s path_parameters=%v query_parameters=%v response_status=%d", r.GetCtxVar(consts.CtxV1OperationIDKey).String(), r.Header.Get("X-Request-Id"), r.GetCtxVar(consts.CtxTraceIDKey).String(), r.Method, r.URL.Path, r.GetRouterMap(), safeQueryParameters(r.URL.Query()), r.Response.Status)
+// logRequestParameters 统一记录所有 HTTP 接口的可安全诊断参数、响应状态和处理耗时，敏感查询值会脱敏且请求正文永不写入日志。
+func logRequestParameters(r *ghttp.Request, duration time.Duration) {
+	g.Log().Infof(r.Context(), "event=http_request_parameters operation_id=%s request_id=%s trace_id=%s method=%s path=%s path_parameters=%v query_parameters=%v response_status=%d duration_ms=%d", r.GetCtxVar(consts.CtxV1OperationIDKey).String(), r.Header.Get("X-Request-Id"), r.GetCtxVar(consts.CtxTraceIDKey).String(), r.Method, r.URL.Path, r.GetRouterMap(), safeQueryParameters(r.URL.Query()), r.Response.Status, duration.Milliseconds())
 }
 
 // safeQueryParameters 返回可记录的查询参数副本，避免未来接口把 credential、token 或密码写入普通日志。
