@@ -126,7 +126,7 @@ type (
 		AdjustMemberStarsWithVersion(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
 		// Unavailable 返回尚未实现的接口 operation 错误。
 		Unavailable(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
-		// ExecuteV1 执行尚未拆分为专用 service 方法的接口 operation。
+		// ExecuteV1 执行接口中暂未拆分专用 service 入口的 operation，保证每个路由均进入对应领域实现。
 		ExecuteV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error)
 		// GetStarRanking 查询群组内儿童星星排行榜。
 		GetStarRanking(ctx context.Context, in v1.StarRankingInput) (*v1.StarRankingOutput, error)
