@@ -216,6 +216,44 @@ curl --fail http://127.0.0.1:18002/v1/health
 
 数据库 migration 必须先在测试库单独执行和验证。当前 SQL migration 未引入版本记录机制，自动部署流程不会执行 SQL 文件。
 
+### 测试数据库远程白名单
+
+开发机公网 IP 变化后，需要由具备 MySQL 管理权限的人员在测试数据库服务器上，为专用测试账号新增精确 IPv4 白名单。不要为 `root` 开放远程访问，也不要使用 `%` 通配主机。
+
+先在开发机查询当前公网 IPv4：
+
+```bash
+curl -4fsS https://api.ipify.org; echo
+```
+
+当前一次查询结果为 `5.34.216.210`。在测试数据库服务器本机执行以下 SQL；首次使用时将 `<强随机密码>` 保存到受控的测试环境配置中，禁止提交到 Git：
+
+```sql
+CREATE USER IF NOT EXISTS 'rslytics_test_ops'@'5.34.216.210' IDENTIFIED BY '<强随机密码>';
+
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX,
+      CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE,
+      CREATE ROUTINE, ALTER ROUTINE
+ON rslytics_kids_test.* TO 'rslytics_test_ops'@'5.34.216.210';
+
+SHOW GRANTS FOR 'rslytics_test_ops'@'5.34.216.210';
+```
+
+以实际测试数据库地址验证连通性：
+
+```bash
+mysql --protocol=TCP -h <测试数据库地址> -P 3306 -u rslytics_test_ops -p rslytics_kids_test \
+  -e 'SELECT DATABASE() AS database_name, CURRENT_USER() AS database_user;'
+```
+
+确认新 IP 可用并且旧 IP 不再需要后，再定向回收旧白名单，不能使用宽泛的 `DROP USER`：
+
+```sql
+DROP USER IF EXISTS 'rslytics_test_ops'@'<旧公网IPv4>';
+```
+
+每次 IP 变化都重复“查询 IP → 为新 IP 创建账号/授权 → 验证连接 → 回收旧 IP”。若仅用于只读排查，应另建只授予 `SELECT` 的账号，避免复用具备 migration 权限的测试运维账号。
+
 ### 兑换审计载荷不可变与测试 fixture 重置
 
 `ledger_id`、`exchange_id`、`kids_sync_commit.change_payload`、写入回执及幂等首响均是已发布的 append-only 审计事实。不得通过查询序列化、数据修复脚本或 migration 就地修改这些记录的时间或其他快照字段；同一标识一旦已被客户端投影，服务端必须持续回放原载荷。
