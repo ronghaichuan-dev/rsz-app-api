@@ -9,6 +9,8 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/net/ghttp"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
 	"rslytics-app-api/internal/consts"
@@ -18,27 +20,35 @@ import (
 // GetStatisticsV1 以接口任务完成和星星账本事实返回成员统计序列。
 func (s *sKids) GetStatisticsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error) {
 	return s.runV1(ctx, in, func(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-		return s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "member_id"))
+		snapshotSequence, snapshotCursor, err := v1StatisticsSnapshot(ctx)
+		if err != nil {
+			return nil, "", err
+		}
+		return s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "member_id"), snapshotSequence, snapshotCursor)
 	})
 }
 
 // CompareStatisticsV1 在相同快照、时区和 bucket 规则下比较两名成员。
 func (s *sKids) CompareStatisticsV1(ctx context.Context, in v1.V1OperationInput) (*v1.V1OperationOutput, error) {
 	return s.runV1(ctx, in, func(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-		base, cursor, err := s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "base_member_id"))
+		snapshotSequence, snapshotCursor, err := v1StatisticsSnapshot(ctx)
 		if err != nil {
 			return nil, "", err
 		}
-		compare, _, err := s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "compare_member_id"))
+		base, _, err := s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "base_member_id"), snapshotSequence, snapshotCursor)
 		if err != nil {
 			return nil, "", err
 		}
-		return map[string]any{"base_member": base, "compare_member": compare, "snapshot_cursor": cursor}, cursor, nil
+		compare, _, err := s.v1StatisticsSeries(ctx, in, v1QueryFirst(in.Query, "compare_member_id"), snapshotSequence, snapshotCursor)
+		if err != nil {
+			return nil, "", err
+		}
+		return map[string]any{"base_member": base, "compare_member": compare, "snapshot_cursor": snapshotCursor}, snapshotCursor, nil
 	})
 }
 
 // v1StatisticsSeries 根据请求的日、周或月 bucket 生成零值完整的接口统计序列。
-func (s *sKids) v1StatisticsSeries(ctx context.Context, in v1.V1OperationInput, memberID string) (map[string]any, string, error) {
+func (s *sKids) v1StatisticsSeries(ctx context.Context, in v1.V1OperationInput, memberID string, snapshotSequence int64, snapshotCursor string) (map[string]any, string, error) {
 	circleID := in.PathParameters["circle_id"]
 	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
 		return nil, "", err
@@ -65,10 +75,49 @@ func (s *sKids) v1StatisticsSeries(ctx context.Context, in v1.V1OperationInput, 
 	}
 	start, end := time.UnixMilli(startAt), time.UnixMilli(endAt)
 	metric, unit, weekStart := v1QueryFirst(in.Query, "metric"), v1QueryFirst(in.Query, "bucket_unit"), v1QueryFirst(in.Query, "week_start")
-	values, err := s.v1StatisticsValues(ctx, circleID, memberID, metric, start, end, location, unit, weekStart)
+	if err = v1ValidateStatisticsBucketRange(start, end, location, unit, weekStart); err != nil {
+		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "statistics range is too large")
+	}
+	v1LogStatisticsParameters(ctx, in, memberID, metric, unit, weekStart, startAt, endAt, zoneID)
+	values, err := s.v1StatisticsValues(ctx, circleID, memberID, metric, start, end, location, unit, weekStart, snapshotSequence)
 	if err != nil {
+		g.Log().Errorf(ctx, "event=kids_statistics_aggregate_failed operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s metric=%s bucket_unit=%s zone_id=%s start_at_ms=%d end_at_ms=%d error=%+v", in.OperationID, in.RequestID, v1StatisticsTraceID(ctx), circleID, memberID, metric, unit, zoneID, startAt, endAt, err)
 		return nil, "", err
 	}
+	data := v1StatisticsSeriesData(memberID, metric, v1QueryFirst(in.Query, "period_type"), unit, weekStart, zoneID, startAt, endAt, start, end, location, values, snapshotCursor)
+	summary := data["summary"].(map[string]any)
+	buckets := data["buckets"].([]map[string]any)
+	g.Log().Infof(ctx, "event=kids_statistics_response_ready operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s metric=%s period_type=%s bucket_unit=%s week_start=%s zone_id=%s start_at_ms=%d end_at_ms=%d bucket_count=%d non_zero_bucket_count=%d total=%d peak_value=%d as_of_cursor=%s", in.OperationID, in.RequestID, v1StatisticsTraceID(ctx), circleID, memberID, metric, v1QueryFirst(in.Query, "period_type"), unit, weekStart, zoneID, startAt, endAt, len(buckets), summary["non_zero_bucket_count"], summary["total"], summary["peak_value"], snapshotCursor)
+	return data, snapshotCursor, nil
+}
+
+// v1StatisticsSnapshot 读取统计读取开始时的提交边界，保证对比双方使用同一事实快照。
+func v1StatisticsSnapshot(ctx context.Context) (int64, string, error) {
+	commit, err := utils.KidsDB(ctx).Model(consts.KidsV1CommitTable).Ctx(ctx).Fields("commit_sequence").OrderDesc("commit_sequence").One()
+	if err != nil {
+		return 0, "", err
+	}
+	if commit.IsEmpty() {
+		return 0, v1CommitCursor(0), nil
+	}
+	sequence := commit["commit_sequence"].Int64()
+	return sequence, v1CommitCursor(sequence), nil
+}
+
+// v1ValidateStatisticsBucketRange 限制 bucket 数量，避免合法格式的大范围请求耗尽内存后被误映射为协议错误。
+func v1ValidateStatisticsBucketRange(start, end time.Time, location *time.Location, unit, weekStart string) error {
+	const maxBuckets = 10000
+	localEnd := end.In(location)
+	for current, count := v1BucketStart(start.In(location), unit, weekStart), 0; current.Before(localEnd); current, count = v1NextBucketStart(current, unit), count+1 {
+		if count >= maxBuckets {
+			return strconv.ErrRange
+		}
+	}
+	return nil
+}
+
+// v1StatisticsSeriesData 将已聚合的事实补齐为包含零值 bucket 的冻结统计响应。
+func v1StatisticsSeriesData(memberID, metric, periodType, unit, weekStart, zoneID string, startAt, endAt int64, start, end time.Time, location *time.Location, values map[string]int64, snapshotCursor string) map[string]any {
 	buckets := make([]map[string]any, 0)
 	var total, peak, nonZero int64
 	localEnd := end.In(location)
@@ -91,18 +140,28 @@ func (s *sKids) v1StatisticsSeries(ctx context.Context, in v1.V1OperationInput, 
 		}
 		buckets = append(buckets, map[string]any{"index": index, "start_at_ms": bucketStart, "end_at_ms": bucketEnd, "local_start_date": current.Format(consts.DateLayout), "local_end_date_exclusive": next.Format(consts.DateLayout), "value": value})
 	}
-	cursor, err := v1LatestCursor(ctx)
-	if err != nil {
-		return nil, "", err
+	return map[string]any{"member_id": memberID, "metric": metric, "period_type": periodType, "bucket_unit": unit, "zone_id": zoneID, "start_at_ms": startAt, "end_at_ms": endAt, "buckets": buckets, "summary": map[string]any{"total": total, "peak_value": peak, "non_zero_bucket_count": nonZero}, "as_of_cursor": snapshotCursor}
+}
+
+// v1LogStatisticsParameters 记录已通过传输校验的统计参数，便于关联响应合同错误而不记录凭据。
+func v1LogStatisticsParameters(ctx context.Context, in v1.V1OperationInput, memberID, metric, unit, weekStart string, startAt, endAt int64, zoneID string) {
+	g.Log().Infof(ctx, "event=kids_statistics_parameters_normalized operation_id=%s request_id=%s trace_id=%s circle_id=%s member_id=%s metric=%s period_type=%s bucket_unit=%s week_start=%s zone_id=%s start_at_ms=%d end_at_ms=%d", in.OperationID, in.RequestID, v1StatisticsTraceID(ctx), in.PathParameters["circle_id"], memberID, metric, v1QueryFirst(in.Query, "period_type"), unit, weekStart, zoneID, startAt, endAt)
+}
+
+// v1StatisticsTraceID 从 HTTP 请求上下文读取链路标识，缺失时返回空字符串。
+func v1StatisticsTraceID(ctx context.Context) string {
+	request := ghttp.RequestFromCtx(ctx)
+	if request == nil {
+		return ""
 	}
-	return map[string]any{"member_id": memberID, "metric": metric, "period_type": v1QueryFirst(in.Query, "period_type"), "bucket_unit": unit, "zone_id": zoneID, "start_at_ms": startAt, "end_at_ms": endAt, "buckets": buckets, "summary": map[string]any{"total": total, "peak_value": peak, "non_zero_bucket_count": nonZero}, "as_of_cursor": cursor}, cursor, nil
+	return request.GetCtxVar(consts.CtxTraceIDKey).String()
 }
 
 // v1StatisticsValues 把接口任务完成或星星流水按请求时区归入对应统计 bucket。
-func (s *sKids) v1StatisticsValues(ctx context.Context, circleID, memberID, metric string, start, end time.Time, location *time.Location, unit, weekStart string) (map[string]int64, error) {
+func (s *sKids) v1StatisticsValues(ctx context.Context, circleID, memberID, metric string, start, end time.Time, location *time.Location, unit, weekStart string, snapshotSequence int64) (map[string]int64, error) {
 	values := make(map[string]int64)
 	if metric == "tasks" {
-		rows, err := utils.KidsDB(ctx).Model(consts.KidsV1TaskCompletionTable).Ctx(ctx).Where("circle_id", circleID).Where("member_id", memberID).Where("completed_at >= ?", start).Where("completed_at < ?", end).All()
+		rows, err := utils.KidsDB(ctx).Model(consts.KidsV1TaskCompletionTable).Ctx(ctx).Fields("completed_at").Where("circle_id", circleID).Where("member_id", memberID).Where("commit_sequence <= ?", snapshotSequence).Where("completed_at >= ?", start).Where("completed_at < ?", end).All()
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +171,7 @@ func (s *sKids) v1StatisticsValues(ctx context.Context, circleID, memberID, metr
 		}
 		return values, nil
 	}
-	rows, err := utils.KidsDB(ctx).Model(consts.KidsV1LedgerTable).Ctx(ctx).Where("circle_id", circleID).Where("member_id", memberID).Where("created_at >= ?", start).Where("created_at < ?", end).All()
+	rows, err := utils.KidsDB(ctx).Model(consts.KidsV1LedgerTable).Ctx(ctx).Fields("created_at,delta").Where("circle_id", circleID).Where("member_id", memberID).Where("commit_sequence <= ?", snapshotSequence).Where("created_at >= ?", start).Where("created_at < ?", end).All()
 	if err != nil {
 		return nil, err
 	}

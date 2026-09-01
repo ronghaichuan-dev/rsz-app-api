@@ -11,6 +11,7 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
 	"github.com/google/uuid"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
@@ -1195,9 +1196,10 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 	if !ok {
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "occurrence version is invalid")
 	}
-	now := time.Now()
 	var occurrence, completion, ledger, balance, receipt map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// committedAt 是本次原子完成唯一的规范提交时刻，所有可见投影必须使用它。
+		committedAt := time.Now()
 		membership, err := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, "")
 		if err != nil {
 			return err
@@ -1229,15 +1231,15 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 			return err
 		}
 		completionID := fmt.Sprint(in.Body["completion_id"])
-		if _, err = tx.Model(consts.KidsV1TaskCompletionTable).Ctx(ctx).Data(gdb.Map{"completion_id": completionID, "circle_id": circleID, "task_id": taskID, "member_id": memberID, "scheduled_date": date, "zone_id": in.Body["zone_id"], "proof_asset_id": proofID, "title_snapshot": row["title_snapshot"], "stars_snapshot": row["stars_snapshot"], "completed_by": mustV1JSON(actor), "completed_at": now, "commit_sequence": 0, "version": 1}).Insert(); err != nil {
+		if _, err = tx.Model(consts.KidsV1TaskCompletionTable).Ctx(ctx).Data(gdb.Map{"completion_id": completionID, "circle_id": circleID, "task_id": taskID, "member_id": memberID, "scheduled_date": date, "zone_id": in.Body["zone_id"], "proof_asset_id": proofID, "title_snapshot": row["title_snapshot"], "stars_snapshot": row["stars_snapshot"], "completed_by": mustV1JSON(actor), "completed_at": committedAt, "commit_sequence": 0, "version": 1}).Insert(); err != nil {
 			return err
 		}
-		if _, err = tx.Model(consts.KidsV1TaskOccurrenceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(gdb.Map{"state": "completed", "completion_id": completionID, "version": current + 1, "updated_at": now}).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1TaskOccurrenceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(gdb.Map{"state": "completed", "completion_id": completionID, "version": current + 1, "updated_at": committedAt}).Update(); err != nil {
 			return err
 		}
 		ledgerID := v1ID("ledger", uuid.NewString())
 		source := map[string]any{"source_type": "task", "source_id": taskID, "title_snapshot": row["title_snapshot"].String(), "stars_snapshot": row["stars_snapshot"].Int64(), "asset_id_snapshot": nullableString(proofID), "scheduled_date_snapshot": date}
-		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": row["stars_snapshot"].Int64(), "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": now}).Insert(); err != nil {
+		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": row["stars_snapshot"].Int64(), "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": committedAt}).Insert(); err != nil {
 			return err
 		}
 		balanceRow, err := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("circle_id", circleID).Where("member_id", memberID).LockUpdate().One()
@@ -1249,7 +1251,7 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 			nextBalance += balanceRow["balance"].Int64()
 			balanceVersion = balanceRow["version"].Int64() + 1
 		}
-		receipt, err = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{"completion_id": completionID, "ledger_id": ledgerID})
+		receipt, err = v1CreateCommitAtTx(ctx, tx, circleID, in.OperationID, committedAt, map[string]any{"completion_id": completionID, "ledger_id": ledgerID})
 		if err != nil {
 			return err
 		}
@@ -1261,7 +1263,7 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Where("ledger_id", ledgerID).Data(gdb.Map{"commit_sequence": sequence}).Update(); err != nil {
 			return err
 		}
-		data := gdb.Map{"balance": nextBalance, "version": balanceVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": now}
+		data := gdb.Map{"balance": nextBalance, "version": balanceVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": committedAt}
 		if balanceRow.IsEmpty() {
 			data["circle_id"], data["member_id"] = circleID, memberID
 			if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(data).Insert(); err != nil {
@@ -1275,9 +1277,22 @@ func (s *sKids) v1CompleteTask(ctx context.Context, in v1.V1OperationInput) (map
 			return err
 		}
 		occurrence = v1TaskOccurrenceProjection(row)
-		completion = v1CompletionProjection(completionID, circleID, taskID, memberID, date, fmt.Sprint(in.Body["zone_id"]), proofID, row["title_snapshot"].String(), row["stars_snapshot"].Int64(), actor, now, sequence, 1)
-		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, row["stars_snapshot"].Int64(), nil, actor, nil, now, sequence)
-		balance = v1BalanceProjection(circleID, memberID, nextBalance, balanceVersion, commitID, sequence, now)
+		completion = v1CompletionProjection(completionID, circleID, taskID, memberID, date, fmt.Sprint(in.Body["zone_id"]), proofID, row["title_snapshot"].String(), row["stars_snapshot"].Int64(), actor, committedAt, sequence, 1)
+		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, row["stars_snapshot"].Int64(), nil, actor, nil, committedAt, sequence)
+		balance = v1BalanceProjection(circleID, memberID, nextBalance, balanceVersion, commitID, sequence, committedAt)
+		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"occurrence": occurrence, "completion": completion, "ledger_entry": ledger, "balance": balance}); err != nil {
+			return err
+		}
+		bundle := map[string]any{"receipt": receipt, "occurrence": occurrence, "completion": completion, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
+		if err = v1.ValidateV1ResponseData(in.OperationID, bundle); err != nil {
+			return err
+		}
+		if err = v1ValidateCompleteTaskCanonicalBundle(bundle); err != nil {
+			return err
+		}
+		if err = v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), &v1.V1OperationOutput{Data: bundle, Status: 200, ChangeCursor: v1CommitCursor(sequence)}); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -1300,6 +1315,19 @@ func v1LedgerProjection(ledgerID, circleID, memberID string, source map[string]a
 // v1BalanceProjection 构造成员当前余额的接口投影。
 func v1BalanceProjection(circleID, memberID string, amount, version int64, commitID string, sequence int64, at time.Time) map[string]any {
 	return map[string]any{"circle_id": circleID, "member_id": memberID, "balance": amount, "version": version, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at_ms": at.UnixMilli()}
+}
+
+// v1BalanceProjectionFromRecord 只使用持久化余额行构造规范余额投影，避免同一版本在写入响应和读取路径出现不同字段。
+func v1BalanceProjectionFromRecord(row gdb.Record) map[string]any {
+	return v1BalanceProjection(
+		row["circle_id"].String(),
+		row["member_id"].String(),
+		row["balance"].Int64(),
+		row["version"].Int64(),
+		row["source_commit_id"].String(),
+		row["source_commit_sequence"].Int64(),
+		row["updated_at"].Time(),
+	)
 }
 
 // v1CancelTaskCompletion 保留原 completion 和正向流水，并原子追加 cancellation 与冲销流水。
@@ -1422,8 +1450,9 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 	if !ok || delta == 0 {
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "adjustment delta is invalid")
 	}
-	now := time.Now()
-	var ledger, balance, receipt map[string]any
+	// 调整的所有写入和回执固定到同一个毫秒时刻，确保首次结果和持久化快照可稳定重放。
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	var bundle map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		membership, err := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, consts.KidsV1PermissionAdjustStars)
 		if err != nil {
@@ -1440,10 +1469,10 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if err != nil {
 			return err
 		}
-		current, version := int64(0), int64(1)
-		if !row.IsEmpty() {
-			current, version = row["balance"].Int64(), row["version"].Int64()
+		if row.IsEmpty() {
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
 		}
+		current, version := row["balance"].Int64(), row["version"].Int64()
 		if version != expected {
 			return &v1.V1Error{Status: 409, Code: "VERSION_CONFLICT", Version: &version, Message: "balance version conflicts"}
 		}
@@ -1460,7 +1489,7 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": delta, "reason": in.Body["reason"], "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": now}).Insert(); err != nil {
 			return err
 		}
-		receipt, err = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{"ledger_id": ledgerID})
+		receipt, err := v1CreateCommitAtTx(ctx, tx, circleID, in.OperationID, now, map[string]any{})
 		if err != nil {
 			return err
 		}
@@ -1470,23 +1499,64 @@ func (s *sKids) v1AdjustMemberStars(ctx context.Context, in v1.V1OperationInput)
 		}
 		nextVersion := version + 1
 		values := gdb.Map{"balance": next, "version": nextVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": now}
-		if row.IsEmpty() {
-			values["circle_id"], values["member_id"] = circleID, memberID
-			if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(values).Insert(); err != nil {
-				return err
-			}
-		} else if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(values).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", row["id"].Int64()).Data(values).Update(); err != nil {
 			return err
 		}
-		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
-		balance = v1BalanceProjection(circleID, memberID, next, nextVersion, commitID, sequence, now)
+		// 事务已写入的字段全部由本次请求确定，直接使用同一 canonical 值构造回执，
+		// 避免数据库时间精度或 JSON 扫描类型差异把已提交的合法调整误报为 502。
+		ledger := v1LedgerProjection(ledgerID, circleID, memberID, source, delta, fmt.Sprint(in.Body["reason"]), actor, nil, now, sequence)
+		balance := v1BalanceProjection(circleID, memberID, next, nextVersion, commitID, sequence, now)
+		bundle = map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": v1CommitCursor(sequence)}
+		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"ledger_entry": ledger, "balance": balance}); err != nil {
+			return err
+		}
+		if err = v1ValidateAdjustmentCommitBundle(bundle, circleID, memberID, fmt.Sprint(in.Body["adjustment_id"]), expected, delta, fmt.Sprint(in.Body["reason"]), now); err != nil {
+			g.Log().Errorf(ctx, "adjustment 响应合同校验失败 operation_id=%s request_id=%s error=%v", in.OperationID, in.RequestID, err)
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "adjustment canonical projection is inconsistent")
+		}
+		out := &v1.V1OperationOutput{Data: bundle, Status: 200, ChangeCursor: v1CommitCursor(sequence)}
+		if err = v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), out); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
 		return nil, "", err
 	}
-	cursor := v1CommitCursor(receipt["commit_sequence"].(int64))
-	return map[string]any{"receipt": receipt, "ledger_entry": ledger, "balance": balance, "change_cursor": cursor}, cursor, nil
+	cursor := bundle["change_cursor"].(string)
+	return bundle, cursor, nil
+}
+
+// v1ValidateAdjustmentCommitBundle 校验人工调整的 receipt、流水、余额和 cursor 是否构成同一原子提交。
+func v1ValidateAdjustmentCommitBundle(bundle map[string]any, circleID, memberID, adjustmentID string, expectedVersion, delta int64, reason string, committedAt time.Time) error {
+	if err := v1.ValidateV1ResponseData("adjustMemberStars", bundle); err != nil {
+		return err
+	}
+	receipt := bundle["receipt"].(map[string]any)
+	ledger := bundle["ledger_entry"].(map[string]any)
+	balance := bundle["balance"].(map[string]any)
+	sequence, ok := v1Integer(receipt["commit_sequence"])
+	if !ok {
+		return fmt.Errorf("adjustment receipt commit sequence is invalid")
+	}
+	if bundle["change_cursor"] != v1CommitCursor(sequence) || ledger["commit_sequence"] != sequence || balance["source_commit_sequence"] != sequence {
+		return fmt.Errorf("adjustment commit cursor or sequence is inconsistent")
+	}
+	if ledger["circle_id"] != circleID || ledger["member_id"] != memberID || ledger["delta"] != delta || ledger["reason"] != reason || ledger["reversal_of_ledger_id"] != nil {
+		return fmt.Errorf("adjustment ledger does not match the requested mutation")
+	}
+	source, ok := ledger["source"].(map[string]any)
+	if !ok || source["source_type"] != "adjustment" || source["source_id"] != adjustmentID {
+		return fmt.Errorf("adjustment ledger source is inconsistent")
+	}
+	if balance["circle_id"] != circleID || balance["member_id"] != memberID || balance["version"] != expectedVersion+1 || balance["source_commit_id"] != receipt["commit_id"] {
+		return fmt.Errorf("adjustment balance is inconsistent")
+	}
+	committedAtMs := committedAt.UnixMilli()
+	if receipt["committed_at_ms"] != committedAtMs || ledger["created_at_ms"] != committedAtMs || balance["updated_at_ms"] != committedAtMs {
+		return fmt.Errorf("adjustment committed time is inconsistent")
+	}
+	return nil
 }
 
 // v1Integer 将经过 schema 校验的 JSON 整数转为 int64。
@@ -1509,13 +1579,13 @@ func v1Integer(value any) (int64, bool) {
 
 // v1TaskOccurrences 按日期窗口返回任务 occurrence 的稳定分页快照。
 func (s *sKids) v1TaskOccurrences(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
+	limit, err := v1ValidateTaskOccurrencesQuery(in.Query)
+	if err != nil {
+		return nil, "", err
+	}
 	circleID := in.PathParameters["circle_id"]
 	if _, err := v1RequireMembership(ctx, in.PrincipalID, circleID, ""); err != nil {
 		return nil, "", err
-	}
-	limit, err := strconv.Atoi(v1QueryFirst(in.Query, "limit"))
-	if err != nil || limit < 1 || limit > 200 {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "occurrence limit is invalid")
 	}
 	offset, err := v1PageOffset(v1QueryFirst(in.Query, "cursor"))
 	if err != nil {
@@ -1550,6 +1620,26 @@ func (s *sKids) v1TaskOccurrences(ctx context.Context, in v1.V1OperationInput) (
 		next = v1PageCursor(offset + limit)
 	}
 	return map[string]any{"items": items, "next_cursor": next, "has_more": hasMore, "snapshot_cursor": cursor}, cursor, nil
+}
+
+// v1ValidateTaskOccurrencesQuery 校验 occurrence 日历窗口、时区和分页边界，防止错误客户端放宽服务端合同。
+func v1ValidateTaskOccurrencesQuery(query map[string][]string) (int, error) {
+	startDate, err := time.Parse(consts.DateLayout, v1QueryFirst(query, "start_date"))
+	if err != nil {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence start date is invalid")
+	}
+	endDate, err := time.Parse(consts.DateLayout, v1QueryFirst(query, "end_date_exclusive"))
+	if err != nil || !endDate.After(startDate) {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence end date is invalid")
+	}
+	if _, err = time.LoadLocation(v1QueryFirst(query, "zone_id")); err != nil {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence zone is invalid")
+	}
+	limit, err := strconv.Atoi(v1QueryFirst(query, "limit"))
+	if err != nil || limit < 1 || limit > 200 {
+		return 0, v1Error(422, "VALIDATION_FAILED", false, "occurrence limit is invalid")
+	}
+	return limit, nil
 }
 
 // v1CompletionDetails 返回完成和取消流水的关联审计明细。

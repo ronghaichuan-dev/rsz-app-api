@@ -2772,6 +2772,7 @@
           "INVITE_NOT_FOUND",
           "INVITE_EXPIRED",
           "INVITE_USED",
+          "ALREADY_CIRCLE_MEMBER",
           "INVITE_ROLE_MISMATCH",
           "INVITE_TARGET_DELETED",
           "AUDIT_INCONSISTENT",
@@ -24888,7 +24889,7 @@
                 }
               }
             },
-            "description": "稳定错误：IDEMPOTENCY_CONFLICT, INVITE_USED",
+            "description": "稳定错误：IDEMPOTENCY_CONFLICT, INVITE_USED, ALREADY_CIRCLE_MEMBER",
             "headers": {
               "X-Contract-Version": {
                 "description": "服务端实际使用的合同主版本。",
@@ -24907,7 +24908,8 @@
             },
             "x-error-codes": [
               "IDEMPOTENCY_CONFLICT",
-              "INVITE_USED"
+              "INVITE_USED",
+              "ALREADY_CIRCLE_MEMBER"
             ]
           },
           "410": {
@@ -25139,6 +25141,7 @@
           "INVITE_NOT_FOUND",
           "INVITE_EXPIRED",
           "INVITE_USED",
+          "ALREADY_CIRCLE_MEMBER",
           "INVITE_ROLE_MISMATCH",
           "INVITE_TARGET_DELETED"
         ],
@@ -25310,7 +25313,7 @@
                 }
               }
             },
-            "description": "稳定错误：IDEMPOTENCY_CONFLICT, INVITE_USED",
+            "description": "稳定错误：IDEMPOTENCY_CONFLICT, INVITE_USED, ALREADY_CIRCLE_MEMBER",
             "headers": {
               "X-Contract-Version": {
                 "description": "服务端实际使用的合同主版本。",
@@ -25329,7 +25332,8 @@
             },
             "x-error-codes": [
               "IDEMPOTENCY_CONFLICT",
-              "INVITE_USED"
+              "INVITE_USED",
+              "ALREADY_CIRCLE_MEMBER"
             ]
           },
           "410": {
@@ -25561,6 +25565,7 @@
           "INVITE_NOT_FOUND",
           "INVITE_EXPIRED",
           "INVITE_USED",
+          "ALREADY_CIRCLE_MEMBER",
           "INVITE_ROLE_MISMATCH",
           "INVITE_TARGET_DELETED"
         ],

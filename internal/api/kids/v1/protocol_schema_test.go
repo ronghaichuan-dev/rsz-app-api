@@ -113,6 +113,54 @@ func TestValidateV1RequestPreservesRepeatedQuery(t *testing.T) {
 	}
 }
 
+// TestValidateV1TaskOccurrencesLimitBoundary 验证 OpenAPI 请求校验拒绝超过 200 的 occurrence 分页请求。
+func TestValidateV1TaskOccurrencesLimitBoundary(t *testing.T) {
+	for _, limit := range []string{"1", "100", "200"} {
+		in := v1TaskOccurrencesValidationInput(limit)
+		if err := ValidateV1Request(in); err != nil {
+			t.Fatalf("合法 occurrence limit=%s 被 OpenAPI 校验拒绝: %v", limit, err)
+		}
+	}
+	for _, limit := range []string{"201", "500"} {
+		in := v1TaskOccurrencesValidationInput(limit)
+		err := ValidateV1Request(in)
+		v1Error, ok := err.(*V1Error)
+		if !ok || v1Error.Status != 422 || v1Error.Code != "VALIDATION_FAILED" {
+			t.Fatalf("非法 occurrence limit=%s 未返回 422/VALIDATION_FAILED: %v", limit, err)
+		}
+	}
+	in := v1TaskOccurrencesValidationInput("1")
+	in.Query["member_id"] = []string{"not-a-member-id"}
+	if err := ValidateV1Request(in); err == nil {
+		t.Fatal("非法 optional member_id 未被 OpenAPI 校验拒绝")
+	}
+}
+
+// v1TaskOccurrencesValidationInput 构造只用于 OpenAPI 请求校验的 occurrence 请求。
+func v1TaskOccurrencesValidationInput(limit string) V1OperationInput {
+	circleID := "circle:v1:00000000-0000-4000-8000-000000000001"
+	return V1OperationInput{
+		OperationID: "listTaskOccurrences",
+		Method:      "GET",
+		Path:        "/v1/circles/" + circleID + "/task-occurrences",
+		Headers: map[string]string{
+			V1RequestIDHeader:     "request:occurrence-limit-0001",
+			V1VersionHeader:       V1Version,
+			V1ClientVersionHeader: "1.0.0",
+		},
+		PathParameters: map[string]string{"circle_id": circleID},
+		Query: map[string][]string{
+			"start_date":         {"2026-03-01"},
+			"end_date_exclusive": {"2026-04-01"},
+			"zone_id":            {"Asia/Shanghai"},
+			"limit":              {limit},
+			"member_id":          {"member:v1:00000000-0000-4000-8000-000000000001"},
+		},
+		Body:        map[string]any{},
+		AccessToken: "fixture-access-token",
+	}
+}
+
 // TestValidateV1ResponseData 验证成功数据也按 operation 专属 schema 检查。
 func TestValidateV1ResponseData(t *testing.T) {
 	data := map[string]any{

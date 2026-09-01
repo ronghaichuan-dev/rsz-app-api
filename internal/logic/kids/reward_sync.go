@@ -163,9 +163,11 @@ func (s *sKids) v1RedeemReward(ctx context.Context, in v1.V1OperationInput) (map
 	if !ok {
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "reward version is invalid")
 	}
-	now := time.Now()
+	var committedAt time.Time
 	var exchange, ledger, balance, cooldownOut, notification, receipt map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// 兑换涉及的全部事实和 read-model 投影必须共用一次 canonical commit 时间。
+		committedAt = time.Now().UTC().Truncate(time.Millisecond)
 		membership, err := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, "")
 		if err != nil {
 			return err
@@ -188,7 +190,7 @@ func (s *sKids) v1RedeemReward(ctx context.Context, in v1.V1OperationInput) (map
 			return err
 		}
 		if assigned.IsEmpty() {
-			return v1Error(409, "NOT_ASSIGNED", false, "reward is not assigned to member")
+			return v1Error(422, "NOT_ASSIGNED", false, "reward is not assigned to member")
 		}
 		member, err := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).Where("member_id", memberID).Where("circle_id", circleID).Where("status", "active").One()
 		if err != nil {
@@ -201,27 +203,33 @@ func (s *sKids) v1RedeemReward(ctx context.Context, in v1.V1OperationInput) (map
 		if err != nil {
 			return err
 		}
-		if !cooldown.IsEmpty() && (cooldown["permanently_unavailable"].Bool() || (!cooldown["cooldown_until_at"].Time().IsZero() && now.Before(cooldown["cooldown_until_at"].Time()))) {
-			return v1Error(409, "COOLING_DOWN", false, "reward is cooling down")
+		if !cooldown.IsEmpty() && cooldown["permanently_unavailable"].Bool() {
+			return v1Error(422, "PERMANENTLY_UNAVAILABLE", false, "reward is permanently unavailable")
+		}
+		if !cooldown.IsEmpty() && !cooldown["cooldown_until_at"].Time().IsZero() && committedAt.Before(cooldown["cooldown_until_at"].Time()) {
+			return v1Error(422, "COOLDOWN_ACTIVE", false, "reward is cooling down")
 		}
 		balanceRow, err := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("circle_id", circleID).Where("member_id", memberID).LockUpdate().One()
 		if err != nil {
 			return err
 		}
-		if balanceRow.IsEmpty() || balanceRow["balance"].Int64() < reward["stars_required"].Int64() {
-			return v1Error(409, "INSUFFICIENT_STARS", false, "member balance is insufficient")
+		if balanceRow.IsEmpty() {
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "canonical member balance is missing")
+		}
+		if balanceRow["balance"].Int64() < reward["stars_required"].Int64() {
+			return v1Error(422, "INSUFFICIENT_BALANCE", false, "member balance is insufficient")
 		}
 		actor, err := v1ActorSnapshotTx(ctx, tx, membership)
 		if err != nil {
 			return err
 		}
-		permanent, until := v1RewardCooldown(ruleString(reward["repeat_rule"].String()), reward["cooldown_days"].Int64(), now)
+		permanent, until := v1RewardCooldown(ruleString(reward["repeat_rule"].String()), reward["cooldown_days"].Int64(), committedAt)
 		ledgerID, exchangeID := v1ID("ledger", uuid.NewString()), fmt.Sprint(in.Body["exchange_id"])
 		source := map[string]any{"source_type": "reward", "source_id": rewardID, "title_snapshot": reward["title"].String(), "stars_snapshot": reward["stars_required"].Int64(), "asset_id_snapshot": nil, "scheduled_date_snapshot": nil}
-		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": -reward["stars_required"].Int64(), "reason": nil, "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": now}).Insert(); err != nil {
+		if _, err = tx.Model(consts.KidsV1LedgerTable).Ctx(ctx).Data(gdb.Map{"ledger_id": ledgerID, "circle_id": circleID, "member_id": memberID, "source": mustV1JSON(source), "delta": -reward["stars_required"].Int64(), "reason": nil, "actor": mustV1JSON(actor), "commit_sequence": 0, "created_at": committedAt}).Insert(); err != nil {
 			return err
 		}
-		receipt, err = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{"exchange_id": exchangeID, "ledger_id": ledgerID})
+		receipt, err = v1CreateCommitAtTx(ctx, tx, circleID, in.OperationID, committedAt, map[string]any{})
 		if err != nil {
 			return err
 		}
@@ -232,29 +240,40 @@ func (s *sKids) v1RedeemReward(ctx context.Context, in v1.V1OperationInput) (map
 		cooldownVersion := int64(1)
 		if !cooldown.IsEmpty() {
 			cooldownVersion = cooldown["version"].Int64() + 1
-			if _, err = tx.Model(consts.KidsV1RewardCooldownTable).Ctx(ctx).Where("id", cooldown["id"].Int64()).Data(gdb.Map{"cooldown_until_at": nullableTime(until), "last_redeemed_at": now, "permanently_unavailable": permanent, "version": cooldownVersion, "updated_at": now}).Update(); err != nil {
+			if _, err = tx.Model(consts.KidsV1RewardCooldownTable).Ctx(ctx).Where("id", cooldown["id"].Int64()).Data(gdb.Map{"cooldown_until_at": nullableTime(until), "last_redeemed_at": committedAt, "permanently_unavailable": permanent, "version": cooldownVersion, "updated_at": committedAt}).Update(); err != nil {
 				return err
 			}
-		} else if _, err = tx.Model(consts.KidsV1RewardCooldownTable).Ctx(ctx).Data(gdb.Map{"reward_id": rewardID, "member_id": memberID, "cooldown_until_at": nullableTime(until), "last_redeemed_at": now, "permanently_unavailable": permanent, "version": cooldownVersion, "created_at": now, "updated_at": now}).Insert(); err != nil {
+		} else if _, err = tx.Model(consts.KidsV1RewardCooldownTable).Ctx(ctx).Data(gdb.Map{"reward_id": rewardID, "member_id": memberID, "cooldown_until_at": nullableTime(until), "last_redeemed_at": committedAt, "permanently_unavailable": permanent, "version": cooldownVersion, "created_at": committedAt, "updated_at": committedAt}).Insert(); err != nil {
 			return err
 		}
 		nextBalance, nextVersion := balanceRow["balance"].Int64()-reward["stars_required"].Int64(), balanceRow["version"].Int64()+1
-		if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", balanceRow["id"].Int64()).Data(gdb.Map{"balance": nextBalance, "version": nextVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": now}).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Where("id", balanceRow["id"].Int64()).Data(gdb.Map{"balance": nextBalance, "version": nextVersion, "source_commit_id": commitID, "source_commit_sequence": sequence, "updated_at": committedAt}).Update(); err != nil {
 			return err
 		}
 		avatar := v1JSONValue(member["avatar"].String())
-		if _, err = tx.Model(consts.KidsV1ExchangeTable).Ctx(ctx).Data(gdb.Map{"exchange_id": exchangeID, "circle_id": circleID, "member_id": memberID, "member_name_snapshot": member["display_name"], "member_avatar_snapshot": mustV1JSON(avatar), "reward_id": rewardID, "reward_title_snapshot": reward["title"], "reward_visual_snapshot": reward["visual"], "stars_deducted_snapshot": reward["stars_required"], "reward_repeat_rule_snapshot": reward["repeat_rule"], "reward_cooldown_days_snapshot": nullableInt(reward["cooldown_days"].Int64()), "cooldown_until_at_snapshot": nullableTime(until), "permanently_unavailable_snapshot": permanent, "ledger_id": ledgerID, "commit_sequence": sequence, "exchanged_at": now}).Insert(); err != nil {
+		if _, err = tx.Model(consts.KidsV1ExchangeTable).Ctx(ctx).Data(gdb.Map{"exchange_id": exchangeID, "circle_id": circleID, "member_id": memberID, "member_name_snapshot": member["display_name"], "member_avatar_snapshot": mustV1JSON(avatar), "reward_id": rewardID, "reward_title_snapshot": reward["title"], "reward_visual_snapshot": reward["visual"], "stars_deducted_snapshot": reward["stars_required"], "reward_repeat_rule_snapshot": reward["repeat_rule"], "reward_cooldown_days_snapshot": nullableInt(reward["cooldown_days"].Int64()), "cooldown_until_at_snapshot": nullableTime(until), "permanently_unavailable_snapshot": permanent, "ledger_id": ledgerID, "commit_sequence": sequence, "exchanged_at": committedAt}).Insert(); err != nil {
 			return err
 		}
 		notificationID := v1ID("notification", uuid.NewString())
-		if _, err = tx.Model(consts.KidsV1NotificationOutboxTable).Ctx(ctx).Data(gdb.Map{"notification_id": notificationID, "circle_id": circleID, "account_id": in.PrincipalID, "exchange_id": exchangeID, "event_type": "reward_redeemed", "payload": mustV1JSON(map[string]any{"exchange_id": exchangeID}), "commit_sequence": sequence, "status": "pending", "attempt_count": 0, "next_attempt_at": nil, "created_at": now, "updated_at": now, "version": 1}).Insert(); err != nil {
+		if _, err = tx.Model(consts.KidsV1NotificationOutboxTable).Ctx(ctx).Data(gdb.Map{"notification_id": notificationID, "circle_id": circleID, "account_id": in.PrincipalID, "exchange_id": exchangeID, "event_type": "reward_redeemed", "payload": mustV1JSON(map[string]any{"exchange_id": exchangeID}), "commit_sequence": sequence, "status": "pending", "attempt_count": 0, "next_attempt_at": nil, "created_at": committedAt, "updated_at": committedAt, "version": 1}).Insert(); err != nil {
 			return err
 		}
-		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, -reward["stars_required"].Int64(), nil, actor, nil, now, sequence)
-		balance = v1BalanceProjection(circleID, memberID, nextBalance, nextVersion, commitID, sequence, now)
-		cooldownOut = v1CooldownProjection(rewardID, memberID, until, permanent, now, cooldownVersion)
-		exchange = v1ExchangeProjection(exchangeID, circleID, memberID, member["display_name"].String(), avatar, rewardID, reward, ledgerID, until, permanent, now, sequence)
-		notification = v1NotificationProjection(notificationID, exchangeID, now)
+		ledger = v1LedgerProjection(ledgerID, circleID, memberID, source, -reward["stars_required"].Int64(), nil, actor, nil, committedAt, sequence)
+		balance = v1BalanceProjection(circleID, memberID, nextBalance, nextVersion, commitID, sequence, committedAt)
+		cooldownOut = v1CooldownProjection(rewardID, memberID, until, permanent, committedAt, cooldownVersion)
+		exchange = v1ExchangeProjection(exchangeID, circleID, memberID, member["display_name"].String(), avatar, rewardID, reward, ledgerID, until, permanent, committedAt, sequence)
+		notification = v1NotificationProjection(notificationID, exchangeID, committedAt)
+		bundle := map[string]any{"receipt": receipt, "exchange": exchange, "ledger_entry": ledger, "balance": balance, "cooldown": cooldownOut, "notification_outbox": notification, "change_cursor": v1CommitCursor(sequence)}
+		if err = v1ValidateRewardRedemptionCommitBundle(bundle, committedAt); err != nil {
+			return v1Error(409, "AUDIT_INCONSISTENT", false, "reward redemption canonical projection is inconsistent")
+		}
+		if err = v1UpdateCommitChangesTx(ctx, tx, commitID, map[string]any{"exchange": exchange, "ledger_entry": ledger, "balance": balance, "cooldown": cooldownOut, "notification_outbox": notification}); err != nil {
+			return err
+		}
+		out := &v1.V1OperationOutput{Data: bundle, Status: 200, ChangeCursor: v1CommitCursor(sequence)}
+		if err = v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), out); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -262,6 +281,47 @@ func (s *sKids) v1RedeemReward(ctx context.Context, in v1.V1OperationInput) (map
 	}
 	cursor := v1CommitCursor(receipt["commit_sequence"].(int64))
 	return map[string]any{"receipt": receipt, "exchange": exchange, "ledger_entry": ledger, "balance": balance, "cooldown": cooldownOut, "notification_outbox": notification, "change_cursor": cursor}, cursor, nil
+}
+
+// v1ValidateRewardRedemptionCommitBundle 校验兑换 bundle 的所有跨 read-model 标识、序列和业务时间均来自同一次提交。
+func v1ValidateRewardRedemptionCommitBundle(bundle map[string]any, committedAt time.Time) error {
+	if err := v1.ValidateV1ResponseData("redeemReward", bundle); err != nil {
+		return err
+	}
+	receipt := bundle["receipt"].(map[string]any)
+	exchange := bundle["exchange"].(map[string]any)
+	ledger := bundle["ledger_entry"].(map[string]any)
+	balance := bundle["balance"].(map[string]any)
+	cooldown := bundle["cooldown"].(map[string]any)
+	notification := bundle["notification_outbox"].(map[string]any)
+	sequence, ok := v1Integer(receipt["commit_sequence"])
+	if !ok {
+		return fmt.Errorf("reward redemption receipt commit sequence is invalid")
+	}
+	if bundle["change_cursor"] != v1CommitCursor(sequence) || !v1RewardRedemptionIntegerEquals(exchange["commit_sequence"], sequence) || !v1RewardRedemptionIntegerEquals(ledger["commit_sequence"], sequence) || !v1RewardRedemptionIntegerEquals(balance["source_commit_sequence"], sequence) {
+		return fmt.Errorf("reward redemption commit sequence or cursor is inconsistent")
+	}
+	if exchange["ledger_id"] != ledger["ledger_id"] || balance["source_commit_id"] != receipt["commit_id"] || notification["exchange_id"] != exchange["exchange_id"] || cooldown["reward_id"] != exchange["reward_id"] || cooldown["member_id"] != exchange["member_id"] {
+		return fmt.Errorf("reward redemption cross-model identity is inconsistent")
+	}
+	if source, ok := ledger["source"].(map[string]any); !ok || source["source_type"] != "reward" || source["source_id"] != exchange["reward_id"] {
+		return fmt.Errorf("reward redemption ledger source is inconsistent")
+	}
+	stars, ok := v1Integer(exchange["stars_deducted_snapshot"])
+	if !ok || !v1RewardRedemptionIntegerEquals(ledger["delta"], -stars) {
+		return fmt.Errorf("reward redemption ledger amount is inconsistent")
+	}
+	committedAtMs := committedAt.UnixMilli()
+	if !v1RewardRedemptionIntegerEquals(receipt["committed_at_ms"], committedAtMs) || !v1RewardRedemptionIntegerEquals(exchange["exchanged_at_ms"], committedAtMs) || !v1RewardRedemptionIntegerEquals(ledger["created_at_ms"], committedAtMs) || !v1RewardRedemptionIntegerEquals(balance["updated_at_ms"], committedAtMs) || !v1RewardRedemptionIntegerEquals(cooldown["last_redeemed_at_ms"], committedAtMs) || !v1RewardRedemptionIntegerEquals(notification["created_at_ms"], committedAtMs) || !v1RewardRedemptionIntegerEquals(notification["updated_at_ms"], committedAtMs) {
+		return fmt.Errorf("reward redemption commit time is inconsistent")
+	}
+	return nil
+}
+
+// v1RewardRedemptionIntegerEquals 兼容首次内存 bundle 与 JSON 幂等重放后的整数表示。
+func v1RewardRedemptionIntegerEquals(value any, expected int64) bool {
+	actual, ok := v1Integer(value)
+	return ok && actual == expected
 }
 
 // v1ExchangeHistory 返回指定成员按兑换时间倒序排列的稳定分页历史。

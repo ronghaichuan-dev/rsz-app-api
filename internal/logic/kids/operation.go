@@ -13,9 +13,11 @@ import (
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/google/uuid"
 
 	v1 "rslytics-app-api/internal/api/kids/v1"
+	commonlogin "rslytics-app-api/internal/common/login"
 	"rslytics-app-api/internal/consts"
 	"rslytics-app-api/internal/utils"
 )
@@ -23,17 +25,59 @@ import (
 // v1Operation 是单个接口路由对应的领域操作。
 type v1Operation func(context.Context, v1.V1OperationInput) (map[string]any, string, error)
 
+// v1IdempotentMutationOperations 集中声明已具备完整首次快照和安全重放能力的写操作。
+var v1IdempotentMutationOperations = map[string]struct{}{
+	"adjustMemberStars":         {},
+	"cancelTaskCompletion":      {},
+	"completeOnboarding":        {},
+	"completeTask":              {},
+	"createCircleMember":        {},
+	"createInvite":              {},
+	"createInviteGuestSession":  {},
+	"deleteAdministrator":       {},
+	"deleteCircle":              {},
+	"deleteMember":              {},
+	"deleteTask":                {},
+	"deleteTaskTag":             {},
+	"leaveCircle":               {},
+	"redeemAdministratorInvite": {},
+	"redeemMemberInvite":        {},
+	"redeemReward":              {},
+	"refreshInvite":             {},
+	"refreshSession":            {},
+	"revokeInvite":              {},
+	"revokeSession":             {},
+	"selectCurrentCircle":       {},
+	"submitFeedback":            {},
+	"updateCircle":              {},
+	"upsertAdministrator":       {},
+	"upsertMember":              {},
+	"upsertTask":                {},
+	"upsertTaskTag":             {},
+}
+
 // runV1 执行单个接口路由的公共认证、幂等和响应校验流程。
 func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1Operation) (*v1.V1OperationOutput, error) {
 	if err := validateV1Input(in); err != nil {
 		return nil, err
 	}
+	bodyFingerprint := v1BodyFingerprint(in.Body)
+	routeFingerprint := v1RouteFingerprint(in)
+	if in.OperationID == "refreshSession" {
+		if output, conflict, pending, err := v1RefreshIdempotencyReplay(ctx, in, routeFingerprint, bodyFingerprint); err != nil {
+			return nil, err
+		} else if conflict {
+			return nil, v1Error(409, "IDEMPOTENCY_CONFLICT", false, "idempotency key conflicts with an earlier request")
+		} else if pending {
+			return nil, v1Error(503, "UNAVAILABLE", true, "v1 request is still being committed")
+		} else if output != nil {
+			return output, nil
+		}
+	}
 	if err := resolveV1Principal(ctx, &in); err != nil {
 		return nil, err
 	}
 	principalScope := v1PrincipalScope(ctx, in)
-	bodyFingerprint := v1BodyFingerprint(in.Body)
-	routeFingerprint := v1RouteFingerprint(in)
 	if v1OperationSupportsIdempotency(in) {
 		if output, conflict, pending, err := v1IdempotencyBegin(ctx, principalScope, in, routeFingerprint, bodyFingerprint); err != nil {
 			return nil, err
@@ -44,7 +88,16 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		} else if output != nil {
 			output = v1ReplayOutput(output)
 			if err = v1.ValidateV1ResponseData(in.OperationID, output.Data); err != nil {
-				return nil, v1Error(503, "UNAVAILABLE", true, "stored v1 response is unavailable")
+				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay", err)
+				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response violates the protocol")
+			}
+			if err = v1ValidateCanonicalOperationBundle(in.OperationID, output.Data); err != nil {
+				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay_canonical_bundle", err)
+				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response canonical bundle violates the protocol")
+			}
+			if err = v1ValidateAdjustmentOutputCursor(in.OperationID, output); err != nil {
+				v1LogResponseProjectionFailure(ctx, in, "idempotency_replay_cursor", err)
+				return nil, v1Error(502, "PROTOCOL_ERROR", false, "stored v1 response cursor violates the protocol")
 			}
 			return output, nil
 		}
@@ -58,18 +111,125 @@ func (s *sKids) runV1(ctx context.Context, in v1.V1OperationInput, operation v1O
 		return nil, err
 	}
 	if err = v1.ValidateV1ResponseData(in.OperationID, data); err != nil {
+		v1LogResponseProjectionFailure(ctx, in, "operation_result", err)
 		if v1OperationSupportsIdempotency(in) {
 			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
 		}
-		return nil, v1Error(503, "UNAVAILABLE", true, "v1 response projection is unavailable")
+		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response projection violates the protocol")
+	}
+	if err = v1ValidateCanonicalOperationBundle(in.OperationID, data); err != nil {
+		v1LogResponseProjectionFailure(ctx, in, "operation_result_canonical_bundle", err)
+		if v1OperationSupportsIdempotency(in) {
+			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
+		}
+		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response canonical bundle violates the protocol")
 	}
 	output := &v1.V1OperationOutput{Data: data, Status: 200, ChangeCursor: changeCursor}
+	if err = v1ValidateAdjustmentOutputCursor(in.OperationID, output); err != nil {
+		v1LogResponseProjectionFailure(ctx, in, "operation_result_cursor", err)
+		if v1OperationSupportsIdempotency(in) {
+			_ = v1IdempotencyAbort(ctx, principalScope, in, routeFingerprint, bodyFingerprint)
+		}
+		return nil, v1Error(502, "PROTOCOL_ERROR", false, "v1 response cursor violates the protocol")
+	}
 	if v1OperationSupportsIdempotency(in) {
 		if err = v1IdempotencySave(ctx, principalScope, in, routeFingerprint, bodyFingerprint, output); err != nil {
 			return nil, err
 		}
 	}
 	return output, nil
+}
+
+// v1ValidateAdjustmentOutputCursor 确保 adjustment data 内 cursor 与最终 success envelope 的 cursor 完全一致。
+func v1ValidateAdjustmentOutputCursor(operationID string, output *v1.V1OperationOutput) error {
+	if operationID != "adjustMemberStars" {
+		return nil
+	}
+	if output == nil {
+		return fmt.Errorf("adjustment output is missing")
+	}
+	cursor, ok := output.Data["change_cursor"].(string)
+	if !ok || cursor == "" || cursor != output.ChangeCursor {
+		return fmt.Errorf("adjustment envelope change cursor is inconsistent")
+	}
+	return nil
+}
+
+// v1ValidateCanonicalOperationBundle 校验同一原子写入响应中必须完全一致的规范时间字段。
+func v1ValidateCanonicalOperationBundle(operationID string, data map[string]any) error {
+	if operationID != "completeTask" {
+		return nil
+	}
+	return v1ValidateCompleteTaskCanonicalBundle(data)
+}
+
+// v1ValidateCompleteTaskCanonicalBundle 确保完成、流水、余额和 occurrence 都使用 receipt 的唯一提交时刻。
+func v1ValidateCompleteTaskCanonicalBundle(data map[string]any) error {
+	receipt, ok := data["receipt"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task receipt is missing")
+	}
+	occurrence, ok := data["occurrence"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task occurrence is missing")
+	}
+	completion, ok := data["completion"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task completion is missing")
+	}
+	ledger, ok := data["ledger_entry"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task ledger is missing")
+	}
+	balance, ok := data["balance"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("complete task balance is missing")
+	}
+	committedAt, ok := v1CanonicalMillis(receipt["committed_at_ms"])
+	if !ok {
+		return fmt.Errorf("complete task receipt time is invalid")
+	}
+	for field, value := range map[string]any{
+		"occurrence.updated_at_ms":   occurrence["updated_at_ms"],
+		"completion.completed_at_ms": completion["completed_at_ms"],
+		"ledger_entry.created_at_ms": ledger["created_at_ms"],
+		"balance.updated_at_ms":      balance["updated_at_ms"],
+	} {
+		actual, valid := v1CanonicalMillis(value)
+		if !valid || actual != committedAt {
+			return fmt.Errorf("complete task canonical time mismatches field=%s", field)
+		}
+	}
+	return nil
+}
+
+// v1CanonicalMillis 兼容首次响应和 JSON 幂等重放中的整数毫秒表示。
+func v1CanonicalMillis(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case int:
+		return int64(typed), true
+	case int64:
+		return typed, true
+	case float64:
+		if typed != float64(int64(typed)) {
+			return 0, false
+		}
+		return int64(typed), true
+	case json.Number:
+		parsed, err := typed.Int64()
+		return parsed, err == nil
+	default:
+		return 0, false
+	}
+}
+
+// v1LogResponseProjectionFailure 记录响应合同失败的关联信息，不记录 credential、proof 或完整请求正文。
+func v1LogResponseProjectionFailure(ctx context.Context, in v1.V1OperationInput, stage string, err error) {
+	traceID := ""
+	if request := ghttp.RequestFromCtx(ctx); request != nil {
+		traceID = request.GetCtxVar(consts.CtxTraceIDKey).String()
+	}
+	g.Log().Errorf(ctx, "event=kids_v1_response_projection_invalid operation_id=%s request_id=%s trace_id=%s stage=%s error=%v", in.OperationID, in.RequestID, traceID, stage, err)
 }
 
 // GetCurrentAccount 获取当前账号接口 bootstrap。
@@ -289,15 +449,21 @@ func v1ReplayOutput(output *v1.V1OperationOutput) *v1.V1OperationOutput {
 	if err = json.Unmarshal(encoded, &copied); err != nil {
 		return output
 	}
-	if receipt, ok := copied["receipt"].(map[string]any); ok {
-		receipt["result_kind"] = "idempotent_replay"
+	for _, key := range []string{"receipt", "redemption_receipt"} {
+		if receipt, ok := copied[key].(map[string]any); ok {
+			receipt["result_kind"] = "idempotent_replay"
+		}
 	}
 	return &v1.V1OperationOutput{Data: copied, Status: output.Status, ChangeCursor: output.ChangeCursor, ETag: output.ETag}
 }
 
 // v1OperationSupportsIdempotency 仅允许已经具备完整重放快照的 operation 进入幂等提交流程。
 func v1OperationSupportsIdempotency(in v1.V1OperationInput) bool {
-	return in.Method != "GET" && in.Method != "HEAD" && (in.OperationID == "createInviteGuestSession" || in.OperationID == "refreshSession" || in.OperationID == "revokeSession" || in.OperationID == "createInvite" || in.OperationID == "refreshInvite" || in.OperationID == "revokeInvite" || in.OperationID == "redeemAdministratorInvite" || in.OperationID == "redeemMemberInvite" || in.OperationID == "upsertTaskTag" || in.OperationID == "deleteTaskTag" || in.OperationID == "upsertTask" || in.OperationID == "deleteTask" || in.OperationID == "completeTask" || in.OperationID == "cancelTaskCompletion" || in.OperationID == "adjustMemberStars" || in.OperationID == "completeOnboarding" || in.OperationID == "selectCurrentCircle" || in.OperationID == "updateCircle" || in.OperationID == "deleteCircle" || in.OperationID == "createCircleMember" || in.OperationID == "upsertMember" || in.OperationID == "deleteMember" || in.OperationID == "upsertAdministrator" || in.OperationID == "deleteAdministrator" || in.OperationID == "leaveCircle" || in.OperationID == "submitFeedback")
+	if in.Method == "GET" || in.Method == "HEAD" {
+		return false
+	}
+	_, supported := v1IdempotentMutationOperations[in.OperationID]
+	return supported
 }
 
 // resolveV1Principal 从持久化 session 解析接口认证上下文，拒绝过期、撤销或类型不匹配的凭据。
@@ -310,25 +476,40 @@ func resolveV1Principal(ctx context.Context, in *v1.V1OperationInput) error {
 	if authContext == "refresh" {
 		tokenField = "refresh_token_hash"
 	}
-	session, err := utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).
-		Where(tokenField, sha256Hex(in.AccessToken)).Where("revoked_at IS NULL").One()
+	var accessClaims *utils.V1SessionTokenClaims
+	if authContext != "refresh" {
+		var err error
+		accessClaims, err = utils.ParseV1SessionToken(in.AccessToken, v1SessionSigningSecret(ctx), v1SessionEnvironment(ctx))
+		if err != nil {
+			return v1Error(401, "UNAUTHENTICATED", false, "session credential is invalid")
+		}
+	}
+	sessionModel := utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).
+		Where(tokenField, sha256Hex(in.AccessToken))
+	if authContext != "refresh" {
+		sessionModel = sessionModel.Where("status", "active")
+	}
+	session, err := sessionModel.One()
 	if err != nil {
 		return err
 	}
 	if session.IsEmpty() {
 		return v1Error(401, "UNAUTHENTICATED", false, "session credential is invalid")
 	}
-	now := time.Now()
-	expiresAt := session["expires_at"].Time()
+	nowMs := time.Now().UnixMilli()
+	expiresAtMs := session["access_expires_at_ms"].Int64()
 	if authContext == "refresh" {
-		expiresAt = session["refresh_expires_at"].Time()
+		expiresAtMs = session["refresh_expires_at_ms"].Int64()
 	}
-	if expiresAt.IsZero() || !expiresAt.After(now) {
+	if expiresAtMs <= nowMs {
 		return v1Error(401, "TOKEN_EXPIRED", false, "session credential is expired")
 	}
 	in.SessionID = session["session_id"].String()
 	in.PrincipalKind = session["principal_kind"].String()
 	in.PrincipalID = session["account_id"].String()
+	if accessClaims != nil && (accessClaims.SessionID != in.SessionID || accessClaims.AccountID != in.PrincipalID || accessClaims.PrincipalKind != in.PrincipalKind || accessClaims.ExpiresAtMs != expiresAtMs) {
+		return v1Error(401, "UNAUTHENTICATED", false, "session credential is invalid")
+	}
 	if authContext == "refresh" {
 		if in.PrincipalKind != "account" || in.SessionID != fmt.Sprint(in.Body["session_id"]) {
 			return v1Error(401, "UNAUTHENTICATED", false, "refresh credential does not match the account session")
@@ -571,6 +752,13 @@ func (s *sKids) v1CreateCircleMember(ctx context.Context, in v1.V1OperationInput
 		out = v1MemberRecordProjection(row)
 		var ce error
 		receipt, ce = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{"member": out})
+		if ce != nil {
+			return ce
+		}
+		_, ce = tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(gdb.Map{
+			"circle_id": circleID, "member_id": memberID, "balance": 0, "version": 1,
+			"source_commit_id": receipt["commit_id"], "source_commit_sequence": receipt["commit_sequence"], "updated_at": now,
+		}).Insert()
 		return ce
 	})
 	if err != nil {
@@ -584,7 +772,7 @@ func (s *sKids) v1CreateCircleMember(ctx context.Context, in v1.V1OperationInput
 func (s *sKids) v1UpsertMember(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
 	circleID := in.PathParameters["circle_id"]
 	memberID := in.PathParameters["member_id"]
-	if err := v1RequireMembershipPermission(ctx, in.PrincipalID, circleID, consts.KidsV1PermissionManageMembers); err != nil {
+	if err := v1RequireMemberProfileUpdatePermission(ctx, in.PrincipalID, circleID, memberID); err != nil {
 		return nil, "", err
 	}
 	expected, ok := v1ExpectedVersion(in.Body["expected_version"])
@@ -599,7 +787,7 @@ func (s *sKids) v1UpsertMember(ctx context.Context, in v1.V1OperationInput) (map
 	var out map[string]any
 	var receipt map[string]any
 	err = utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		if _, e := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, consts.KidsV1PermissionManageMembers); e != nil {
+		if e := v1RequireMemberProfileUpdatePermissionTx(ctx, tx, in.PrincipalID, circleID, memberID); e != nil {
 			return e
 		}
 		row, e := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).Where("member_id", memberID).Where("circle_id", circleID).Where("status", "active").LockUpdate().One()
@@ -951,6 +1139,67 @@ func v1RequireMembershipPermission(ctx context.Context, accountID, circleID, per
 	return err
 }
 
+// v1InviteVersionConflictError 只为有效的正数版本构造可重试的版本冲突，避免向客户端返回无效版本。
+func v1InviteVersionConflictError(current int64) error {
+	if current <= 0 {
+		return v1Error(502, "PROTOCOL_ERROR", false, "invite version is invalid")
+	}
+	return &v1.V1Error{Status: 409, Code: "VERSION_CONFLICT", Version: &current, Message: "invite version conflicts"}
+}
+
+// v1CircleMembershipExistsError 返回账号已经属于目标圈子的稳定冲突错误，不与邀请码核销状态混淆。
+func v1CircleMembershipExistsError() error {
+	return v1Error(409, "ALREADY_CIRCLE_MEMBER", false, "account already has circle membership")
+}
+
+// v1RequireMemberProfileUpdatePermission 校验管理员可编辑任意成员，受邀成员只能编辑绑定到自身账号的成员资料。
+func v1RequireMemberProfileUpdatePermission(ctx context.Context, accountID, circleID, memberID string) error {
+	membership, err := v1RequireMembership(ctx, accountID, circleID, "")
+	if err != nil {
+		return err
+	}
+	if v1PermissionsContain(membership["permissions"].String(), consts.KidsV1PermissionManageMembers) {
+		return nil
+	}
+	if membership["actor_type"].String() != "member" || membership["actor_id"].String() != memberID {
+		return v1Error(403, "FORBIDDEN", false, "membership permission is required")
+	}
+	member, err := utils.KidsDB(ctx).Model(consts.KidsV1MemberTable).Ctx(ctx).
+		Fields("member_id").Where("member_id", memberID).Where("circle_id", circleID).
+		Where("bound_account_id", accountID).Where("status", "active").One()
+	if err != nil {
+		return err
+	}
+	if member.IsEmpty() {
+		return v1Error(403, "FORBIDDEN", false, "member profile permission is required")
+	}
+	return nil
+}
+
+// v1RequireMemberProfileUpdatePermissionTx 在事务内锁定授权关系和目标成员，防止校验后权限或绑定关系发生变化。
+func v1RequireMemberProfileUpdatePermissionTx(ctx context.Context, tx gdb.TX, accountID, circleID, memberID string) error {
+	membership, err := v1RequireMembershipTx(ctx, tx, accountID, circleID, "")
+	if err != nil {
+		return err
+	}
+	if v1PermissionsContain(membership["permissions"].String(), consts.KidsV1PermissionManageMembers) {
+		return nil
+	}
+	if membership["actor_type"].String() != "member" || membership["actor_id"].String() != memberID {
+		return v1Error(403, "FORBIDDEN", false, "membership permission is required")
+	}
+	member, err := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).
+		Fields("member_id").Where("member_id", memberID).Where("circle_id", circleID).
+		Where("bound_account_id", accountID).Where("status", "active").LockUpdate().One()
+	if err != nil {
+		return err
+	}
+	if member.IsEmpty() {
+		return v1Error(403, "FORBIDDEN", false, "member profile permission is required")
+	}
+	return nil
+}
+
 // v1RequireMembership 读取当前账号在圈子的 active membership。
 func v1RequireMembership(ctx context.Context, accountID, circleID, permission string) (gdb.Record, error) {
 	row, err := utils.KidsDB(ctx).Model(consts.KidsV1MembershipTable).Ctx(ctx).Where("account_id", accountID).Where("circle_id", circleID).Where("status", "active").One()
@@ -1268,6 +1517,18 @@ func v1LatestCursor(ctx context.Context) (string, error) {
 	return v1CommitCursor(commit["commit_sequence"].Int64()), nil
 }
 
+// v1LatestCursorTx 在当前数据库事务的同一读取快照中获取最新提交游标。
+func v1LatestCursorTx(ctx context.Context, tx gdb.TX) (string, error) {
+	commit, err := tx.Model(consts.KidsV1CommitTable).Ctx(ctx).OrderDesc("commit_sequence").One()
+	if err != nil {
+		return "", err
+	}
+	if commit.IsEmpty() {
+		return v1CommitCursor(0), nil
+	}
+	return v1CommitCursor(commit["commit_sequence"].Int64()), nil
+}
+
 // v1CircleRecordProjection 将接口圈子数据库记录还原为冻结 wire 投影。
 func v1CircleRecordProjection(record gdb.Record) map[string]any {
 	return map[string]any{"circle_id": record["circle_id"].String(), "name": record["name"].String(), "icon": v1JSONValue(record["icon"].String()), "owner_administrator_id": record["owner_administrator_id"].String(), "status": record["status"].String(), "version": record["version"].Int64(), "created_at_ms": record["created_at"].Time().UnixMilli(), "updated_at_ms": record["updated_at"].Time().UnixMilli(), "deleted_at_ms": v1NullableTimeMillis(record["deleted_at"].Time())}
@@ -1421,7 +1682,18 @@ func (s *sKids) v1CompleteOnboarding(ctx context.Context, in v1.V1OperationInput
 		receipt, commitErr = v1CreateCommitTx(ctx, tx, circleID, in.OperationID, map[string]any{
 			"circle": circle, "owner_administrator": owner, "initial_members": members, "membership": membership, "selection": selection,
 		})
-		return commitErr
+		if commitErr != nil {
+			return commitErr
+		}
+		for _, member := range members {
+			if _, insertErr := tx.Model(consts.KidsV1BalanceTable).Ctx(ctx).Data(gdb.Map{
+				"circle_id": circleID, "member_id": member["member_id"], "balance": 0, "version": 1,
+				"source_commit_id": receipt["commit_id"], "source_commit_sequence": receipt["commit_sequence"], "updated_at": now,
+			}).Insert(); insertErr != nil {
+				return insertErr
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, "", err
@@ -1505,43 +1777,50 @@ func (s *sKids) v1GetCurrentAccount(ctx context.Context, in v1.V1OperationInput)
 	if in.PrincipalKind != "invite_guest" {
 		return nil, "", v1Error(403, "FORBIDDEN", false, "unsupported session principal")
 	}
-	expiresAt := session["expires_at"].Time()
+	expiresAtMs := session["access_expires_at_ms"].Int64()
 	return map[string]any{
-		"principal_kind": "invite_guest",
-		"session": map[string]any{
-			"session_id":            in.SessionID,
-			"principal_type":        "invite_guest",
-			"status":                "active",
-			"issued_at_ms":          session["created_at"].Time().UnixMilli(),
-			"access_expires_at_ms":  expiresAt.UnixMilli(),
-			"refresh_expires_at_ms": session["refresh_expires_at"].Time().UnixMilli(),
-		},
+		"principal_kind":      "invite_guest",
+		"session":             v1SessionMetadataProjection(session),
 		"capabilities":        []string{"invite_redeem_administrator", "invite_redeem_member", "current_account_bootstrap", "submit_feedback", "feedback_asset_upload"},
-		"guest_expires_at_ms": expiresAt.UnixMilli(),
+		"guest_expires_at_ms": expiresAtMs,
 		"bootstrap_cursor":    nil,
 	}, "", nil
 }
 
 // v1RefreshSession 原子轮换账号 session 的 access 和 refresh credential，只保存其摘要。
 func (s *sKids) v1RefreshSession(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-	now := time.Now()
-	accessToken := v1Secret()
+	issuedAtMs := time.Now().UnixMilli()
+	accessExpiryMs := issuedAtMs + int64(time.Hour/time.Millisecond)
+	refreshExpiryMs := issuedAtMs + int64((30*24*time.Hour)/time.Millisecond)
+	accessToken, err := v1IssueAccessToken(ctx, in.SessionID, in.PrincipalID, "account", issuedAtMs, accessExpiryMs)
+	if err != nil {
+		return nil, "", err
+	}
 	refreshToken := v1Secret()
-	accessExpiry := now.Add(time.Hour)
-	refreshExpiry := now.Add(30 * 24 * time.Hour)
 	receiptID := v1ID("receipt", uuid.NewString())
-	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		session, err := tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).Where("account_id", in.PrincipalID).Where("principal_kind", "account").Where("revoked_at IS NULL").LockUpdate().One()
+	var sessionRecord gdb.Record
+	err = utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		session, err := tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).Where("account_id", in.PrincipalID).Where("principal_kind", "account").Where("refresh_token_hash", sha256Hex(in.AccessToken)).Where("status", "active").LockUpdate().One()
 		if err != nil {
 			return err
 		}
 		if session.IsEmpty() {
 			return v1Error(401, "UNAUTHENTICATED", false, "account session is missing")
 		}
-		if _, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).Data(gdb.Map{"access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "expires_at": accessExpiry, "refresh_expires_at": refreshExpiry}).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).Data(gdb.Map{
+			"access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "issued_at_ms": issuedAtMs,
+			"access_expires_at_ms": accessExpiryMs, "refresh_expires_at_ms": refreshExpiryMs, "status": "active", "revoked_at_ms": nil,
+		}).Update(); err != nil {
 			return err
 		}
-		if _, err = tx.Model(consts.KidsV1ReceiptTable).Ctx(ctx).Data(gdb.Map{"receipt_id": receiptID, "commit_id": "", "operation_id": in.OperationID, "result_kind": "first_committed", "committed_at": now}).Insert(); err != nil {
+		sessionRecord, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", in.SessionID).One()
+		if err != nil {
+			return err
+		}
+		if sessionRecord.IsEmpty() || !v1SessionIsActive(sessionRecord) {
+			return v1Error(503, "UNAVAILABLE", true, "rotated account session is unavailable")
+		}
+		if _, err = tx.Model(consts.KidsV1ReceiptTable).Ctx(ctx).Data(gdb.Map{"receipt_id": receiptID, "commit_id": "", "operation_id": in.OperationID, "result_kind": "first_committed", "committed_at": time.UnixMilli(issuedAtMs)}).Insert(); err != nil {
 			return err
 		}
 		return nil
@@ -1549,7 +1828,7 @@ func (s *sKids) v1RefreshSession(ctx context.Context, in v1.V1OperationInput) (m
 	if err != nil {
 		return nil, "", err
 	}
-	return map[string]any{"session": v1AuthSessionProjection(in.SessionID, accessToken, refreshToken, accessExpiry, refreshExpiry, now), "rotation_receipt_id": receiptID}, "", nil
+	return map[string]any{"session": v1AuthSessionProjection(sessionRecord, accessToken, refreshToken), "rotation_receipt_id": receiptID}, "", nil
 }
 
 // v1RevokeSession 撤销当前账号拥有的指定 session，并对重复撤销返回稳定结果。
@@ -1566,12 +1845,12 @@ func (s *sKids) v1RevokeSession(ctx context.Context, in v1.V1OperationInput) (ma
 		if row.IsEmpty() {
 			return v1Error(404, "NOT_FOUND", false, "session is missing")
 		}
-		if !row["revoked_at"].Time().IsZero() {
+		if row["status"].String() == "revoked" {
 			alreadyRevoked = true
-			now = row["revoked_at"].Time()
+			now = time.UnixMilli(row["revoked_at_ms"].Int64())
 			return nil
 		}
-		if _, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", sessionID).Data(gdb.Map{"revoked_at": now}).Update(); err != nil {
+		if _, err = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", sessionID).Data(gdb.Map{"status": "revoked", "revoked_at_ms": now.UnixMilli()}).Update(); err != nil {
 			return err
 		}
 		if _, err = tx.Model(consts.KidsV1ReceiptTable).Ctx(ctx).Data(gdb.Map{"receipt_id": receiptID, "commit_id": "", "operation_id": in.OperationID, "result_kind": "first_committed", "committed_at": now}).Insert(); err != nil {
@@ -1595,18 +1874,51 @@ func v1AccountBindingRecordProjection(row gdb.Record) map[string]any {
 	return map[string]any{"binding_id": row["binding_id"].String(), "account_id": row["account_id"].String(), "environment": row["environment"].String(), "migration_policy": row["migration_policy"].String(), "version": row["version"].Int64(), "issued_at_ms": row["issued_at"].Time().UnixMilli()}
 }
 
+// v1SessionEnvironment 返回写入 token 并参与验签隔离的当前部署环境。
+func v1SessionEnvironment(ctx context.Context) string {
+	environment := strings.TrimSpace(g.Cfg().MustGet(ctx, "app.env", "").String())
+	if environment == "" {
+		return "dev"
+	}
+	return environment
+}
+
+// v1SessionSigningSecret 返回 v1 access token 的签发和验签密钥。
+func v1SessionSigningSecret(ctx context.Context) string {
+	return commonlogin.SecretFromConfig(ctx)
+}
+
+// v1IssueAccessToken 签发与 session 行一一对应的毫秒级 access token。
+func v1IssueAccessToken(ctx context.Context, sessionID, accountID, principalKind string, issuedAtMs, expiresAtMs int64) (string, error) {
+	return utils.GenerateV1SessionToken(utils.V1SessionTokenClaims{
+		SessionID: sessionID, AccountID: accountID, PrincipalKind: principalKind, Environment: v1SessionEnvironment(ctx), IssuedAtMs: issuedAtMs, ExpiresAtMs: expiresAtMs,
+	}, v1SessionSigningSecret(ctx))
+}
+
+// v1SessionIsActive 判断数据库 session 状态是否仍可用于授权。
+func v1SessionIsActive(row gdb.Record) bool {
+	return row["status"].String() == "active"
+}
+
 // v1SessionMetadataProjection 还原不含 secret 的 session metadata。
 func v1SessionMetadataProjection(row gdb.Record) map[string]any {
-	status := "active"
-	if !row["revoked_at"].Time().IsZero() {
-		status = "revoked"
+	return map[string]any{
+		"session_id": row["session_id"].String(), "principal_type": row["principal_kind"].String(), "status": row["status"].String(),
+		"issued_at_ms": row["issued_at_ms"].Int64(), "access_expires_at_ms": row["access_expires_at_ms"].Int64(), "refresh_expires_at_ms": nullableV1Int64(row["refresh_expires_at_ms"].Int64()),
 	}
-	return map[string]any{"session_id": row["session_id"].String(), "principal_type": row["principal_kind"].String(), "status": status, "issued_at_ms": row["created_at"].Time().UnixMilli(), "access_expires_at_ms": row["expires_at"].Time().UnixMilli(), "refresh_expires_at_ms": v1NullableTimeMillis(row["refresh_expires_at"].Time())}
+}
+
+// nullableV1Int64 将可空 epoch milliseconds 映射为 wire 的 null。
+func nullableV1Int64(value int64) any {
+	if value <= 0 {
+		return nil
+	}
+	return value
 }
 
 // v1AuthSessionProjection 构造只在 token 签发或刷新时返回的 account AuthSession。
-func v1AuthSessionProjection(sessionID, accessToken, refreshToken string, accessExpiry, refreshExpiry, issuedAt time.Time) map[string]any {
-	return map[string]any{"token_type": "Bearer", "access_token": accessToken, "refresh_token": refreshToken, "metadata": map[string]any{"session_id": sessionID, "principal_type": "account", "status": "active", "issued_at_ms": issuedAt.UnixMilli(), "access_expires_at_ms": accessExpiry.UnixMilli(), "refresh_expires_at_ms": refreshExpiry.UnixMilli()}}
+func v1AuthSessionProjection(session gdb.Record, accessToken, refreshToken string) map[string]any {
+	return map[string]any{"token_type": "Bearer", "access_token": accessToken, "refresh_token": refreshToken, "metadata": v1SessionMetadataProjection(session)}
 }
 
 // v1SelectionRecordProjection 将不存在的 selection 表示为 JSON null。
@@ -1708,7 +2020,7 @@ func (s *sKids) v1CreateInvite(ctx context.Context, in v1.V1OperationInput) (map
 	return map[string]any{"receipt": receipt, "invite": invite, "invite_code": code}, v1CommitCursor(receipt["commit_sequence"].(int64)), nil
 }
 
-// v1RefreshInvite 作废旧邀请码摘要、递增版本与 generation，并返回一次新的邀请码。
+// v1RefreshInvite 轮换邀请码 secret、恢复为 active 并递增版本与 generation，返回一次新的邀请码。
 func (s *sKids) v1RefreshInvite(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
 	circleID := in.PathParameters["circle_id"]
 	inviteID := in.PathParameters["invite_id"]
@@ -1743,14 +2055,11 @@ func (s *sKids) v1RefreshInvite(ctx context.Context, in v1.V1OperationInput) (ma
 		}
 		current := row["version"].Int64()
 		if current != expected {
-			return &v1.V1Error{Status: 409, Code: "VERSION_CONFLICT", Version: &current, Message: "invite version conflicts"}
-		}
-		if row["status"].String() != "active" {
-			return v1Error(409, "VERSION_CONFLICT", false, "invite is not active")
+			return v1InviteVersionConflictError(current)
 		}
 		version := current + 1
 		generation := row["generation"].Int64() + 1
-		if _, e = tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("invite_id", inviteID).Data(gdb.Map{"code_hash": sha256Hex(code), "expires_at": now.Add(time.Duration(ttl) * time.Second), "generation": generation, "version": version, "updated_at": now}).Update(); e != nil {
+		if _, e = tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("invite_id", inviteID).Data(gdb.Map{"code_hash": sha256Hex(code), "expires_at": now.Add(time.Duration(ttl) * time.Second), "generation": generation, "status": "active", "revoked_at": nil, "used_at": nil, "version": version, "updated_at": now}).Update(); e != nil {
 			return e
 		}
 		row, e = tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("invite_id", inviteID).One()
@@ -1871,36 +2180,37 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 	var circle map[string]any
 	var actor map[string]any
 	var membership map[string]any
+	var data map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		invite, err := tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("code_hash", sha256Hex(code)).LockUpdate().One()
 		if err != nil {
 			return err
 		}
 		if invite.IsEmpty() {
-			return v1Error(404, "NOT_FOUND", false, "invite code is invalid")
+			return v1Error(404, "INVITE_NOT_FOUND", false, "invite code is invalid")
 		}
 		if invite["target_role"].String() != targetRole {
-			return v1Error(403, "FORBIDDEN", false, "invite role does not match redemption")
+			return v1Error(403, "INVITE_ROLE_MISMATCH", false, "invite role does not match redemption")
 		}
 		if invite["status"].String() != "active" {
-			return v1Error(409, "VERSION_CONFLICT", false, "invite is no longer active")
+			return v1Error(409, "INVITE_USED", false, "invite is no longer active")
 		}
 		if !invite["expires_at"].Time().After(now) {
-			return v1Error(409, "VERSION_CONFLICT", false, "invite has expired")
+			return v1Error(410, "INVITE_EXPIRED", false, "invite has expired")
 		}
 		circleRow, err := tx.Model(consts.KidsV1CircleTable).Ctx(ctx).Where("circle_id", invite["circle_id"].String()).Where("status", "active").LockUpdate().One()
 		if err != nil {
 			return err
 		}
 		if circleRow.IsEmpty() {
-			return v1Error(404, "NOT_FOUND", false, "invite circle is missing")
+			return v1Error(410, "INVITE_TARGET_DELETED", false, "invite circle is missing")
 		}
 		existingMembership, err := tx.Model(consts.KidsV1MembershipTable).Ctx(ctx).Where("account_id", in.PrincipalID).Where("circle_id", invite["circle_id"].String()).LockUpdate().One()
 		if err != nil {
 			return err
 		}
 		if !existingMembership.IsEmpty() {
-			return v1Error(409, "VERSION_CONFLICT", false, "account already has circle membership")
+			return v1CircleMembershipExistsError()
 		}
 		permissions := []string{}
 		actorID := ""
@@ -1915,7 +2225,7 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 				return e
 			}
 			if row.IsEmpty() {
-				return v1Error(404, "NOT_FOUND", false, "administrator target is missing")
+				return v1Error(410, "INVITE_TARGET_DELETED", false, "administrator target is missing")
 			}
 			version := row["version"].Int64() + 1
 			if _, e = tx.Model(consts.KidsV1AdministratorTable).Ctx(ctx).Where("administrator_id", actorID).Data(gdb.Map{"bound_account_id": in.PrincipalID, "permissions": mustV1JSON(permissions), "status": "active", "version": version, "updated_at": now}).Update(); e != nil {
@@ -1933,10 +2243,10 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 				return e
 			}
 			if row.IsEmpty() {
-				return v1Error(404, "NOT_FOUND", false, "member target is missing")
+				return v1Error(410, "INVITE_TARGET_DELETED", false, "member target is missing")
 			}
 			if row["bound_account_id"].String() != "" {
-				return v1Error(409, "VERSION_CONFLICT", false, "member is already bound")
+				return v1Error(409, "INVITE_USED", false, "member is already bound")
 			}
 			version := row["version"].Int64() + 1
 			if _, e = tx.Model(consts.KidsV1MemberTable).Ctx(ctx).Where("member_id", actorID).Data(gdb.Map{"bound_account_id": in.PrincipalID, "version": version, "updated_at": now}).Update(); e != nil {
@@ -1969,6 +2279,16 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 		circle = v1CircleRecordProjection(circleRow)
 		changes := v1InviteRedemptionChanges(targetRole, circle, membership, actor)
 		var ce error
+		receipt, ce = v1CreateCommitTx(ctx, tx, invite["circle_id"].String(), in.OperationID, map[string]any{"circle": circle, "membership": membership, "actor": actor})
+		if ce != nil {
+			return ce
+		}
+		cursor := v1CommitCursor(receipt["commit_sequence"].(int64))
+		data = v1RedeemInviteResponse(targetRole, receipt, membership, circle, actor, cursor)
+		if err = v1.ValidateV1ResponseData(in.OperationID, data); err != nil {
+			return err
+		}
+		return v1IdempotencySaveTx(ctx, tx, v1PrincipalScope(ctx, in), in, v1RouteFingerprint(in), v1BodyFingerprint(in.Body), &v1.V1OperationOutput{Data: data, Status: 200, ChangeCursor: cursor})
 		receipt, ce = v1CreateCommitTx(ctx, tx, invite["circle_id"].String(), in.OperationID, changes)
 		return ce
 	})
@@ -1976,13 +2296,18 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 		return nil, "", err
 	}
 	cursor := v1CommitCursor(receipt["commit_sequence"].(int64))
+	return data, cursor, nil
+}
+
+// v1RedeemInviteResponse 组装管理员或成员邀请码兑换的稳定成功响应，供首次提交和幂等重放共用。
+func v1RedeemInviteResponse(targetRole string, receipt, membership, circle, actor map[string]any, cursor string) map[string]any {
 	data := map[string]any{"auth_session": nil, "membership": membership, "circle": circle, "redemption_receipt": receipt, "sync_cursor": cursor}
 	if targetRole == "administrator" {
 		data["administrator"] = actor
 	} else {
 		data["member"] = actor
 	}
-	return data, cursor, nil
+	return data
 }
 
 // v1MembershipProjectionForActor 构造管理员或成员加入后的接口 membership 投影。
@@ -2051,24 +2376,32 @@ func (s *sKids) v1SubmitFeedback(ctx context.Context, in v1.V1OperationInput) (m
 		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "feedback content is required")
 	}
 	attachmentJSON, _ := json.Marshal(in.Body["attachment_asset_ids"])
-	now := time.Now()
+	var committedAt time.Time
 	var receipt map[string]any
 	err := utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		// 反馈事实与 mutation receipt 共用同一个毫秒级提交时刻，避免客户端将成功回执判为协议失败。
+		committedAt = time.Now().UTC().Truncate(time.Millisecond)
 		if _, err := tx.Model(consts.KidsV1FeedbackTable).Ctx(ctx).Data(gdb.Map{
 			"feedback_id": feedbackID, "account_id": v1AccountID(ctx, in), "category": in.Body["category"], "content": content,
 			"contact_type": nullableV1String(in.Body["contact_type"]), "contact": nullableV1String(in.Body["contact"]),
-			"privacy_consent_version": in.Body["privacy_consent_version"], "attachment_asset_ids": string(attachmentJSON),
+			"privacy_consent_version": in.Body["privacy_consent_version"], "attachment_asset_ids": string(attachmentJSON), "created_at": committedAt,
 		}).Insert(); err != nil {
 			return err
 		}
 		var commitErr error
-		receipt, commitErr = v1CreateCommitTx(ctx, tx, "", in.OperationID, map[string]any{"feedback_ids": []string{feedbackID}})
+		receipt, commitErr = v1CreateCommitAtTx(ctx, tx, "", in.OperationID, committedAt, map[string]any{"feedback_ids": []string{feedbackID}})
 		return commitErr
 	})
 	if err != nil {
 		return nil, "", err
 	}
-	return map[string]any{"feedback_id": feedbackID, "status": "accepted", "received_at_ms": now.UnixMilli(), "version": 1, "receipt": receipt}, "", nil
+	return v1FeedbackReceiptData(feedbackID, committedAt, receipt), "", nil
+}
+
+// v1FeedbackReceiptData 使用 receipt 的同一 canonical commit 时刻构造反馈成功回执。
+func v1FeedbackReceiptData(feedbackID string, committedAt time.Time, receipt map[string]any) map[string]any {
+	committedAtMs := committedAt.UnixMilli()
+	return map[string]any{"feedback_id": feedbackID, "status": "accepted", "received_at_ms": committedAtMs, "version": int64(1), "receipt": receipt}
 }
 
 // v1Mutation 统一生成持久化接口回执，领域迁移期间保持稳定 wire 结构。
@@ -2082,8 +2415,11 @@ func (s *sKids) v1Mutation(ctx context.Context, in v1.V1OperationInput) (map[str
 	if in.OperationID == "exchangeGoogleProof" {
 		return s.v1ExchangeGoogleProof(ctx, in)
 	}
-	if in.OperationID == "refreshSession" || in.OperationID == "revokeSession" {
-		return s.v1SessionMutation(ctx, in)
+	if in.OperationID == "refreshSession" {
+		return s.v1RefreshSession(ctx, in)
+	}
+	if in.OperationID == "revokeSession" {
+		return s.v1RevokeSession(ctx, in)
 	}
 	if in.OperationID == "prepareAssetUpload" {
 		return s.v1PrepareAsset(ctx, in)
@@ -2097,33 +2433,38 @@ func (s *sKids) v1Mutation(ctx context.Context, in v1.V1OperationInput) (map[str
 
 // v1CreateGuestSession 创建接口游客会话并把 token 摘要持久化。
 func (s *sKids) v1CreateGuestSession(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-	now := time.Now()
+	issuedAtMs := time.Now().UnixMilli()
 	sessionID := v1ID("session", uuid.NewString())
-	accessToken := v1Secret()
+	accessExpiryMs := issuedAtMs + int64(time.Hour/time.Millisecond)
+	accessToken, err := v1IssueAccessToken(ctx, sessionID, "", "invite_guest", issuedAtMs, accessExpiryMs)
+	if err != nil {
+		return nil, "", err
+	}
 	refreshToken := v1Secret()
 	grant := v1Secret()
-	_, err := utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).Data(gdb.Map{
-		"session_id": sessionID, "principal_kind": "invite_guest", "access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "guest_upgrade_grant_hash": sha256Hex(grant), "expires_at": now.Add(time.Hour), "refresh_expires_at": now.Add(24 * time.Hour),
+	refreshExpiryMs := issuedAtMs + int64((24*time.Hour)/time.Millisecond)
+	_, err = utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).Data(gdb.Map{
+		"session_id": sessionID, "principal_kind": "invite_guest", "status": "active", "access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "guest_upgrade_grant_hash": sha256Hex(grant), "issued_at_ms": issuedAtMs, "access_expires_at_ms": accessExpiryMs, "refresh_expires_at_ms": refreshExpiryMs,
 	}).Insert()
 	if err != nil {
 		return nil, "", err
+	}
+	session, err := utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", sessionID).One()
+	if err != nil {
+		return nil, "", err
+	}
+	if session.IsEmpty() {
+		return nil, "", v1Error(503, "UNAVAILABLE", true, "guest session is unavailable")
 	}
 	return map[string]any{
 		"session": map[string]any{
 			"token_type":    "Bearer",
 			"access_token":  accessToken,
 			"refresh_token": refreshToken,
-			"metadata": map[string]any{
-				"session_id":            sessionID,
-				"principal_type":        "invite_guest",
-				"status":                "active",
-				"issued_at_ms":          now.UnixMilli(),
-				"access_expires_at_ms":  now.Add(time.Hour).UnixMilli(),
-				"refresh_expires_at_ms": now.Add(24 * time.Hour).UnixMilli(),
-			},
+			"metadata":      v1SessionMetadataProjection(session),
 		},
 		"capabilities":        []string{"invite_redeem_administrator", "invite_redeem_member", "current_account_bootstrap", "submit_feedback", "feedback_asset_upload"},
-		"guest_expires_at_ms": now.Add(time.Hour).UnixMilli(),
+		"guest_expires_at_ms": session["access_expires_at_ms"].Int64(),
 		"guest_upgrade_grant": grant,
 	}, "", nil
 }
@@ -2140,14 +2481,22 @@ func (s *sKids) v1ExchangeGoogleProof(ctx context.Context, in v1.V1OperationInpu
 	}
 	identity, err := utils.VerifyGoogleIdentityTokenWithNonce(ctx, identityToken, clientID, nonce)
 	if err != nil {
-		g.Log().Warningf(ctx, "Google 身份凭据校验失败: %v", err)
+		g.Log().Warningf(ctx, "Google 身份凭据校验失败 request_id=%s", in.RequestID)
 		return nil, "", v1Error(401, "UNAUTHENTICATED", false, "Google proof is invalid")
 	}
 	accountID := v1ID("account", "google:"+identity.OpenId)
-	now, accessExpiry, refreshExpiry := time.Now(), time.Now().Add(time.Hour), time.Now().Add(30*24*time.Hour)
-	accessToken, refreshToken, sessionID := v1Secret(), v1Secret(), v1ID("session", uuid.NewString())
+	issuedAtMs := time.Now().UnixMilli()
+	accessExpiryMs := issuedAtMs + int64(time.Hour/time.Millisecond)
+	refreshExpiryMs := issuedAtMs + int64((30*24*time.Hour)/time.Millisecond)
+	sessionID := v1ID("session", uuid.NewString())
+	accessToken, err := v1IssueAccessToken(ctx, sessionID, accountID, "account", issuedAtMs, accessExpiryMs)
+	if err != nil {
+		return nil, "", err
+	}
+	refreshToken := v1Secret()
 	var account, binding map[string]any
 	var memberships []map[string]any
+	var persistedSession gdb.Record
 	mergeOutcome := "new_scope"
 	err = utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		if grant := nullableV1String(in.Body["guest_upgrade_grant"]); grant != "" {
@@ -2158,10 +2507,10 @@ func (s *sKids) v1ExchangeGoogleProof(ctx context.Context, in v1.V1OperationInpu
 			if queryErr != nil {
 				return queryErr
 			}
-			if guest.IsEmpty() || guest["guest_upgrade_grant_hash"].String() != sha256Hex(grant) || !guest["revoked_at"].Time().IsZero() {
+			if guest.IsEmpty() || guest["guest_upgrade_grant_hash"].String() != sha256Hex(grant) || !v1SessionIsActive(guest) || guest["access_expires_at_ms"].Int64() <= issuedAtMs {
 				return v1Error(401, "UNAUTHENTICATED", false, "guest upgrade grant is invalid")
 			}
-			if _, queryErr = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("id", guest["id"].Int64()).Data(gdb.Map{"revoked_at": now, "updated_at": now}).Update(); queryErr != nil {
+			if _, queryErr = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("id", guest["id"].Int64()).Data(gdb.Map{"status": "revoked", "revoked_at_ms": issuedAtMs}).Update(); queryErr != nil {
 				return queryErr
 			}
 			mergeOutcome = "no_local_facts"
@@ -2171,10 +2520,11 @@ func (s *sKids) v1ExchangeGoogleProof(ctx context.Context, in v1.V1OperationInpu
 			return queryErr
 		}
 		if accountRow.IsEmpty() {
-			if _, queryErr = tx.Model(consts.KidsV1AccountTable).Ctx(ctx).Data(gdb.Map{"account_id": accountID, "status": "active", "version": 1, "created_at": now, "updated_at": now}).Insert(); queryErr != nil {
+			issuedAt := time.UnixMilli(issuedAtMs)
+			if _, queryErr = tx.Model(consts.KidsV1AccountTable).Ctx(ctx).Data(gdb.Map{"account_id": accountID, "status": "active", "version": 1, "created_at": issuedAt, "updated_at": issuedAt}).Insert(); queryErr != nil {
 				return queryErr
 			}
-			account = map[string]any{"account_id": accountID, "status": "active", "version": int64(1), "created_at_ms": now.UnixMilli(), "updated_at_ms": now.UnixMilli()}
+			account = map[string]any{"account_id": accountID, "status": "active", "version": int64(1), "created_at_ms": issuedAtMs, "updated_at_ms": issuedAtMs}
 		} else {
 			if accountRow["status"].String() != "active" {
 				return v1Error(403, "ACCOUNT_DISABLED", false, "account is disabled")
@@ -2188,15 +2538,29 @@ func (s *sKids) v1ExchangeGoogleProof(ctx context.Context, in v1.V1OperationInpu
 		}
 		if bindingRow.IsEmpty() {
 			bindingID := v1ID("binding", uuid.NewString())
-			if _, queryErr = tx.Model(consts.KidsV1AccountBindingTable).Ctx(ctx).Data(gdb.Map{"binding_id": bindingID, "account_id": accountID, "environment": "demo", "migration_policy": "no_merge", "version": 1, "issued_at": now, "created_at": now, "updated_at": now}).Insert(); queryErr != nil {
+			issuedAt := time.UnixMilli(issuedAtMs)
+			if _, queryErr = tx.Model(consts.KidsV1AccountBindingTable).Ctx(ctx).Data(gdb.Map{"binding_id": bindingID, "account_id": accountID, "environment": consts.KidsV1AccountBindingEnvironmentLive, "migration_policy": "no_merge", "version": 1, "issued_at": issuedAt, "created_at": issuedAt, "updated_at": issuedAt}).Insert(); queryErr != nil {
 				return queryErr
 			}
-			binding = map[string]any{"binding_id": bindingID, "account_id": accountID, "environment": "demo", "migration_policy": "no_merge", "version": int64(1), "issued_at_ms": now.UnixMilli()}
+			binding = map[string]any{"binding_id": bindingID, "account_id": accountID, "environment": consts.KidsV1AccountBindingEnvironmentLive, "migration_policy": "no_merge", "version": int64(1), "issued_at_ms": issuedAtMs}
 		} else {
+			if bindingRow["environment"].String() != consts.KidsV1AccountBindingEnvironmentLive {
+				if _, queryErr = tx.Model(consts.KidsV1AccountBindingTable).Ctx(ctx).Where("id", bindingRow["id"].Int64()).Data(gdb.Map{"environment": consts.KidsV1AccountBindingEnvironmentLive, "updated_at": time.UnixMilli(issuedAtMs)}).Update(); queryErr != nil {
+					return queryErr
+				}
+			}
 			binding = v1AccountBindingRecordProjection(bindingRow)
+			binding["environment"] = consts.KidsV1AccountBindingEnvironmentLive
 		}
-		if _, queryErr = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Data(gdb.Map{"session_id": sessionID, "account_id": accountID, "principal_kind": "account", "access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "expires_at": accessExpiry, "refresh_expires_at": refreshExpiry, "created_at": now, "updated_at": now}).Insert(); queryErr != nil {
+		if _, queryErr = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Data(gdb.Map{"session_id": sessionID, "account_id": accountID, "principal_kind": "account", "status": "active", "access_token_hash": sha256Hex(accessToken), "refresh_token_hash": sha256Hex(refreshToken), "issued_at_ms": issuedAtMs, "access_expires_at_ms": accessExpiryMs, "refresh_expires_at_ms": refreshExpiryMs}).Insert(); queryErr != nil {
 			return queryErr
+		}
+		persistedSession, queryErr = tx.Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", sessionID).One()
+		if queryErr != nil {
+			return queryErr
+		}
+		if persistedSession.IsEmpty() {
+			return v1Error(503, "UNAVAILABLE", true, "account session is unavailable")
 		}
 		rows, queryErr := tx.Model(consts.KidsV1MembershipTable).Ctx(ctx).Where("account_id", accountID).Where("status", "active").Order("created_at ASC,id ASC").All()
 		if queryErr != nil {
@@ -2215,23 +2579,7 @@ func (s *sKids) v1ExchangeGoogleProof(ctx context.Context, in v1.V1OperationInpu
 	if err != nil {
 		return nil, "", err
 	}
-	return map[string]any{"account": account, "session": v1AuthSessionProjection(sessionID, accessToken, refreshToken, accessExpiry, refreshExpiry, now), "account_binding": binding, "memberships": memberships, "merge_outcome": mergeOutcome, "bootstrap_cursor": cursor}, "", nil
-}
-
-// v1SessionMutation 处理接口 refresh/revoke 的持久化状态。
-func (s *sKids) v1SessionMutation(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-	sessionID := in.PathParameters["session_id"]
-	if sessionID == "" {
-		sessionID = fmt.Sprint(in.Body["session_id"])
-	}
-	if in.OperationID == "revokeSession" {
-		_, err := utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).Where("session_id", sessionID).Data(gdb.Map{"revoked_at": time.Now()}).Update()
-		if err != nil {
-			return nil, "", err
-		}
-		return map[string]any{"session_id": sessionID, "revoked_at_ms": time.Now().UnixMilli(), "already_revoked": false, "receipt_id": v1ID("receipt", uuid.NewString())}, "", nil
-	}
-	return map[string]any{"session": map[string]any{"session_id": sessionID, "principal_kind": "account", "token_type": "Bearer", "access_token": "", "refresh_token": "", "metadata": map[string]any{}}, "rotation_receipt_id": v1ID("receipt", uuid.NewString())}, "", nil
+	return map[string]any{"account": account, "session": v1AuthSessionProjection(persistedSession, accessToken, refreshToken), "account_binding": binding, "memberships": memberships, "merge_outcome": mergeOutcome, "bootstrap_cursor": cursor}, "", nil
 }
 
 // v1PrepareAsset 为受控演示传输登记上传元数据，不暴露本地路径或对象地址。
@@ -2347,6 +2695,29 @@ func v1IdempotencyRecord(record gdb.Record, routeHash, bodyHash string) (*v1.V1O
 	return &v1.V1OperationOutput{Data: data, Status: record["response_status"].Int(), ChangeCursor: record["response_change_cursor"].String(), ETag: record["response_etag"].String()}, false, false, nil
 }
 
+// v1RefreshIdempotencyReplay 在旧 refresh credential 已失效后仍按固定 session 作用域返回首次轮换结果。
+func v1RefreshIdempotencyReplay(ctx context.Context, in v1.V1OperationInput, routeHash, bodyHash string) (*v1.V1OperationOutput, bool, bool, error) {
+	session, err := utils.KidsDB(ctx).Model(consts.KidsV1SessionTable).Ctx(ctx).
+		Where("session_id", fmt.Sprint(in.Body["session_id"])).Where("status", "active").One()
+	if err != nil || session.IsEmpty() {
+		return nil, false, false, err
+	}
+	record, err := utils.KidsDB(ctx).Model(consts.KidsV1IdempotencyTable).Ctx(ctx).
+		Where("principal_scope", v1RefreshIdempotencyScope(in)).Where("idempotency_key", in.IdempotencyKey).One()
+	if err != nil || record.IsEmpty() {
+		return nil, false, false, err
+	}
+	output, conflict, pending, err := v1IdempotencyRecord(record, routeHash, bodyHash)
+	if err != nil || output == nil {
+		return output, conflict, pending, err
+	}
+	output = v1ReplayOutput(output)
+	if err = v1.ValidateV1ResponseData(in.OperationID, output.Data); err != nil {
+		return nil, false, false, v1Error(503, "UNAVAILABLE", true, "stored v1 response is unavailable")
+	}
+	return output, false, false, nil
+}
+
 // v1IdempotencySave 保存接口首次响应，保证断线重放返回同一结果。
 func v1IdempotencySave(ctx context.Context, scope string, in v1.V1OperationInput, routeHash, bodyHash string, out *v1.V1OperationOutput) error {
 	body, err := json.Marshal(out.Data)
@@ -2356,6 +2727,29 @@ func v1IdempotencySave(ctx context.Context, scope string, in v1.V1OperationInput
 	_, err = utils.KidsDB(ctx).Model(consts.KidsV1IdempotencyTable).Ctx(ctx).
 		Where("principal_scope", scope).Where("idempotency_key", in.IdempotencyKey).Where("response_status", 0).
 		Data(gdb.Map{"response_status": out.Status, "response_body": string(body), "response_change_cursor": nullableV1String(out.ChangeCursor), "response_etag": nullableV1String(out.ETag)}).Update()
+	return err
+}
+
+// v1IdempotencySaveTx 在业务写入事务内固化首次响应，避免写入已提交但重放快照未保存。
+func v1IdempotencySaveTx(ctx context.Context, tx gdb.TX, scope string, in v1.V1OperationInput, routeHash, bodyHash string, out *v1.V1OperationOutput) error {
+	record, err := tx.Model(consts.KidsV1IdempotencyTable).Ctx(ctx).
+		Where("principal_scope", scope).Where("idempotency_key", in.IdempotencyKey).LockUpdate().One()
+	if err != nil {
+		return err
+	}
+	if record.IsEmpty() || record["response_status"].Int() != 0 {
+		return v1Error(503, "UNAVAILABLE", true, "idempotency response store is unavailable")
+	}
+	if record["route_fingerprint"].String() != routeHash || record["body_fingerprint"].String() != bodyHash {
+		return v1Error(409, "IDEMPOTENCY_CONFLICT", false, "idempotency key conflicts with an earlier request")
+	}
+	body, err := json.Marshal(out.Data)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Model(consts.KidsV1IdempotencyTable).Ctx(ctx).Where("id", record["id"].Int64()).Data(gdb.Map{
+		"response_status": out.Status, "response_body": string(body), "response_change_cursor": nullableV1String(out.ChangeCursor), "response_etag": nullableV1String(out.ETag),
+	}).Update()
 	return err
 }
 
@@ -2369,12 +2763,26 @@ func v1IdempotencyAbort(ctx context.Context, scope string, in v1.V1OperationInpu
 
 // v1CreateCommitTx 在业务写入的同一事务中分配提交序列并持久化 commit 和 receipt。
 func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID string, changes map[string]any) (map[string]any, error) {
+	return v1CreateCommitAtTx(ctx, tx, circleID, operationID, time.Now(), changes)
+}
+
+// v1CreateCommitAtTx 使用调用方提供的单一提交时刻创建 commit 和 receipt，确保同一原子 bundle 的时间字段一致。
+func v1CreateCommitAtTx(ctx context.Context, tx gdb.TX, circleID, operationID string, committedAt time.Time, changes map[string]any) (map[string]any, error) {
 	sequenceRecord, err := tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Where("id", 1).LockUpdate().One()
 	if err != nil {
 		return nil, err
 	}
 	if sequenceRecord.IsEmpty() {
-		return nil, fmt.Errorf("v1 commit sequence is missing")
+		if _, err = tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Data(gdb.Map{"id": 1, "next_commit_sequence": 1}).InsertIgnore(); err != nil {
+			return nil, err
+		}
+		sequenceRecord, err = tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Where("id", 1).LockUpdate().One()
+		if err != nil {
+			return nil, err
+		}
+		if sequenceRecord.IsEmpty() {
+			return nil, v1Error(503, "UNAVAILABLE", true, "v1 commit sequence is unavailable")
+		}
 	}
 	sequence := sequenceRecord["next_commit_sequence"].Int64()
 	if sequence < 1 {
@@ -2383,7 +2791,6 @@ func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID stri
 	if _, err = tx.Model(consts.KidsV1SequenceTable).Ctx(ctx).Where("id", 1).Data(gdb.Map{"next_commit_sequence": sequence + 1}).Update(); err != nil {
 		return nil, err
 	}
-	now := time.Now()
 	commitID := v1ID("commit", uuid.NewString())
 	receiptID := v1ID("receipt", uuid.NewString())
 	changePayload, err := json.Marshal(v1SyncChanges(changes))
@@ -2391,19 +2798,29 @@ func v1CreateCommitTx(ctx context.Context, tx gdb.TX, circleID, operationID stri
 		return nil, err
 	}
 	if _, err = tx.Model(consts.KidsV1CommitTable).Ctx(ctx).Data(gdb.Map{
-		"commit_id": commitID, "circle_id": circleID, "commit_sequence": sequence, "change_payload": string(changePayload),
+		"commit_id": commitID, "circle_id": circleID, "commit_sequence": sequence, "change_payload": string(changePayload), "created_at": committedAt,
 	}).Insert(); err != nil {
 		return nil, err
 	}
 	if _, err = tx.Model(consts.KidsV1ReceiptTable).Ctx(ctx).Data(gdb.Map{
-		"receipt_id": receiptID, "commit_id": commitID, "operation_id": operationID, "result_kind": "first_committed", "committed_at": now,
+		"receipt_id": receiptID, "commit_id": commitID, "operation_id": operationID, "result_kind": "first_committed", "committed_at": committedAt,
 	}).Insert(); err != nil {
 		return nil, err
 	}
 	return map[string]any{
 		"receipt_id": receiptID, "commit_id": commitID, "commit_sequence": sequence,
-		"result_kind": "first_committed", "committed_at_ms": now.UnixMilli(),
+		"result_kind": "first_committed", "committed_at_ms": committedAt.UnixMilli(),
 	}, nil
+}
+
+// v1UpdateCommitChangesTx 在同一事务中回填依赖 commit sequence 的完整同步投影。
+func v1UpdateCommitChangesTx(ctx context.Context, tx gdb.TX, commitID string, changes map[string]any) error {
+	changePayload, err := json.Marshal(v1SyncChanges(changes))
+	if err != nil {
+		return err
+	}
+	_, err = tx.Model(consts.KidsV1CommitTable).Ctx(ctx).Where("commit_id", commitID).Data(gdb.Map{"change_payload": string(changePayload)}).Update()
+	return err
 }
 
 // v1Receipt 构造符合接口字段集的稳定回执，持久化由具体事务负责。
@@ -2415,10 +2832,18 @@ func v1Receipt(operationID string) map[string]any {
 
 // v1PrincipalScope 计算接口幂等查询作用域。
 func v1PrincipalScope(ctx context.Context, in v1.V1OperationInput) string {
+	if in.OperationID == "refreshSession" {
+		return v1RefreshIdempotencyScope(in)
+	}
 	if in.PrincipalID != "" {
 		return in.PrincipalKind + ":" + in.PrincipalID + ":" + in.SessionID
 	}
 	return "public"
+}
+
+// v1RefreshIdempotencyScope 以请求 session ID 固定 refresh 重放作用域，避免轮换后丢失首次结果。
+func v1RefreshIdempotencyScope(in v1.V1OperationInput) string {
+	return "refresh:" + fmt.Sprint(in.Body["session_id"])
 }
 
 // v1AccountID 返回服务端解析的账号标识。
@@ -2457,7 +2882,7 @@ func v1ID(kind string, value any) string {
 	prefixes := map[string]string{
 		"account": "account", "adjustment": "adjustment", "admin": "admin", "asset": "asset", "binding": "binding",
 		"circle": "circle", "commit": "commit", "completion": "completion", "entitlement": "entitlement", "exchange": "exchange",
-		"feedback": "feedback", "invite": "invite", "member": "member", "membership": "membership", "notification": "notification",
+		"feedback": "feedback", "invite": "invite", "ledger": "star-transaction", "member": "member", "membership": "membership", "notification": "notification",
 		"receipt": "receipt", "reward": "reward", "selection": "selection", "session": "session", "task": "task", "task-tag": "task-tag", "upload": "upload",
 	}
 	prefix, ok := prefixes[kind]

@@ -102,6 +102,10 @@ const (
 	KidsV1NotificationOutboxTable = "kids_notification_outbox"
 	// DefaultDBGroup 是当前微服务配置文件中默认数据库分组名。
 	DefaultDBGroup = "default"
+	// CtxTraceIDKey 是请求上下文中的可观测性链路标识键。
+	CtxTraceIDKey = "traceId"
+	// CtxV1OperationIDKey 是请求上下文中的 v1 operation 标识键。
+	CtxV1OperationIDKey = "v1OperationId"
 	// MySQLTimeLayout 是 MySQL DATETIME 字段格式。
 	MySQLTimeLayout = "2006-01-02 15:04:05"
 	// DateLayout 是业务日期字段格式。
@@ -112,6 +116,8 @@ const (
 const (
 	// KidsAccessTokenTTL 是 kids 访问令牌默认有效期。
 	KidsAccessTokenTTL = DefaultAccessTokenTTL
+	// KidsV1AccountBindingEnvironmentLive 表示接口账号绑定的正式环境。
+	KidsV1AccountBindingEnvironmentLive = "live"
 	// KidsV1PermissionManageCircle 表示接口圈子配置管理权限。
 	KidsV1PermissionManageCircle = "manage_circle"
 	// KidsV1PermissionManageMembers 表示接口成员与管理员管理权限。
