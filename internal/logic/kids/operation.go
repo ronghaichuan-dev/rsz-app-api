@@ -772,7 +772,7 @@ func (s *sKids) v1CreateCircleMember(ctx context.Context, in v1.V1OperationInput
 func (s *sKids) v1UpsertMember(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
 	circleID := in.PathParameters["circle_id"]
 	memberID := in.PathParameters["member_id"]
-	if err := v1RequireMembershipPermission(ctx, in.PrincipalID, circleID, consts.KidsV1PermissionManageMembers); err != nil {
+	if err := v1RequireMemberProfileUpdatePermission(ctx, in.PrincipalID, circleID, memberID); err != nil {
 		return nil, "", err
 	}
 	expected, ok := v1ExpectedVersion(in.Body["expected_version"])
@@ -787,7 +787,7 @@ func (s *sKids) v1UpsertMember(ctx context.Context, in v1.V1OperationInput) (map
 	var out map[string]any
 	var receipt map[string]any
 	err = utils.KidsDB(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		if _, e := v1RequireMembershipTx(ctx, tx, in.PrincipalID, circleID, consts.KidsV1PermissionManageMembers); e != nil {
+		if e := v1RequireMemberProfileUpdatePermissionTx(ctx, tx, in.PrincipalID, circleID, memberID); e != nil {
 			return e
 		}
 		row, e := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).Where("member_id", memberID).Where("circle_id", circleID).Where("status", "active").LockUpdate().One()
@@ -1137,6 +1137,54 @@ func (s *sKids) v1LeaveCircle(ctx context.Context, in v1.V1OperationInput) (map[
 func v1RequireMembershipPermission(ctx context.Context, accountID, circleID, permission string) error {
 	_, err := v1RequireMembership(ctx, accountID, circleID, permission)
 	return err
+}
+
+// v1RequireMemberProfileUpdatePermission 校验管理员可编辑任意成员，受邀成员只能编辑绑定到自身账号的成员资料。
+func v1RequireMemberProfileUpdatePermission(ctx context.Context, accountID, circleID, memberID string) error {
+	membership, err := v1RequireMembership(ctx, accountID, circleID, "")
+	if err != nil {
+		return err
+	}
+	if v1PermissionsContain(membership["permissions"].String(), consts.KidsV1PermissionManageMembers) {
+		return nil
+	}
+	if membership["actor_type"].String() != "member" || membership["actor_id"].String() != memberID {
+		return v1Error(403, "FORBIDDEN", false, "membership permission is required")
+	}
+	member, err := utils.KidsDB(ctx).Model(consts.KidsV1MemberTable).Ctx(ctx).
+		Fields("member_id").Where("member_id", memberID).Where("circle_id", circleID).
+		Where("bound_account_id", accountID).Where("status", "active").One()
+	if err != nil {
+		return err
+	}
+	if member.IsEmpty() {
+		return v1Error(403, "FORBIDDEN", false, "member profile permission is required")
+	}
+	return nil
+}
+
+// v1RequireMemberProfileUpdatePermissionTx 在事务内锁定授权关系和目标成员，防止校验后权限或绑定关系发生变化。
+func v1RequireMemberProfileUpdatePermissionTx(ctx context.Context, tx gdb.TX, accountID, circleID, memberID string) error {
+	membership, err := v1RequireMembershipTx(ctx, tx, accountID, circleID, "")
+	if err != nil {
+		return err
+	}
+	if v1PermissionsContain(membership["permissions"].String(), consts.KidsV1PermissionManageMembers) {
+		return nil
+	}
+	if membership["actor_type"].String() != "member" || membership["actor_id"].String() != memberID {
+		return v1Error(403, "FORBIDDEN", false, "membership permission is required")
+	}
+	member, err := tx.Model(consts.KidsV1MemberTable).Ctx(ctx).
+		Fields("member_id").Where("member_id", memberID).Where("circle_id", circleID).
+		Where("bound_account_id", accountID).Where("status", "active").LockUpdate().One()
+	if err != nil {
+		return err
+	}
+	if member.IsEmpty() {
+		return v1Error(403, "FORBIDDEN", false, "member profile permission is required")
+	}
+	return nil
 }
 
 // v1RequireMembership 读取当前账号在圈子的 active membership。
