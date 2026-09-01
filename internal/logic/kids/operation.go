@@ -1147,6 +1147,11 @@ func v1InviteVersionConflictError(current int64) error {
 	return &v1.V1Error{Status: 409, Code: "VERSION_CONFLICT", Version: &current, Message: "invite version conflicts"}
 }
 
+// v1CircleMembershipExistsError 返回账号已经属于目标圈子的稳定冲突错误，不与邀请码核销状态混淆。
+func v1CircleMembershipExistsError() error {
+	return v1Error(409, "ALREADY_CIRCLE_MEMBER", false, "account already has circle membership")
+}
+
 // v1RequireMemberProfileUpdatePermission 校验管理员可编辑任意成员，受邀成员只能编辑绑定到自身账号的成员资料。
 func v1RequireMemberProfileUpdatePermission(ctx context.Context, accountID, circleID, memberID string) error {
 	membership, err := v1RequireMembership(ctx, accountID, circleID, "")
@@ -2205,7 +2210,7 @@ func (s *sKids) v1RedeemInvite(ctx context.Context, in v1.V1OperationInput, targ
 			return err
 		}
 		if !existingMembership.IsEmpty() {
-			return v1Error(409, "INVITE_USED", false, "account already has circle membership")
+			return v1CircleMembershipExistsError()
 		}
 		permissions := []string{}
 		actorID := ""

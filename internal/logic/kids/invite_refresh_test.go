@@ -29,3 +29,15 @@ func TestV1InviteVersionConflictErrorRejectsInvalidVersion(t *testing.T) {
 		t.Fatalf("无效邀请版本错误语义不正确: %+v", protocolErr)
 	}
 }
+
+// TestV1CircleMembershipExistsError 验证已加入目标圈子的账号不会被误报为邀请码已使用。
+func TestV1CircleMembershipExistsError(t *testing.T) {
+	err := v1CircleMembershipExistsError()
+	protocolErr, ok := err.(*v1.V1Error)
+	if !ok {
+		t.Fatalf("圈子成员已存在错误不是 V1Error: %T", err)
+	}
+	if protocolErr.Status != 409 || protocolErr.Code != "ALREADY_CIRCLE_MEMBER" || protocolErr.Retryable || protocolErr.Version != nil {
+		t.Fatalf("圈子成员已存在错误语义不正确: %+v", protocolErr)
+	}
+}
