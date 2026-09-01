@@ -1139,11 +1139,6 @@ func v1RequireMembershipPermission(ctx context.Context, accountID, circleID, per
 	return err
 }
 
-// v1RefreshInviteUnavailableError 返回邀请已使用或撤销时的稳定错误，避免将非版本问题误报为版本冲突。
-func v1RefreshInviteUnavailableError() error {
-	return v1Error(409, "INVITE_USED", false, "invite is no longer active")
-}
-
 // v1InviteVersionConflictError 只为有效的正数版本构造可重试的版本冲突，避免向客户端返回无效版本。
 func v1InviteVersionConflictError(current int64) error {
 	if current <= 0 {
@@ -2020,7 +2015,7 @@ func (s *sKids) v1CreateInvite(ctx context.Context, in v1.V1OperationInput) (map
 	return map[string]any{"receipt": receipt, "invite": invite, "invite_code": code}, v1CommitCursor(receipt["commit_sequence"].(int64)), nil
 }
 
-// v1RefreshInvite 作废旧邀请码摘要、递增版本与 generation，并返回一次新的邀请码。
+// v1RefreshInvite 轮换邀请码 secret、恢复为 active 并递增版本与 generation，返回一次新的邀请码。
 func (s *sKids) v1RefreshInvite(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
 	circleID := in.PathParameters["circle_id"]
 	inviteID := in.PathParameters["invite_id"]
@@ -2057,12 +2052,9 @@ func (s *sKids) v1RefreshInvite(ctx context.Context, in v1.V1OperationInput) (ma
 		if current != expected {
 			return v1InviteVersionConflictError(current)
 		}
-		if row["status"].String() != "active" {
-			return v1RefreshInviteUnavailableError()
-		}
 		version := current + 1
 		generation := row["generation"].Int64() + 1
-		if _, e = tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("invite_id", inviteID).Data(gdb.Map{"code_hash": sha256Hex(code), "expires_at": now.Add(time.Duration(ttl) * time.Second), "generation": generation, "version": version, "updated_at": now}).Update(); e != nil {
+		if _, e = tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("invite_id", inviteID).Data(gdb.Map{"code_hash": sha256Hex(code), "expires_at": now.Add(time.Duration(ttl) * time.Second), "generation": generation, "status": "active", "revoked_at": nil, "used_at": nil, "version": version, "updated_at": now}).Update(); e != nil {
 			return e
 		}
 		row, e = tx.Model(consts.KidsV1InviteTable).Ctx(ctx).Where("invite_id", inviteID).One()

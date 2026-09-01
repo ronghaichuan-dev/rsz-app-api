@@ -6,21 +6,6 @@ import (
 	v1 "rslytics-app-api/internal/api/kids/v1"
 )
 
-// TestV1RefreshInviteUnavailableError 验证不可刷新的邀请码不会被错误标记为可重试的版本冲突。
-func TestV1RefreshInviteUnavailableError(t *testing.T) {
-	err := v1RefreshInviteUnavailableError()
-	protocolErr, ok := err.(*v1.V1Error)
-	if !ok {
-		t.Fatalf("邀请不可刷新错误不是 V1Error: %T", err)
-	}
-	if protocolErr.Status != 409 || protocolErr.Code != "INVITE_USED" || protocolErr.Retryable {
-		t.Fatalf("邀请不可刷新错误语义不正确: %+v", protocolErr)
-	}
-	if protocolErr.Version != nil {
-		t.Fatalf("非版本冲突错误不应返回 current_version: %+v", protocolErr)
-	}
-}
-
 // TestV1InviteVersionConflictError 验证真实版本不匹配会向客户端提供可用于受控重试的正数版本。
 func TestV1InviteVersionConflictError(t *testing.T) {
 	err := v1InviteVersionConflictError(2)
