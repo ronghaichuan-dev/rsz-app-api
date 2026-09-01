@@ -1139,6 +1139,19 @@ func v1RequireMembershipPermission(ctx context.Context, accountID, circleID, per
 	return err
 }
 
+// v1RefreshInviteUnavailableError 返回邀请已使用或撤销时的稳定错误，避免将非版本问题误报为版本冲突。
+func v1RefreshInviteUnavailableError() error {
+	return v1Error(409, "INVITE_USED", false, "invite is no longer active")
+}
+
+// v1InviteVersionConflictError 只为有效的正数版本构造可重试的版本冲突，避免向客户端返回无效版本。
+func v1InviteVersionConflictError(current int64) error {
+	if current <= 0 {
+		return v1Error(502, "PROTOCOL_ERROR", false, "invite version is invalid")
+	}
+	return &v1.V1Error{Status: 409, Code: "VERSION_CONFLICT", Version: &current, Message: "invite version conflicts"}
+}
+
 // v1RequireMemberProfileUpdatePermission 校验管理员可编辑任意成员，受邀成员只能编辑绑定到自身账号的成员资料。
 func v1RequireMemberProfileUpdatePermission(ctx context.Context, accountID, circleID, memberID string) error {
 	membership, err := v1RequireMembership(ctx, accountID, circleID, "")
@@ -2042,10 +2055,10 @@ func (s *sKids) v1RefreshInvite(ctx context.Context, in v1.V1OperationInput) (ma
 		}
 		current := row["version"].Int64()
 		if current != expected {
-			return &v1.V1Error{Status: 409, Code: "VERSION_CONFLICT", Version: &current, Message: "invite version conflicts"}
+			return v1InviteVersionConflictError(current)
 		}
 		if row["status"].String() != "active" {
-			return v1Error(409, "VERSION_CONFLICT", false, "invite is not active")
+			return v1RefreshInviteUnavailableError()
 		}
 		version := current + 1
 		generation := row["generation"].Int64() + 1
