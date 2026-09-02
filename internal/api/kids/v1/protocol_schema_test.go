@@ -72,6 +72,39 @@ func TestValidateV1Request(t *testing.T) {
 	}
 }
 
+// TestValidateV1AppleProofRequest 验证 Apple 登录只接受服务端可校验的 identity token 和可选升级授权。
+func TestValidateV1AppleProofRequest(t *testing.T) {
+	body, present, err := DecodeV1Body([]byte(`{
+        "apple_identity_token":"abcdefghijklmnopqrstuvwxyz0123456789",
+        "guest_upgrade_grant":null
+    }`))
+	if err != nil || !present {
+		t.Fatalf("解析 Apple 登录请求失败: present=%v, err=%v", present, err)
+	}
+	in := V1OperationInput{
+		OperationID: "exchangeAppleProof",
+		Method:      "POST",
+		Path:        "/v1/auth/apple:exchange",
+		Headers: map[string]string{
+			V1RequestIDHeader:     "request:apple-proof-0001",
+			V1VersionHeader:       V1Version,
+			V1ClientVersionHeader: "1.0.0",
+			V1IdempotencyHeader:   "idem:v1:0123456789abcdef",
+		},
+		PathParameters: map[string]string{},
+		Query:          map[string][]string{},
+		Body:           body,
+		BodyPresent:    true,
+	}
+	if err = ValidateV1Request(in); err != nil {
+		t.Fatalf("合法 Apple 登录请求被拒绝: %v", err)
+	}
+	in.Body["provider_subject"] = "client-controlled"
+	if err = ValidateV1Request(in); err == nil {
+		t.Fatal("Apple 登录请求中的客户端身份标识未被拒绝")
+	}
+}
+
 // TestDecodeV1BodyRejectsDuplicateKey 验证重复 JSON 键不会被静默覆盖。
 func TestDecodeV1BodyRejectsDuplicateKey(t *testing.T) {
 	if _, _, err := DecodeV1Body([]byte(`{"purpose":"task_proof","purpose":"reward_image"}`)); err == nil {

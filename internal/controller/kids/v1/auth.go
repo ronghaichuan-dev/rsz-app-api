@@ -46,6 +46,19 @@ func (c *Controller) ExchangeGoogleProof(ctx context.Context, req *v1.ExchangeGo
 	return SuccessResponse(in, out), nil
 }
 
+// ExchangeAppleProof 交换 Apple identity token。
+func (c *Controller) ExchangeAppleProof(ctx context.Context, req *v1.ExchangeAppleProofReq) (*v1.V1Response, error) {
+	in, err := RequestInput(ctx, "exchangeAppleProof", "POST")
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.Kids().ExecuteV1(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	return SuccessResponse(in, out), nil
+}
+
 // RefreshSession 刷新会话。
 func (c *Controller) RefreshV1Session(ctx context.Context, req *v1.RefreshSessionReq) (*v1.V1Response, error) {
 	in, err := RequestInput(ctx, "refreshSession", "POST")

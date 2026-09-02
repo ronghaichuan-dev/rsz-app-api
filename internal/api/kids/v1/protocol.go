@@ -98,6 +98,11 @@ type PrepareAssetUploadReq struct {
 type ExchangeGoogleProofReq struct {
 	g.Meta `path:"/auth/google:exchange" method:"post" tags:"Auth" summary:"交换 Google proof"`
 }
+
+// ExchangeAppleProofReq 声明 Apple identity token 交换接口路由。
+type ExchangeAppleProofReq struct {
+	g.Meta `path:"/auth/apple:exchange" method:"post" tags:"Auth" summary:"交换 Apple identity token"`
+}
 type CreateInviteGuestSessionReq struct {
 	g.Meta `path:"/auth/guest-sessions" method:"post" tags:"Auth" summary:"创建邀请码游客会话"`
 }

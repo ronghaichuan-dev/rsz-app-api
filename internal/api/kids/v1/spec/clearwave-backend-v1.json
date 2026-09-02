@@ -3458,6 +3458,32 @@
         ],
         "type": "object"
       },
+      "AppleProofExchangeRequest": {
+        "additionalProperties": false,
+        "description": "Apple identity token 只作为短生命周期 proof；不得另传 provider subject。可选 guest upgrade grant 由受限 Guest session 签发，exchange 在同一事务完成账号绑定/匿名升级。",
+        "properties": {
+          "apple_identity_token": {
+            "maxLength": 8192,
+            "minLength": 32,
+            "type": "string"
+          },
+          "guest_upgrade_grant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GuestUpgradeGrant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "apple_identity_token",
+          "guest_upgrade_grant"
+        ],
+        "type": "object"
+      },
       "GoogleProofExchangeRequest": {
         "additionalProperties": false,
         "description": "Google ID token 只作为短生命周期 proof；不得另传 provider subject。可选 guest upgrade grant 由受限 Guest session 签发，exchange 在同一事务完成账号绑定/匿名升级。",
@@ -10317,6 +10343,80 @@
           "RATE_LIMITED",
           "UNAVAILABLE"
         ],
+        "x-version-field": null
+      }
+    },
+    "/v1/auth/apple:exchange": {
+      "post": {
+        "description": "交换 Apple identity token 并原子建立账号绑定",
+        "operationId": "exchangeAppleProof",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XRequestId"
+          },
+          {
+            "$ref": "#/components/parameters/XContractVersion"
+          },
+          {
+            "$ref": "#/components/parameters/XClientVersion"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppleProofExchangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeGoogleProofSuccessEnvelope"
+                }
+              }
+            },
+            "description": "成功；相同幂等输入重放时返回首次提交的同一 canonical 快照。"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "稳定错误：UNAUTHENTICATED、ACCOUNT_DISABLED、VALIDATION_FAILED、IDEMPOTENCY_CONFLICT、UNAVAILABLE。"
+          }
+        },
+        "security": [
+          {},
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "交换 Apple identity token",
+        "tags": [
+          "Auth"
+        ],
+        "x-auth-context": "public_or_guest",
+        "x-consistency": "REMOTE_ATOMIC_COMMAND",
+        "x-error-codes": [
+          "UNAUTHENTICATED",
+          "TOKEN_EXPIRED",
+          "ACCOUNT_DISABLED",
+          "VALIDATION_FAILED",
+          "IDEMPOTENCY_CONFLICT",
+          "UNAVAILABLE"
+        ],
+        "x-mutation": true,
         "x-version-field": null
       }
     },

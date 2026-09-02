@@ -471,7 +471,7 @@ func v1DeploymentAssertMemberBalanceSuccess(t *testing.T, requestID string, resp
 	}
 }
 
-// TestV1DeploymentValidationSmoke 对已配置的部署环境执行 46 个 operation 的真实路由、校验和可观测性验收。
+// TestV1DeploymentValidationSmoke 对已配置的部署环境执行 47 个 operation 的真实路由、校验和可观测性验收。
 func TestV1DeploymentValidationSmoke(t *testing.T) {
 	baseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("KIDS_DEPLOY_SMOKE_BASE_URL")), "/")
 	if baseURL == "" {

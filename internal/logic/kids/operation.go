@@ -413,6 +413,8 @@ func (s *sKids) executeV1Operation(ctx context.Context, in v1.V1OperationInput) 
 	switch in.OperationID {
 	case "exchangeGoogleProof":
 		return s.v1ExchangeGoogleProof(ctx, in)
+	case "exchangeAppleProof":
+		return s.v1ExchangeAppleProof(ctx, in)
 	case "prepareAssetUpload":
 		return s.v1PrepareAsset(ctx, in)
 	case "commitAssetUpload":
@@ -542,7 +544,7 @@ func v1OperationAuthContext(operationID string) string {
 	switch operationID {
 	case "createInviteGuestSession":
 		return "public"
-	case "exchangeGoogleProof":
+	case "exchangeGoogleProof", "exchangeAppleProof":
 		return "public_or_guest"
 	case "refreshSession":
 		return "refresh"
@@ -2415,6 +2417,9 @@ func (s *sKids) v1Mutation(ctx context.Context, in v1.V1OperationInput) (map[str
 	if in.OperationID == "exchangeGoogleProof" {
 		return s.v1ExchangeGoogleProof(ctx, in)
 	}
+	if in.OperationID == "exchangeAppleProof" {
+		return s.v1ExchangeAppleProof(ctx, in)
+	}
 	if in.OperationID == "refreshSession" {
 		return s.v1RefreshSession(ctx, in)
 	}
@@ -2471,20 +2476,51 @@ func (s *sKids) v1CreateGuestSession(ctx context.Context, in v1.V1OperationInput
 
 // v1ExchangeGoogleProof 校验 Google 签名和 nonce，并在同一事务创建账号绑定与会话。
 func (s *sKids) v1ExchangeGoogleProof(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
-	identityToken, nonce := strings.TrimSpace(fmt.Sprint(in.Body["google_id_token"])), strings.TrimSpace(fmt.Sprint(in.Body["proof_nonce"]))
-	if identityToken == "" || nonce == "" {
-		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "Google proof is required")
+	return s.v1ExchangeOAuthProof(ctx, in, consts.LoginProviderGoogle)
+}
+
+// v1ExchangeAppleProof 校验 Apple identity token，并在同一事务创建账号绑定与会话。
+func (s *sKids) v1ExchangeAppleProof(ctx context.Context, in v1.V1OperationInput) (map[string]any, string, error) {
+	return s.v1ExchangeOAuthProof(ctx, in, consts.LoginProviderApple)
+}
+
+// v1ExchangeOAuthProof 仅使用服务端校验后的第三方 subject 建立或复用账号，客户端不得传入身份标识。
+func (s *sKids) v1ExchangeOAuthProof(ctx context.Context, in v1.V1OperationInput, provider string) (map[string]any, string, error) {
+	providerName := ""
+	var identity *utils.OAuthIdentity
+	var err error
+	switch provider {
+	case consts.LoginProviderGoogle:
+		providerName = "Google"
+		identityToken := strings.TrimSpace(fmt.Sprint(in.Body["google_id_token"]))
+		nonce := strings.TrimSpace(fmt.Sprint(in.Body["proof_nonce"]))
+		if identityToken == "" || nonce == "" {
+			return nil, "", v1Error(422, "VALIDATION_FAILED", false, "Google proof is required")
+		}
+		clientID := strings.TrimSpace(g.Cfg().MustGet(ctx, "auth.google.clientId", "").String())
+		if clientID == "" {
+			return nil, "", v1Error(503, "UNAVAILABLE", true, "Google issuer configuration is unavailable")
+		}
+		identity, err = utils.VerifyGoogleIdentityTokenWithNonce(ctx, identityToken, clientID, nonce)
+	case consts.LoginProviderApple:
+		providerName = "Apple"
+		identityToken := strings.TrimSpace(fmt.Sprint(in.Body["apple_identity_token"]))
+		if identityToken == "" {
+			return nil, "", v1Error(422, "VALIDATION_FAILED", false, "Apple identity token is required")
+		}
+		clientID := strings.TrimSpace(g.Cfg().MustGet(ctx, "auth.apple.clientId", "").String())
+		if clientID == "" {
+			return nil, "", v1Error(503, "UNAVAILABLE", true, "Apple issuer configuration is unavailable")
+		}
+		identity, err = utils.VerifyAppleIdentityToken(ctx, identityToken, clientID)
+	default:
+		return nil, "", v1Error(422, "VALIDATION_FAILED", false, "OAuth provider is unsupported")
 	}
-	clientID := strings.TrimSpace(g.Cfg().MustGet(ctx, "auth.google.clientId", "").String())
-	if clientID == "" {
-		return nil, "", v1Error(503, "UNAVAILABLE", true, "Google issuer configuration is unavailable")
-	}
-	identity, err := utils.VerifyGoogleIdentityTokenWithNonce(ctx, identityToken, clientID, nonce)
 	if err != nil {
-		g.Log().Warningf(ctx, "Google 身份凭据校验失败 request_id=%s", in.RequestID)
-		return nil, "", v1Error(401, "UNAUTHENTICATED", false, "Google proof is invalid")
+		g.Log().Warningf(ctx, "%s 身份凭据校验失败 request_id=%s", providerName, in.RequestID)
+		return nil, "", v1Error(401, "UNAUTHENTICATED", false, providerName+" proof is invalid")
 	}
-	accountID := v1ID("account", "google:"+identity.OpenId)
+	accountID := v1ID("account", provider+":"+identity.OpenId)
 	issuedAtMs := time.Now().UnixMilli()
 	accessExpiryMs := issuedAtMs + int64(time.Hour/time.Millisecond)
 	refreshExpiryMs := issuedAtMs + int64((30*24*time.Hour)/time.Millisecond)

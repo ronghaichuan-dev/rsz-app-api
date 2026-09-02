@@ -2,7 +2,7 @@ package v1
 
 import "testing"
 
-// TestV1ContractSmokeCoverage 确保 CI 对冻结的全部 46 个 operation 保持显式协议覆盖入口。
+// TestV1ContractSmokeCoverage 确保 CI 对冻结的全部 47 个 operation 保持显式协议覆盖入口。
 func TestV1ContractSmokeCoverage(t *testing.T) {
 	spec, err := loadV1Spec()
 	if err != nil {
@@ -32,7 +32,7 @@ func TestV1ContractSmokeCoverage(t *testing.T) {
 			}
 		}
 	}
-	if len(operations) != 46 {
-		t.Fatalf("v1 smoke 覆盖的 operation 数量错误: got=%d want=46", len(operations))
+	if len(operations) != 47 {
+		t.Fatalf("v1 smoke 覆盖的 operation 数量错误: got=%d want=47", len(operations))
 	}
 }

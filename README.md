@@ -112,6 +112,7 @@ APP_ENV=prod go run ./cmd/kids
 - `GET http://127.0.0.1:8002/v1/kids/tasks`
 - `GET http://127.0.0.1:8002/v1/kids/rewards`
 - `GET http://127.0.0.1:8002/swagger`
+- `GET http://127.0.0.1:8002/api.json`（Swagger/OpenAPI JSON 文档）
 
 统一响应格式：
 
